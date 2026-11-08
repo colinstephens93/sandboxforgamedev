@@ -185,6 +185,6 @@ export function hosePath(P0, mouth, arrive, coneLen, n, dropA = 1.4, reachB = 1.
 export const HOSE = {
   radius: 2 * IN,                    // 4 in hose (outer radius)
   reel: [0.0, 4.25, 6.2],            // reel drum center (design)
-  tailpipe: [-0.6, 0.45, DYNO.truckOrigin.z + 5.05], // tailpipe tip: driver side, 5.05 m behind the front axle
+  tailpipe: [0.6, 0.45, DYNO.truckOrigin.z + 5.05], // tailpipe tip: passenger side (photos 03 and IMG_2872), 5.05 m behind the front axle
   coneLen: 0.24,
 };

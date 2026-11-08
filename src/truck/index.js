@@ -12,6 +12,7 @@ import { buildRear } from './rear.js';
 import { buildBadges, buildFuelDoor } from './badges.js';
 import { buildEngineBay } from './engine/index.js';
 import { buildHoodUnder } from './hoodUnder.js';
+import { buildUnderside } from './underside.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -100,8 +101,8 @@ export function buildTruck({ quality }) {
 
   // ---------------- dark interior tub (seen through panel gaps) ----------------
   const tub = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w * IN, h * IN, d * IN), darkTub); m.position.set(x * IN, y * IN, z * IN); root.add(m); return m; };
-  tub(68, 52, 84, 0, 44, 65);          // cab volume (below the roofline, above the rocker)
-  tub(68, 14, 80, 0, 29, 152);         // bed volume under the floor
+  tub(68, 40, 84, 0, 50, 65);          // cab volume (below the roofline, above the rocker)
+  tub(68, 10, 80, 0, 33, 152);         // bed volume under the floor
 
   // ---------------- placeholder wheels (replaced in 2.2) ----------------
   const wheelMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
@@ -118,5 +119,11 @@ export function buildTruck({ quality }) {
   const hoodUnder = buildHoodUnder({ quality, mats: bay.mats }); hood.add(hoodUnder.group); parts.hoodUnder = hoodUnder;
   const anchors = { ...bay.anchors, ...hoodUnder.anchors, hoodHinge: bay.anchors.hoodHinge };
   root.userData.parts = parts;
-  return { group: root, parts, colliders: [], anchors, update: (dt, st) => bay.update(dt, st) };
+  // ---------------- underside (frame, suspension, driveline, exhaust, fuel, spare) ----------------
+  const underside = buildUnderside({ quality });
+  root.add(underside.group);
+  parts.underside = underside.anchors;
+  root.userData.parts = parts;
+  Object.assign(anchors, underside.anchors);
+  return { group: root, parts, colliders: underside.colliders, anchors, underside, update: (dt, st) => bay.update(dt, st) };
 }
