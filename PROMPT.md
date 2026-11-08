@@ -18,6 +18,7 @@ The one failure that ruins this project is anything that is not true to the real
 - **Do not invent.** If a detail is not in this prompt, not in the `reference/` folder, and you are not certain of it, use the plainest correct option and add it to `ACCURACY.md` as "unverified". Never fill a gap with a guess that looks confident.
 - **Reference photos:** open every image in `reference/` and read `reference/INDEX.md` before modeling. The index says what each photo is trusted for. Where a photo shows something the index marks as non-stock, build the factory 2005 part instead.
 - **Stock only:** the truck in the game is a factory-stock 2005 at factory ride height. No leveling kit, lift, aftermarket tires, aftermarket intake parts, step bars or spray-in bed liner.
+- **Factory data already confirmed from the 2005 owner's manual** (record in the spec file with the source "2005 Silverado owner's manual"): axle ratio 3.73; maximum trailer 12,000 lb and GCWR 22,000 lb for this configuration; short-bed fuel tank 26.0 gal; wheel nut torque 140 lb-ft; A/C refrigerant R134a 1.6 lb; transmission normal temperature 180 to 200 °F, hot warning at 265 °F. The diesel starting procedure, diesel oil capacity and the elevated idle and exhaust restrictor details are in the separate Duramax diesel supplement, not this manual.
 - **Units:** model in meters (1 unit = 1 m), but keep the source values in inches, feet, lb, hp and lb-ft in the spec file and convert in code. Display US units in the UI.
 
 ## 1. THE TRUCK (exterior)
@@ -44,8 +45,8 @@ Body:
 
 All openings are animated on real hinge axes with real swing angles and stop at real limits:
 - **Four doors:** open and close with E when facing the handle. Door cards, door jamb with the tire and loading placard and VIN sticker area, door check straps, interior lights come on when a door opens.
-- **Tailgate:** drops to horizontal and hangs on its cables.
-- **Hood:** opens with the interior release then the safety latch at the grille, rises on its real support mechanism, and stays up.
+- **Tailgate:** opens by lifting the handle while pulling the tailgate toward you, drops to horizontal and hangs on its cables; closes by pushing it firmly up until it latches (2005 owner's manual).
+- **Hood:** opens in the real order from the 2005 owner's manual: pull the release handle inside the cab, to the lower left of the steering wheel, then pull up the secondary release near the center of the grille, then lift the hood. It rises on its real support mechanism and stays up.
 - **Fuel door.**
 - **Inspection mode (I):** point at any part and see its name and a one-line description (for example "Allison 1000 transmission dipstick"). The label list lives in data, not in scattered code.
 
@@ -60,9 +61,9 @@ The 6.6 L Duramax LLY, built at the correct scale and position:
 
 The 2003–2007 GMT800 interior in LT trim:
 - Leather front bucket seats with the center console, or the 40/20/40 front bench, matching the reference. Rear crew cab bench. Correct seat stitching and perforation pattern.
-- The real dashboard of that generation: the gauge cluster laid out exactly as the real one with working needles, the center stack with the radio and climate controls, the steering wheel with the bowtie and its switches, the column shift lever with the Tow/Haul button, the ignition on the dash, the parking brake pedal, and the headlight switch.
+- The real dashboard of that generation: the gauge cluster laid out exactly as the real one with working needles, the center stack with the radio and climate controls, the steering wheel with the bowtie and its switches, the column shift lever with the Tow/Haul and overdrive-disable button on its end (tap toggles Tow/Haul, press and hold toggles overdrive disable, each with its cluster indicator), the ignition with LOCK, ACCESSORY, RUN and START positions, the hood release handle low left of the steering wheel, the transfer case control left of the steering column, the parking brake pedal, and the headlight switch.
 - **Starting sequence (real diesel behavior):** key to RUN, the "wait to start" glow plug light comes on for a few seconds depending on shop temperature, the gauges sweep, then the starter cranks for a moment and the engine catches with a diesel clatter and settles to idle at about 680 rpm. The engine can be shut off with the key.
-- Gauges read the real state: tachometer, speedometer (driven by the rear wheels on the dyno rollers), coolant temperature, oil pressure, voltage, fuel level, and the driver information center.
+- Gauges read the real state, using the United States heavy-duty automatic cluster from the 2005 owner's manual: speedometer (driven by the rear wheels on the dyno rollers) with odometer, tachometer with its dashed red zone and solid red zone, voltmeter, engine coolant temperature, transmission temperature (normal 180 to 200 °F; at about 265 °F the driver information center shows TRANSMISSION HOT and the transmission enters protection mode until it falls below 260 °F), oil pressure, fuel, the warning and indicator lights (including Tow/Haul, overdrive disable, four-wheel drive and check engine), and the driver information center with the engine hour meter.
 
 ## 5. THE SHOP AND THE DYNO
 
@@ -76,7 +77,7 @@ The 2003–2007 GMT800 interior in LT trim:
 
 **The dyno run (physically modeled, never a canned number):**
 - Engine model: a torque curve for the LLY built from the published rating of 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm (Allison-equipped), with a realistic diesel shape: strong low-end torque, flat peak, and falling torque toward the governor near 3,200 rpm. Peak values and their rpm must come out of the curve exactly as rated at the crank.
-- Drivetrain: the 5-speed Allison 1000 ratios (3.10, 1.81, 1.41, 1.00, 0.71, reverse 4.49; all confirmed), the torque converter locking up during the pull, the axle ratio and tire rolling diameter from the spec file, and a drivetrain loss consistent with a 4WD truck with an automatic (about 15 to 20 percent).
+- Drivetrain: the 5-speed Allison 1000 ratios (3.10, 1.81, 1.41, 1.00, 0.71, reverse 4.49; all confirmed), the torque converter locking up during the pull, the 3.73 axle ratio (the only ratio listed for the 6.6 L diesel in the K-2500 Crew Cab Short Box HD in the 2005 owner's manual) and the tire rolling diameter from the spec file, and a drivetrain loss consistent with a 4WD truck with an automatic (about 15 to 20 percent).
 - Procedure: the operator selects a gear (4th, 1:1, is the standard pull gear), the player holds full throttle, the rollers accelerate under the real inertia, the software reads roller speed and acceleration, and computes wheel horsepower and wheel torque against engine rpm.
 - Output: a graph of wheel hp and wheel lb-ft against rpm, with peak values, the SAE J1349 correction factor from the weather station, and a run history to compare runs. A stock truck must land in the real range of a stock LLY on a chassis dyno; derive it, don't hard-code it. Run-to-run variation stays within about 1 percent.
 - During and after the run: coolant and transmission temperatures rise, the fan sound, the exhaust note, the rollers spinning and the tires deforming slightly under load.
