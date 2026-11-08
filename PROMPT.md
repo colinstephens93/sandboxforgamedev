@@ -102,7 +102,7 @@ The shop tunes the truck with **AI Live**, an original laptop tuning app built f
 **Quick tunes (the only tuning mode):**
 - Six named tunes, each card showing its purpose and its expected gains and risks: **Stock** (the factory calibration, always available), plus the five positions of the owner's real switchable LLY tune, with the horsepower each adds over stock (confirmed by the owner):
 
-  | Position | Gain over stock |
+  | Position | Rear-wheel gain over stock |
   |---|---|
   | Heavy Tow | +30 hp |
   | Light Tow | +60 hp |
@@ -110,7 +110,7 @@ The shop tunes the truck with **AI Live**, an original laptop tuning app built f
   | Street | +175 hp |
   | Race | +230 hp |
 
-  Each tune's peak horsepower on the dyno must come out at stock plus its gain (with the LBZ regulator installed), produced by the calibration and the physics, not added on afterwards. The owner did not supply torque gains: derive them from a realistic diesel fueling curve for each tune, and record them as estimates in `ACCURACY.md`. The tow tunes keep the conservative Allison behavior that suits towing, and Economy aims at efficiency at part throttle as well as power. See `reference/tuning/`.
+  The gains are **rear-wheel horsepower measured on the chassis dyno** (confirmed by the owner), not crank. Each tune's peak wheel horsepower must come out at the stock truck's peak wheel horsepower plus its gain (with the LBZ regulator installed), so Race lands roughly 230 whp above the stock baseline. The crank power each tune implies follows from the drivetrain loss model. Every gain is produced by the calibration and the physics, not added on afterwards. The owner did not supply torque gains: derive them from a realistic diesel fueling curve for each tune, and record them as estimates in `ACCURACY.md`. The tow tunes keep the conservative Allison behavior that suits towing, and Economy aims at efficiency at part throttle as well as power. See `reference/tuning/`.
 - **LBZ fuel pressure regulator:** the owner's five tunes were written for an LLY with the LBZ fuel pressure regulator swapped onto the CP3 injection pump (confirmed by the owner). The game truck arrives with the stock LLY regulator, and the LBZ regulator sits on the parts shelf as an installable upgrade at the workbench, with a short install sequence on the pump. Running the five tunes with the stock regulator is allowed but behaves as it would in reality: on the higher tunes the rail pressure falls short of target at high fuel demand, power falls short of the tune's numbers, and the log shows the rail pressure error. Record the regulator's effect with its source or as an estimate in `ACCURACY.md`.
 - The selected tune changes the calibration the engine model reads: main fuel quantity, injection timing, rail pressure, boost and turbo vane targets, the smoke limiter, the torque limiters, and the Allison's shift points, line pressure and converter lockup.
 - The truck behaves differently on every level, on the dyno and at idle: power and torque curves, boost, exhaust temperature, smoke, sound and transmission behavior.
