@@ -6,8 +6,8 @@ The owner's tune is an EFILive `.ctz` file, `LLy_DSP5_Hiss_OptHvyDDHPRace_LBZ_Re
 - Vehicle: VIN decodes to a 2005 Silverado 2500HD 4WD crew cab with the LLY (VIN position 8 = 2, position 10 = 5)
 - Engine computer operating system: 5160005
 - Tool: FlashScan V2, V8 software; created 2015-02-18, modified 2016-10-06
-- A five-position switchable (DSP5) tune. Positions, confirmed by the owner: Optimized, Heavy Tow, Daily Driver,
-  HP, Race (the file name's "Hiss" is the tune's maker or name, not a position)
+- A five-position switchable (DSP5) tune. Positions and horsepower over stock, confirmed by the owner:
+  Heavy Tow +30, Light Tow +60, Economy +120, Street +175, Race +230
 - Written for an LLY with the **LBZ fuel pressure regulator** swapped onto the CP3 pump (confirmed by the owner)
 
 The tune tables themselves are encrypted inside the file, so the game cannot read them directly, and the
