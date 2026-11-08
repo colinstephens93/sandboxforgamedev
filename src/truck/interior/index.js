@@ -12,7 +12,7 @@
 //   shift(gear), setClusterState(partial)
 // }
 import * as THREE from 'three';
-import { IN, M } from './kit.js';
+import { IN, M, hitMesh } from './kit.js';
 import { makeMaterials } from './mats.js';
 import { buildCluster } from './cluster.js';
 import { buildDash, DASH } from './dash.js';
@@ -43,7 +43,7 @@ export function buildInterior({ quality, parts = {} } = {}) {
   const cluster = buildCluster({ quality: q });
   const C = DASH.cluster; cluster.mesh.position.set(C.x, C.y, C.s); cluster.mesh.rotation.x = -C.tilt;
   cluster.mesh.userData.labelId = 'interior.cluster'; root.add(cluster.mesh); anchors.cluster = cluster.mesh;
-  const cluHit = new THREE.Mesh(new THREE.BoxGeometry(13, 5.2, 1.4), new THREE.MeshBasicMaterial({ visible: false })); cluHit.position.z = 0.5; cluHit.userData.labelId = 'interior.cluster'; cluster.mesh.add(cluHit);
+  const cluHit = hitMesh(new THREE.BoxGeometry(13, 5.2, 1.4)); cluHit.position.z = 0.5; cluHit.userData.labelId = 'interior.cluster'; cluster.mesh.add(cluHit);
 
   const dash = buildDash(env);
   const controls = buildControls(env);
@@ -80,12 +80,12 @@ export function buildInterior({ quality, parts = {} } = {}) {
   // interior light (dome / map lamps): on when a door is open
   const interiorLight = {
     on: false,
-    setOn(on) { this.on = !!on; for (const l of shell.lamps) l.visible = this.on; shell.lampMat.emissiveIntensity = this.on ? 2.2 : 0; for (const l of doors.lamps || []) l.intensity = this.on ? 1 : 0; },
+    setOn(on) { this.on = !!on; for (const l of shell.lamps) l.intensity = this.on ? l.userData.maxI : 0; /* intensity, not visibility: toggling visibility would recompile every material */ shell.lampMat.emissiveIntensity = this.on ? 2.2 : 0; },
   };
   interiorLight.setOn(false);
 
   // a faint ambient fill so the cab never reads pure black (stands in for light bounced from the shop through the glass)
-  const fill = new THREE.PointLight(0xfff1dc, 0.9, 3.2, 1.6); fill.position.set(0, 1.45, 1.75); group.add(fill);
+  const fill = new THREE.PointLight(0xfff1dc, 0.35, 3.2, 1.6); fill.position.set(0, 1.45, 1.75); group.add(fill);
 
   // ---------------- runtime ----------------
   const cs = defaultClusterState();

@@ -116,8 +116,8 @@ export function buildCabShell(env) {
     for (const sx of [-1, 1]) {
       const lens = new THREE.Mesh(new THREE.CircleGeometry(0.88, 24), lampMat); lens.rotation.x = Math.PI / 2; lens.position.set(sx * 3.5, cy - 1.42 - 0.18, cz - 1.0); oh.add(lens);
     }
-    const pl = new THREE.PointLight(0xffe3b8, 0.9, 3.0, 1.8); pl.position.set(0, cy - 3.5, cz + 5); g.add(pl); lamps.push(pl);
-    const rl = new THREE.PointLight(0xffe3b8, 0.7, 2.8, 1.8); rl.position.set(0, 71.0, 92); g.add(rl); lamps.push(rl);
+    const pl = new THREE.PointLight(0xffe3b8, 0, 3.0, 1.8); pl.userData.maxI = 0.9; pl.position.set(0, cy - 3.5, cz + 5); g.add(pl); lamps.push(pl);
+    const rl = new THREE.PointLight(0xffe3b8, 0, 2.8, 1.8); rl.userData.maxI = 0.7; rl.position.set(0, 71.0, 92); g.add(rl); lamps.push(rl);
     // rear dome lamp lens (crew cab)
     B.add(softBox({ w: 5.0, h: 0.7, d: 3.6, r: 0.3, step: 2 }), 'tanSoftTwo', M(0, 73.2, 90.5));
     const rlens = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.0), lampMat); rlens.rotation.x = Math.PI / 2; rlens.position.set(0, 72.78, 90.5); g.add(rlens);

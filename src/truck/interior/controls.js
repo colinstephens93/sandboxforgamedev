@@ -2,7 +2,7 @@
 // their interactions. Layout from 01b-dash-wide-driver-pov (wheel, stalk, shape) and IMG_2866/2867/2870/2871 (lever, key, hub).
 // Inches, truck frame. The wheel is 15 in in diameter (PROMPT.md section 4).
 import * as THREE from 'three';
-import { Batch, M, lookM, boxG, cylG, cylX, cylZ, plateG, softBox, tubeG, canvasTex, lerp, polyG } from './kit.js';
+import { Batch, M, lookM, boxG, cylG, cylX, cylZ, plateG, softBox, tubeG, canvasTex, lerp, polyG, hitMesh } from './kit.js';
 import { KEY } from '../../sim/startSequence.js';
 import { nextKeyPosition, keyTwist, cycleGear, GEARS, KEY_NAMES } from './logic.js';
 
@@ -62,7 +62,7 @@ export function buildControls(env) {
   }
   // horn symbols (embossed) skipped: the cover shows the bowtie and AIR BAG as on the truck
   // hit box and interactivity: none (scenery); label is on the group
-  const wheelHit = new THREE.Mesh(new THREE.CylinderGeometry(R + T, R + T, 1.6, 20), new THREE.MeshBasicMaterial({ visible: false })); wheelHit.rotation.x = Math.PI / 2; wheelHit.userData.labelId = 'interior.steeringWheel'; wheel.add(wheelHit);
+  const wheelHit = hitMesh(new THREE.CylinderGeometry(R + T, R + T, 1.6, 20)); wheelHit.rotation.x = Math.PI / 2; wheelHit.userData.labelId = 'interior.steeringWheel'; wheel.add(wheelHit);
 
   // ---------------- column ----------------
   // upper shroud (graphite) from behind the hub to the dash, with the lower shroud and tilt lever
@@ -106,9 +106,9 @@ export function buildControls(env) {
     tow.position.copy(h1).addScaledVector(handleDir, 0.0); tow.quaternion.copy(handle.quaternion);
     tow.position.copy(h1).add(new THREE.Vector3(0, 0, 0)); leverPivot.add(tow);
     anchors.towHaulButton = tow; tow.userData._hit = true;
-    const hit = new THREE.Mesh(new THREE.SphereGeometry(0.85, 10, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, 0.1, 0); tow.add(hit);
+    const hit = hitMesh(new THREE.SphereGeometry(0.85, 10, 8)); hit.position.set(0, 0.1, 0); tow.add(hit);
     // main lever hit
-    const lhit = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, len + 1.2, 10), new THREE.MeshBasicMaterial({ visible: false })); lhit.position.copy(handle.position); lhit.quaternion.copy(handle.quaternion); leverPivot.add(lhit);
+    const lhit = hitMesh(new THREE.CylinderGeometry(0.95, 0.95, len + 1.2, 10)); lhit.position.copy(handle.position); lhit.quaternion.copy(handle.quaternion); leverPivot.add(lhit);
     anchors.shifter = shifter;
   }
   colFrame.add(shifter);
@@ -136,7 +136,7 @@ export function buildControls(env) {
   }
   colFrame.add(ign);
   anchors.ignition = ign;
-  const hitI = new THREE.Mesh(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ visible: false })); hitI.position.copy(lockBase.position); hitI.position.x += 0.4; ign.add(hitI);
+  const hitI = hitMesh(new THREE.SphereGeometry(1.2, 10, 8)); hitI.position.copy(lockBase.position); hitI.position.x += 0.4; ign.add(hitI);
   anchors.ignitionKey = key;
 
   // key twist animation target (deg), eased in update

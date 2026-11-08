@@ -3,7 +3,7 @@
 // Authored in inches in the truck frame (s = z rearward). Layout from 01b-dash-wide-driver-pov (shape), IMG_2866 (center stack),
 // IMG_2869 to IMG_2871 (tan dash with graphite bezels), spec in PROMPT.md section 4.
 import * as THREE from 'three';
-import { Batch, M, prismX, boxG, cylG, cylX, cylZ, plateG, rrShape, softBox, polyG, canvasTex, lerp, clamp, lookM, boxUV } from './kit.js';
+import { Batch, M, prismX, boxG, cylG, cylX, cylZ, plateG, rrShape, softBox, polyG, canvasTex, lerp, clamp, lookM, boxUV, hitMesh } from './kit.js';
 import { makeCanvas } from '../../core/proc.js';
 
 export const DASH = {
@@ -54,6 +54,7 @@ export function buildDash(env) {
   // visor (the binnacle hood): sloped dark hood above the face, with side cheeks
   const visorProfile = [[-0.7, 2.5], [-0.7, 3.1], [0.9, 3.3], [2.7, 3.1], [3.2, 2.7], [3.1, 2.5], [2.4, 2.65], [0.8, 2.6]];
   cf.add(prismX(visorProfile, -7.5, 7.5), 'graphite');
+  cf.add(prismX([[-0.7, 3.0], [-0.7, 3.5], [0.9, 3.75], [2.5, 3.55], [3.0, 3.1], [2.9, 2.8], [0.8, 2.9]], -4.2, 4.2), 'graphite'); // raised center over the speedometer
   for (const sx of [-1, 1]) cf.add(prismX([[-0.4, 2.9], [2.6, 3.0], [2.9, 2.6], [1.5, 0.9], [-0.4, 0.6]], sx * 7.3, sx * 7.55), 'graphite');
   // lower lip under the cluster (flows into the dash face)
   cf.add(prismX([[-0.2, -2.6], [0.9, -2.9], [1.5, -3.5], [1.2, -4.2], [-0.2, -4.2]], -7.5, 7.5), 'graphite');
@@ -92,7 +93,7 @@ export function buildDash(env) {
   hl.add(boxG(0.3, 0.2, 0.4), 'satin', M(-1.9, -1.4, 0.45));
   // headlamp knob is an interaction object in the real truck? (no: scenery); give it a label
   const hlObj = new THREE.Group(); hlObj.name = 'headlamp_switch'; hlObj.position.set(-31 + 0.8, 43.1 - 0.2, faceS(43.1) + 0.9); hlObj.userData.labelId = 'interior.headlampSwitch';
-  const hlHit = new THREE.Mesh(boxG(6.0, 4.4, 1.6), new THREE.MeshBasicMaterial({ visible: false })); hlObj.add(hlHit); hlObj.position.set(-31, 43.1, faceS(43.1) + 0.5); g.add(hlObj);
+  const hlHit = hitMesh(boxG(6.0, 4.4, 1.6)); hlObj.add(hlHit); hlObj.position.set(-31, 43.1, faceS(43.1) + 0.5); g.add(hlObj);
   hlHit.userData.labelId = 'interior.headlampSwitch';
 
   // transfer case switch cluster (left of the steering column): 2WD / 4HI / N / 4LO push buttons
@@ -104,7 +105,7 @@ export function buildDash(env) {
   const tcLabel = new THREE.Mesh(new THREE.PlaneGeometry(7.0, 1.0), new THREE.MeshBasicMaterial({ map: tcPlate, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, color: new THREE.Color(0.55, 0.55, 0.55) }));
   tcLabel.position.set(-30.4, 38.2 + 0.85, faceS(38.2) + 0.58); tcLabel.rotation.x = -0.1; g.add(tcLabel);
   const tcObj = new THREE.Group(); tcObj.name = 'transfer_case_switch'; tcObj.position.set(-30.4, 38.2, faceS(38.2) + 0.5);
-  tcObj.add(new THREE.Mesh(boxG(7.0, 2.7, 1.4), new THREE.MeshBasicMaterial({ visible: false })));
+  tcObj.add(hitMesh(boxG(7.0, 2.7, 1.4)));
   tcObj.userData.labelId = 'interior.transferCase'; g.add(tcObj); anchors.transferCase = tcObj;
   // indicator lamps for the active button (small amber dots)
   const tcDots = [0, 1, 2, 3].map((i) => { const m = new THREE.Mesh(new THREE.CircleGeometry(0.1, 10), new THREE.MeshBasicMaterial({ color: 0xffb030, toneMapped: true })); m.position.set(-30.4 - 2.4 + i * 1.6, 38.2 - 0.62, faceS(38.2) + 0.6); m.rotation.x = -0.1; m.visible = false; g.add(m); return m; });
@@ -132,7 +133,7 @@ export function buildDash(env) {
     const pig = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0.1, -0.9), new THREE.Vector3(0.3, 1.2, -1.4), new THREE.Vector3(1.6, 2.2, -1.6)]), 10, 0.2, 8), MT.blackSoft); obd.add(pig);
     obd.rotation.x = 0.7; // +Z (the opening) points down and rearward
     g.add(obd);
-    const hit = new THREE.Mesh(boxG(4.4, 3, 3), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, 0, 0.6); obd.add(hit);
+    const hit = hitMesh(boxG(4.4, 3, 3)); hit.position.set(0, 0, 0.6); obd.add(hit);
     anchors.obdPort = obd;
     // plug point (where the AI Live cable mates), at the opening, +Z outward
     anchors.obdPlug = new THREE.Object3D(); anchors.obdPlug.name = 'obd_plug'; anchors.obdPlug.position.set(0, 0, 0.8); obd.add(anchors.obdPlug);
@@ -145,7 +146,7 @@ export function buildDash(env) {
     const grip = new THREE.Mesh(softBox({ w: 3.0, h: 0.85, d: 0.9, r: 0.32, step: 1 }), MT.blackSoft); grip.position.set(0, 0, 2.9); h.add(grip);
     const bracket = new THREE.Mesh(boxG(1.8, 0.8, 0.5), MT.graphite); bracket.position.set(0, 0.55, -0.1); h.add(bracket);
     g.add(h); anchors.hoodRelease = h; h.userData.restZ = h.position.z;
-    const hit = new THREE.Mesh(boxG(4.4, 2.4, 4.0), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, 0, 2.2); h.add(hit);
+    const hit = hitMesh(boxG(4.4, 2.4, 4.0)); hit.position.set(0, 0, 2.2); h.add(hit);
   }
 
   // parking brake pedal: far left of the footwell, small ribbed rubber pad on a lever arm from the toe board
@@ -155,7 +156,7 @@ export function buildDash(env) {
     const pad = new THREE.Mesh(plateG(3.4, 2.2, 0.5, 0.35, 0.05), MT.rubberGrip); pad.position.set(0, -1.2, 6.5); pad.rotation.x = -0.45; p.add(pad);
     for (let i = 0; i < 6; i++) { const rib = new THREE.Mesh(boxG(3.0, 0.07, 0.08), MT.black); rib.position.set(0, -1.62 + i * 0.28, 7.05 - i * 0.0); rib.rotation.x = -0.45; p.add(rib); }
     g.add(p); anchors.parkBrake = p;
-    const hit = new THREE.Mesh(boxG(4, 3, 3), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, -1.2, 6.6); p.add(hit);
+    const hit = hitMesh(boxG(4, 3, 3)); hit.position.set(0, -1.2, 6.6); p.add(hit);
   }
   // brake and accelerator pedals
   {
@@ -170,7 +171,7 @@ export function buildDash(env) {
     for (let i = 0; i < 9; i++) { const rib = new THREE.Mesh(boxG(2.6, 0.08, 0.1), MT.black); rib.position.set(0, -3.2 + i * 0.75, 0.7); apad.add(rib); }
     const hinge = new THREE.Mesh(boxG(3.0, 0.7, 0.9), MT.steel); hinge.position.set(0, 0.0, 0.0); accel.add(hinge);
     g.add(accel); anchors.accelPedal = accel;
-    for (const o of [brake, accel]) { const hit = new THREE.Mesh(boxG(5.2, 6, 3), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, 2, 1.8); o.add(hit); }
+    for (const o of [brake, accel]) { const hit = hitMesh(boxG(5.2, 6, 3)); hit.position.set(0, 2, 1.8); o.add(hit); }
   }
   // dead pedal footrest on the far left
   B.add(plateG(5.0, 3.0, 0.5, 0.35, 0.05), 'rubberGrip', M(-26.8, 25.4, 46.0, -0.8, 0, 0));
@@ -225,7 +226,7 @@ export function buildDash(env) {
   }
   sf.add(boxG(0.05, 0.28, 0.05), 'chrome', M(-2.98 + RF.cx, 1.3 + RF.cy, 0.46));
   radio.position.set(0, 0, 0); radio.applyMatrix4(sm); g.add(radio);
-  const radioHit = new THREE.Mesh(boxG(7.4, 4.2, 1.2), new THREE.MeshBasicMaterial({ visible: false })); radioHit.position.set(RF.cx, RF.cy, 0.2); radio.add(radioHit);
+  const radioHit = hitMesh(boxG(7.4, 4.2, 1.2)); radioHit.position.set(RF.cx, RF.cy, 0.2); radio.add(radioHit);
   // --- climate control ---
   const clim = new THREE.Group(); clim.name = 'climate_controls'; clim.userData.labelId = 'interior.climate';
   const CF = { cx: -2.0, cy: -0.45, w: 6.2, h: 2.3 };
@@ -271,7 +272,7 @@ export function buildDash(env) {
   accessory(-3.4, -4.4, false); accessory(4.2, -4.1, true);
   // The lighter is its own object with a label
   const lighter = new THREE.Group(); lighter.name = 'cigar_lighter'; lighter.userData.labelId = 'interior.cigarLighter';
-  lighter.add(new THREE.Mesh(boxG(1.4, 1.4, 0.6), new THREE.MeshBasicMaterial({ visible: false }))); lighter.position.set(-3.4, -4.4, 0.6); lighter.applyMatrix4(sm); g.add(lighter);
+  lighter.add(hitMesh(boxG(1.4, 1.4, 0.6))); lighter.position.set(-3.4, -4.4, 0.6); lighter.applyMatrix4(sm); g.add(lighter);
 
   // ---------------- glove box (interactable) ----------------
   const gl = DASH.glove; const glw = gl.x1 - gl.x0, glh = gl.y1 - gl.y0;
@@ -290,7 +291,7 @@ export function buildDash(env) {
   const latch = new THREE.Mesh(plateG(3.2, 0.5, 0.2, 0.15, 0.03), MT.graphite); latch.position.set(0, glh - 1.6, 0.68); gdoor.add(latch);
   const inner = new THREE.Mesh(boxG(glw - 1.2, glh - 1.0, 0.2), MT.graphite); inner.position.set(0, glh / 2, -0.4); gdoor.add(inner);
   g.add(gdoor); anchors.glovebox = gdoor;
-  const gHit = new THREE.Mesh(boxG(glw, glh, 2), new THREE.MeshBasicMaterial({ visible: false })); gHit.position.set(0, glh / 2, 0.2); gdoor.add(gHit);
+  const gHit = hitMesh(boxG(glw, glh, 2)); gHit.position.set(0, glh / 2, 0.2); gdoor.add(gHit);
 
   // passenger airbag door seam on the pad (soft line) and the AIRBAG tag
   B.add(boxG(24, 0.03, 0.08), 'tanSeam', M(21.5, 52.55, 41.2)); B.add(boxG(0.08, 0.03, 9), 'tanSeam', M(9.5, 52.58, 36.8)); B.add(boxG(0.08, 0.03, 9), 'tanSeam', M(33.5, 52.58, 36.8));

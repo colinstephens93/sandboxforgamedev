@@ -22,6 +22,31 @@ export function lookM(p, dir, up = [0, 1, 0]) {
   return new THREE.Matrix4().makeBasis(x, y, d).setPosition(p[0], p[1], p[2]);
 }
 
+// Remove zero-area triangles and any vertex normal that is not unit length: a zero normal becomes NaN in a normal pass and,
+// through SSAO and bloom, blanks the whole frame. Expects a non-indexed geometry with position, normal and uv.
+export function dropDegenerate(g) {
+  const P = g.attributes.position, N = g.attributes.normal, U = g.attributes.uv;
+  const pos = [], nor = [], uv = [];
+  for (let i = 0; i + 2 < P.count; i += 3) {
+    const ax = P.getX(i), ay = P.getY(i), az = P.getZ(i);
+    const ux = P.getX(i + 1) - ax, uy = P.getY(i + 1) - ay, uz = P.getZ(i + 1) - az, vx = P.getX(i + 2) - ax, vy = P.getY(i + 2) - ay, vz = P.getZ(i + 2) - az;
+    const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
+    const area2 = cx * cx + cy * cy + cz * cz;
+    if (!(area2 > 1e-14)) continue; // degenerate (also catches NaN)
+    const fl = Math.sqrt(area2);
+    for (let k = 0; k < 3; k++) {
+      pos.push(P.getX(i + k), P.getY(i + k), P.getZ(i + k));
+      let nx = N.getX(i + k), ny = N.getY(i + k), nz = N.getZ(i + k); const l = Math.hypot(nx, ny, nz);
+      if (!(l > 0.5)) { nx = cx / fl; ny = cy / fl; nz = cz / fl; } else { nx /= l; ny /= l; nz /= l; }
+      nor.push(nx, ny, nz); uv.push(U.getX(i + k), U.getY(i + k));
+    }
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); out.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.dispose();
+  return out;
+}
+
 // ---- batching: many small parts merged into one mesh per material ----
 export class Batch {
   constructor(materials) { this.materials = materials; this.map = new Map(); }
@@ -32,6 +57,7 @@ export class Batch {
     for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'uv') g.deleteAttribute(k);
     if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
     if (!g.attributes.normal) g.computeVertexNormals();
+    g = dropDegenerate(g); if (!g.attributes.position.count) return this;
     if (!this.map.has(key)) this.map.set(key, []);
     this.map.get(key).push(g);
     return this;
@@ -266,3 +292,8 @@ export function canvasTex(w, h, draw, { srgb = true, aniso = 4 } = {}) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
   const t = new THREE.CanvasTexture(c); t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = aniso; return t;
 }
+
+// invisible interaction helper: a mesh the raycaster can hit but no render pass draws (a material with visible:false would still be
+// drawn by the SSAO normal pass, which uses an override material)
+const HIT_MAT = new THREE.MeshBasicMaterial({ visible: false });
+export function hitMesh(geom) { const m = new THREE.Mesh(geom, HIT_MAT); m.visible = false; m.userData.isHit = true; return m; }

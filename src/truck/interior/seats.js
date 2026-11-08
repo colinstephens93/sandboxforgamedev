@@ -2,7 +2,7 @@
 // cupholder tray and padded lid; the crew cab rear bench with three headrests and a folding center armrest; seat belts.
 // Reference: IMG_2869, IMG_2870, IMG_2871 (front buckets, console), IMG_2869 (rear bench and armrest), 07b (rear bench shape).
 import * as THREE from 'three';
-import { Batch, M, boxG, cylG, cylX, cylZ, plateG, softBox, surfaceG, stitchesG, ribbonG, tubeG, lerp, clamp, smooth, boxUV } from './kit.js';
+import { Batch, M, boxG, cylG, cylX, cylZ, plateG, softBox, surfaceG, stitchesG, ribbonG, tubeG, lerp, clamp, smooth, boxUV, hitMesh } from './kit.js';
 
 const FLOOR = 22;
 
@@ -214,7 +214,7 @@ export function buildSeats(env) {
   }
   // armrest pivot: hinged at the seat back, lower position: top surface at 39.6 in
   const armPivot = [0, 37.6, 105.6]; arm.position.set(...armPivot); arm.rotation.x = 0; // z length extends toward -z (forward)
-  const hit = new THREE.Mesh(boxG(16, 5, 16), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, 0, -8); arm.add(hit);
+  const hit = hitMesh(boxG(16, 5, 16)); hit.position.set(0, 0, -8); arm.add(hit);
   let armTarget = 0; arm.userData.interact = { prompt: 'Fold rear armrest', run(ctx) { armTarget = armTarget ? 0 : 1; ctx.say?.(armTarget ? 'Armrest up' : 'Armrest down'); } };
   anchors.rearArmrest = arm;
 

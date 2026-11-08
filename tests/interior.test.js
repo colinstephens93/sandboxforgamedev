@@ -9,6 +9,8 @@ import {
   odometerText, dicLine, defaultClusterState, effectiveLights, REST, DIC_MESSAGES, KEY_NAMES,
 } from '../src/truck/interior/logic.js';
 import { INTERIOR_LABELS } from '../src/truck/interior/labels.js';
+import * as THREE from 'three';
+import { Batch, prismX, softBox, dropDegenerate, stitchesG } from '../src/truck/interior/kit.js';
 
 describe('cluster gauge scales match spec.cluster', () => {
   const C = spec.cluster;
@@ -171,5 +173,35 @@ describe('interior labels', () => {
   });
   it('the key controls are all labelled', () => {
     for (const id of ['interior.cluster', 'interior.steeringWheel', 'interior.shifter', 'interior.ignition', 'interior.hoodRelease', 'interior.obdPort', 'interior.transferCase', 'interior.parkBrake', 'interior.radio', 'interior.climate', 'interior.glovebox', 'interior.seatFrontL', 'interior.seatRear', 'interior.placard', 'interior.overhead']) expect(INTERIOR_LABELS[id], id).toBeTruthy();
+  });
+});
+
+describe('interior geometry kit (zero normals blank the SSAO/bloom frame, so none may survive)', () => {
+  const zeroNormals = (g) => { const n = g.attributes.normal; let z = 0; for (let i = 0; i < n.count; i++) if (!(Math.hypot(n.getX(i), n.getY(i), n.getZ(i)) > 0.5)) z++; return z; };
+  const volume = (g) => { const p = g.attributes.position, ix = g.index; let v = 0; const n = ix ? ix.count : p.count; for (let i = 0; i < n; i += 3) { const a = ix ? ix.getX(i) : i, b = ix ? ix.getX(i + 1) : i + 1, c = ix ? ix.getX(i + 2) : i + 2; const A = [p.getX(a), p.getY(a), p.getZ(a)], B = [p.getX(b), p.getY(b), p.getZ(b)], C = [p.getX(c), p.getY(c), p.getZ(c)]; v += (A[0] * (B[1] * C[2] - B[2] * C[1]) - A[1] * (B[0] * C[2] - B[2] * C[0]) + A[2] * (B[0] * C[1] - B[1] * C[0])) / 6; } return v; };
+  it('softBox is a closed rounded solid with outward normals (positive volume, close to w*h*d)', () => {
+    const g = softBox({ w: 10, h: 4, d: 8, r: 1, step: 2 }); const v = volume(g);
+    expect(v).toBeGreaterThan(280); expect(v).toBeLessThan(320);
+  });
+  it('prismX extrudes a profile with outward normals whichever way the polygon is wound', () => {
+    expect(volume(prismX([[0, 0], [10, 0], [10, 5], [0, 5]], 0, 4))).toBeCloseTo(200, 3);
+    expect(volume(prismX([[0, 0], [0, 5], [10, 5], [10, 0]], 0, 4))).toBeCloseTo(200, 3);
+  });
+  it('Batch drops degenerate triangles and never emits a zero normal', () => {
+    // a profile with a repeated point creates zero-area triangles
+    const g = prismX([[0, 0], [10, 0], [10, 0], [10, 5], [0, 5], [0, 5]], 0, 4);
+    const mats = { a: new THREE.MeshBasicMaterial() }; const B = new Batch(mats); B.add(g, 'a'); const grp = new THREE.Group(); B.build(grp);
+    const mesh = grp.children[0]; expect(zeroNormals(mesh.geometry)).toBe(0);
+    for (const v of mesh.geometry.attributes.position.array) expect(Number.isFinite(v)).toBe(true);
+  });
+  it('dropDegenerate repairs zero normals on a valid triangle and removes a collapsed one', () => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1], 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(new Array(18).fill(0), 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(12).fill(0), 2));
+    const out = dropDegenerate(g); expect(out.attributes.position.count).toBe(3); expect(zeroNormals(out)).toBe(0); expect(out.attributes.normal.getZ(0)).toBeCloseTo(1, 6);
+  });
+  it('stitch dashes are flat quads lying on the surface (2 triangles each)', () => {
+    const g = stitchesG([[0, 0, 0], [4, 0, 0]], { len: 0.2, gap: 0.2 }); expect(g.attributes.position.count % 6).toBe(0); expect(g.attributes.position.count).toBeGreaterThan(30);
+    const n = g.attributes.normal; for (let i = 0; i < n.count; i++) expect(Math.abs(n.getY(i))).toBeGreaterThan(0.99);
   });
 });
