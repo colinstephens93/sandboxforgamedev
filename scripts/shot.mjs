@@ -9,8 +9,8 @@ await page.waitForFunction(() => window.__game && window.__game.frames > 1, null
 await page.evaluate(([c, t, f]) => window.__game.setCam(c.split(',').map(Number), t.split(',').map(Number), +f), [cam, tgt, fov]);
 await page.waitForTimeout(1500);
 const data = await page.evaluate(() => window.__game.shot());
-fs.mkdirSync('screenshots', { recursive: true });
-fs.writeFileSync(`screenshots/${name}.png`, Buffer.from(data.split(',')[1], 'base64'));
-console.log('saved screenshots/' + name + '.png', 'fps~', await page.evaluate(() => window.__game.fps.toFixed(1)));
+fs.mkdirSync('.dev', { recursive: true });
+fs.writeFileSync(`.dev/${name}.png`, Buffer.from(data.split(',')[1], 'base64'));
+console.log('saved .dev/' + name + '.png', 'fps~', await page.evaluate(() => window.__game.fps.toFixed(1)));
 if (logs.length) console.log('LOGS:\n' + logs.join('\n'));
 await browser.close(); await app.close();
