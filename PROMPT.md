@@ -36,7 +36,12 @@ Body:
 - Summit White gloss paint with clearcoat, correct GMT800 Classic body lines: the 2003–2007 front fascia and grille with the Chevrolet bowtie, the headlamps of that body, the HD's raised hood, flared fenders, chrome bumpers as fitted to the LT, towing mirrors or standard mirrors as on the reference.
 - Build the body as smooth curved surfaces from cross-section and profile curves, not boxes. Correct panel gaps (about 4–5 mm) at every door, the hood, the tailgate and the fuel door. Real door seals and weatherstrip.
 - Glass: tinted windshield, side glass and rear glass with the black ceramic frit border.
-- Badging only where the real truck had it, in the right places and sizes. Check each badge against the reference; list any you cannot confirm in `ACCURACY.md`.
+- Badging only where the real truck had it, in the right places and sizes, confirmed by the owner:
+  - a **gold** Chevrolet bowtie in the grille bar (and gold bowties on the wheel center caps)
+  - the DURAMAX and 2500 HD badges on each side, as in `reference/05b-door-badge.jpg` and the side photos
+  - the chrome SILVERADO badge with bowtie on the lower left of the tailgate, and **no** CHEVROLET lettering on the tailgate
+  - the **4x4** decal on each rear bedside ahead of the taillight; no Z71 decal
+  Check each against the reference photos; list anything you cannot confirm in `ACCURACY.md`.
 - Bed: the inner box with stamped floor ribs, wheel tubs, tie-down hooks, stake pockets, and a working tailgate with its hinges, latches and support cables.
 - Underside: the fuel filter and its housing on the driver-side frame rail in front of the fuel tank (confirmed by owner and the 2005 Duramax diesel supplement), with its water-in-fuel sensor wire; frame rails, crossmembers, front differential and IFS (torsion bars) for the 4WD, solid rear axle on leaf springs, driveshafts, transfer case, exhaust with the downpipe, fuel tank, spare tire under the bed. Visible from a low angle and from the dyno pit.
 - Light grime that a working shop truck would have: a little road dust low on the rockers and wheel wells, never dirty enough to hide the paint.
