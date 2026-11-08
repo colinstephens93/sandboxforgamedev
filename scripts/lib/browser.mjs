@@ -10,7 +10,7 @@ export const CHROME_FLAGS = [
   '--ignore-gpu-blocklist', '--enable-webgl', '--no-sandbox', '--autoplay-policy=no-user-gesture-required',
 ];
 
-export async function startApp(port = 5199) {
+export async function startApp(port = 5300 + Math.floor(Math.random() * 2500)) {
   const server = await createServer({ server: { port, host: '127.0.0.1' }, logLevel: 'error' });
   await server.listen();
   return { url: `http://127.0.0.1:${port}/`, close: () => server.close() };
