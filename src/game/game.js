@@ -208,6 +208,7 @@ export class Game {
 
   visuals(dt) {
     this.shop.updateDoors(dt);
+    if (this.equipment.update) this.equipment.update(dt, this.state);
     for (const h of this.hooks) h(dt);
     this.updateAudio(dt);
   }
