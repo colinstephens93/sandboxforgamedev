@@ -4,6 +4,8 @@ import { qualityFromUrl, QUALITY } from './core/quality.js';
 import { buildShop } from './shop/shell.js';
 import { bakeEnvironment } from './core/env.js';
 import { buildEquipment } from './shop/equipment/index.js';
+import { buildTruck } from './truck/index.js';
+import { DYNO } from './shop/layout.js';
 
 const canvas = document.getElementById('view');
 const loadbar = document.getElementById('loadbar');
@@ -26,6 +28,10 @@ async function boot() {
   scene.environmentIntensity = 0.28;
   const equipment = buildEquipment({ quality: R.q, shop });
   scene.add(equipment.group);
+  progress(0.35, 'Building the truck');
+  const truck = buildTruck({ quality: R.q });
+  truck.group.position.set(DYNO.truckOrigin.x, 0, DYNO.truckOrigin.z);
+  scene.add(truck.group);
   await nextFrame();
   progress(0.6, 'Baking shop reflections');
   bakeEnvironment(R.renderer, scene, new THREE.Vector3(0, 1.4, 0), R.q.envSize);
@@ -34,7 +40,7 @@ async function boot() {
   await nextFrame();
   progress(1, 'Ready');
 
-  const state = { R, scene, camera, shop, equipment, frames: 0, last: performance.now(), fps: 0 };
+  const state = { R, scene, camera, shop, equipment, truck, frames: 0, last: performance.now(), fps: 0 };
   window.__game = state;
   state.setCam = (p, t, fov = 60) => { camera.position.set(...p); camera.fov = fov; camera.updateProjectionMatrix(); camera.lookAt(...t); };
   state.renderOnce = () => R.render(0.016);
