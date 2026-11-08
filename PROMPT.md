@@ -22,7 +22,7 @@ The one failure that ruins this project is anything that is not true to the real
 ## 1. THE TRUCK (exterior)
 
 Configuration (default, change in the spec file only):
-- 2005 Chevrolet Silverado 2500HD, LT trim, Crew Cab (four full-size doors), standard 6.5 ft box, 4WD, Summit White.
+- 2005 Chevrolet Silverado 2500HD, LT trim, Crew Cab (four full-size doors), 6.5 ft box (confirmed by owner), 4WD, Summit White.
 
 Main dimensions:
 - Wheelbase 153.0 in (confirmed for the crew cab short box; the 8 ft box is 167.0 in).
@@ -75,7 +75,7 @@ The 2003–2007 GMT800 interior in LT trim:
 
 **The dyno run (physically modeled, never a canned number):**
 - Engine model: a torque curve for the LLY built from the published rating of 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm (Allison-equipped), with a realistic diesel shape: strong low-end torque, flat peak, and falling torque toward the governor near 3,200 rpm. Peak values and their rpm must come out of the curve exactly as rated at the crank.
-- Drivetrain: the 5-speed Allison 1000 ratios (3.10, 1.81, 1.41, 1.00, 0.71, reverse 4.49), the torque converter locking up during the pull, the axle ratio and tire rolling diameter from the spec file, and a drivetrain loss consistent with a 4WD truck with an automatic (about 15 to 20 percent).
+- Drivetrain: the 5-speed Allison 1000 ratios (3.10, 1.81, 1.41, 1.00, 0.71, reverse 4.49; all confirmed), the torque converter locking up during the pull, the axle ratio and tire rolling diameter from the spec file, and a drivetrain loss consistent with a 4WD truck with an automatic (about 15 to 20 percent).
 - Procedure: the operator selects a gear (4th, 1:1, is the standard pull gear), the player holds full throttle, the rollers accelerate under the real inertia, the software reads roller speed and acceleration, and computes wheel horsepower and wheel torque against engine rpm.
 - Output: a graph of wheel hp and wheel lb-ft against rpm, with peak values, the SAE J1349 correction factor from the weather station, and a run history to compare runs. A stock truck must land in the real range of a stock LLY on a chassis dyno; derive it, don't hard-code it. Run-to-run variation stays within about 1 percent.
 - During and after the run: coolant and transmission temperatures rise, the fan sound, the exhaust note, the rollers spinning and the tires deforming slightly under load.
