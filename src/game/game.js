@@ -21,6 +21,8 @@ import { loadCal } from '../sim/calibrations.js';
 import { degFtoC } from '../data/truckSpec.js';
 import { AudioEngine } from '../audio/index.js';
 import { buildDynoHardware } from '../shop/dyno/index.js';
+import { buildAILiveRig } from '../shop/ailiveRig.js';
+import { registerUi } from '../ui/index.js';
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 const TRUCK_Z = DYNO.truckOrigin.z;
@@ -57,6 +59,17 @@ export class Game {
     await nextFrame();
     p(0.7, 'Simulating the engine');
     this.initSim();
+    this.rig = buildAILiveRig({ quality: this.R.q, shop: this.shop, game: this });
+    this.scene.add(this.rig.group);
+    // battery terminals come from the engine bay anchors (truck frame -> world)
+    try {
+      const A = this.truck.anchors || {};
+      if (A.batteryDriver && A.batteryPass && this.rig.setBatteryPorts) {
+        this.truck.group.updateMatrixWorld(true);
+        const w = (o, dx = 0) => o.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(dx, 0.12, 0));
+        this.rig.setBatteryPorts(w(A.batteryPass, -0.06), w(A.batteryDriver, 0.06));
+      }
+    } catch (e) { console.warn('battery ports', e); }
     p(0.78, 'Baking shop reflections');
     this.truck.group.visible = false;
     bakeEnvironment(this.R.renderer, this.scene, new THREE.Vector3(0, 1.4, 0), this.R.q.envSize);
@@ -66,12 +79,12 @@ export class Game {
     await nextFrame();
 
     // colliders
-    this.colliders = [...this.shop.colliders, ...this.equipment.colliders, ...this.dynoHw.colliders, ...(this.truck.colliders || [])];
+    this.colliders = [...this.shop.colliders, ...this.equipment.colliders, ...this.dynoHw.colliders, ...(this.rig.colliders || []), ...(this.truck.colliders || [])];
     this.colliders.push(aabb(0, 1.0, TRUCK_Z + 2.55, 1.0, 1.0, 3.55)); // the truck body footprint (doors/hood handled by use, not walking through)
     this.input = new Input(this.canvas);
     this.player = new Player(this.camera, this.colliders);
     this.ui = new UI(document.getElementById('ui')); this.ui.setQuality(this.qname);
-    this.roots = [this.truck.group, this.equipment.group, this.dynoHw.group, this.shop.group];
+    this.roots = [this.truck.group, this.equipment.group, this.dynoHw.group, this.rig.group, this.shop.group];
     this.interactor = new Interactor(this.camera, this.roots);
     this.ctx = { shop: this.shop, say: (t, s) => this.ui.say(t, s), animate: (fn) => this.interactor.animate(fn), state: this.state, game: this };
     this.state.dyno = this.dyno; this.state.ignition = this.ign; this.state.ailive = this.ai; this.state.plant = this.plant;
@@ -81,6 +94,7 @@ export class Game {
     const startAudio = () => { this.audio.start(); window.removeEventListener('pointerdown', startAudio); window.removeEventListener('keydown', startAudio); };
     window.addEventListener('pointerdown', startAudio); window.addEventListener('keydown', startAudio);
     this.bindKeys();
+    registerUi(this);
     this.last = performance.now(); this.setMode('intro'); this.introT = 0;
     p(1, 'Ready');
     document.getElementById('loading').style.opacity = '0'; setTimeout(() => document.getElementById('loading').remove(), 700);
@@ -163,6 +177,7 @@ export class Game {
 
   update(dt) {
     this.time += dt;
+    for (const h of this.hooks) h(dt);
     // fixed-step simulation
     this.simAcc += dt; let n = 0;
     while (this.simAcc >= 1 / 120 && n < 8) { this.stepSim(1 / 120); this.simAcc -= 1 / 120; n++; }
@@ -215,6 +230,7 @@ export class Game {
   visuals(dt) {
     this.shop.updateDoors(dt);
     if (this.equipment.update) this.equipment.update(dt, this.state);
+    if (this.rig.update) this.rig.update(dt);
     const d = this.dyno, p = this.plant;
     this.dynoHw.update(dt, { rollerRad: p.dl.wr, straps: d.straps, fan: d.fan, chocks: d.chocks !== false, hose: d.hoseOn, air: p.air,
       run: { phase: d.phase, rpm: p.rpm, hp: d.last ? d.last.peakHp : 0, tq: d.last ? d.last.peakTq : 0 } });

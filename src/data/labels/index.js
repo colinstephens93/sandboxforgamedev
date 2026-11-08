@@ -5,6 +5,7 @@ import truck from './truck.js';
 import engine from './engine.js';
 import interior from './interior.js';
 import dyno from './dyno.js';
+import { AILIVE_LABELS } from '../../shop/ailiveRig.js';
 
-export const LABELS = { ...shop, ...truck, ...engine, ...interior, ...dyno };
+export const LABELS = { ...shop, ...truck, ...engine, ...interior, ...dyno, ...AILIVE_LABELS };
 export const labelFor = (id) => LABELS[id] || null;

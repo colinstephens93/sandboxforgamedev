@@ -50,6 +50,7 @@ export class Ignition {
       }
     }
     if (k === KEY.START) {
+      if (this.blocked) { this.say(this.blocked, 6); this.key = prev; return; } // ECM unusable (failed write): set by the AI Live hook
       if (range !== 'P' && range !== 'N') { this.say('Shift to PARK or NEUTRAL: the engine will not crank in any other position.'); this.key = prev; return; }
       if (this.engineRunning) { this.key = prev; return; }
       if (this.cooldown > 0) { this.say(`Starter is cooling: wait ${Math.ceil(this.cooldown)} s (the manual says one minute).`); this.key = prev; return; }
