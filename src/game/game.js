@@ -297,6 +297,8 @@ Game.prototype.prepare = function (o = {}) {
   const fd = this.truck.parts.fuelDoor; if (fd && fd.set) fd.set(0);
   this.dyno.strapAll(!!(o.straps || o.run || o.compare));
   this.shop.setDoor(0, true); this.shop.setDoor(1, true);
+  // photo presets may lift the removable pit guard rails so they do not hide the wheels (they are chained rails in a real shop)
+  const rails = this.dynoHw.group.getObjectByName('pit_rails'); if (rails) rails.visible = !o.hideRails;
   this.advance(3, 0.05);
   if (o.engine && !this.plant.running) this.startEngineNow();
   if (o.run) { this.plant.warm(198, 188); if (!this.plant.running) this.startEngineNow(); this.plant.warm(198, 188); this.dyno.runs.length = 0; this.pullNow(); this.openPanel('dyno'); }

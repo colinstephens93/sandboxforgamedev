@@ -1,7 +1,7 @@
 // Named camera bookmarks (PROMPT.md section 10): used by `npm run shots`. Positions are in the SHOP frame (meters).
 // The truck's front axle is at (0, 0, -0.8); the rear axle at z = 3.086. `setup(game)` prepares the scene state for the shot.
 export const BOOKMARKS = {
-  hero: { pos: [-3.7, 0.72, -4.2], tgt: [0.35, 0.95, -0.9], fov: 38, file: '01-hero', setup: (g) => g.prepare({ rollup: true }) },
+  hero: { pos: [3.9, 0.7, -4.5], tgt: [-0.25, 0.95, -0.7], fov: 38, file: '01-hero', setup: (g) => g.prepare({ rollup: true }) },
   side: { pos: [8.4, 1.05, 1.15], tgt: [0, 1.0, 1.15], fov: 30, file: '02-side-profile', setup: (g) => g.prepare({}) },
   rear: { pos: [3.4, 1.35, 8.6], tgt: [0, 0.85, 4.1], fov: 46, file: '03-rear-tailgate-down', setup: (g) => g.prepare({ tailgate: true, straps: true }) },
   engine: { pos: [0.1, 2.75, -2.25], tgt: [0, 0.95, -0.7], fov: 56, file: '04-engine-bay', setup: (g) => g.prepare({ hood: true }) },

@@ -164,19 +164,20 @@ export function buildPit(M, quality) {
 
   // ---------------- safety posts and rails (yellow), open for the ladder and for the approach ----------------
   {
+    const BR = new Batch();
     const R = RAIL_OFFSET, postH = 1.05;
     const post = (x, z) => {
-      B.add(cyl(0.025, postH, 'y', 12), M.safetyYellow, mx(x, postH / 2, z));
-      B.add(cyl(0.03, 0.05, 'y', 12), M.plasticBlack, mx(x, postH - 0.2, z));
-      B.add(new THREE.SphereGeometry(0.03, 12, 8), M.safetyYellow, mx(x, postH + 0.005, z));
-      B.add(mbox(0.15, 0.008, 0.15), M.steelDark, mx(x, 0.004, z));
-      for (const [bx, bz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B.add(cyl(0.008, 0.008, 'y', 6), M.zinc, mx(x + bx * 0.055, 0.012, z + bz * 0.055));
+      BR.add(cyl(0.025, postH, 'y', 12), M.safetyYellow, mx(x, postH / 2, z));
+      BR.add(cyl(0.03, 0.05, 'y', 12), M.plasticBlack, mx(x, postH - 0.2, z));
+      BR.add(new THREE.SphereGeometry(0.03, 12, 8), M.safetyYellow, mx(x, postH + 0.005, z));
+      BR.add(mbox(0.15, 0.008, 0.15), M.steelDark, mx(x, 0.004, z));
+      for (const [bx, bz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) BR.add(cyl(0.008, 0.008, 'y', 6), M.zinc, mx(x + bx * 0.055, 0.012, z + bz * 0.055));
     };
     const rail = (x0, z0, x1, z1) => {
       const dx = x1 - x0, dz = z1 - z0, l = Math.hypot(dx, dz), ang = Math.atan2(dx, dz);
       for (const y of [postH - 0.04, 0.55]) {
         const g = cyl(0.02, l, 'z', 10);
-        B.add(g, M.safetyYellow, mx((x0 + x1) / 2, y, (z0 + z1) / 2, 0, ang, 0));
+        BR.add(g, M.safetyYellow, mx((x0 + x1) / 2, y, (z0 + z1) / 2, 0, ang, 0));
       }
     };
     // east and west ends (x = +-(hw + R)), west one has a gap for the ladder
@@ -196,6 +197,8 @@ export function buildPit(M, quality) {
       post(x0, z);
       rail(x0, z, x1, z);
     }
+    const railGroup = new THREE.Group(); railGroup.name = 'pit_rails'; group.add(railGroup);
+    BR.build(railGroup, { cast: false, name: 'pit_rails' });
     // collider boxes: pit edge walls, 0.12 m thick centered on the edge, from the pit floor to rail height
     const th = 0.06;
     colliders.push(aabb(0, (postH - depth) / 2, zN, hw + th, (postH + depth) / 2, th));
