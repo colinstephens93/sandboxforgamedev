@@ -38,7 +38,7 @@ Body:
 - Glass: tinted windshield, side glass and rear glass with the black ceramic frit border.
 - Badging only where the real truck had it, in the right places and sizes. Check each badge against the reference; list any you cannot confirm in `ACCURACY.md`.
 - Bed: the inner box with stamped floor ribs, wheel tubs, tie-down hooks, stake pockets, and a working tailgate with its hinges, latches and support cables.
-- Underside: frame rails, crossmembers, front differential and IFS (torsion bars) for the 4WD, solid rear axle on leaf springs, driveshafts, transfer case, exhaust with the downpipe, fuel tank, spare tire under the bed. Visible from a low angle and from the dyno pit.
+- Underside: the fuel filter and its housing on the driver-side frame rail in front of the fuel tank (confirmed by owner and the 2005 Duramax diesel supplement), with its water-in-fuel sensor wire; frame rails, crossmembers, front differential and IFS (torsion bars) for the 4WD, solid rear axle on leaf springs, driveshafts, transfer case, exhaust with the downpipe, fuel tank, spare tire under the bed. Visible from a low angle and from the dyno pit.
 - Light grime that a working shop truck would have: a little road dust low on the rockers and wheel wells, never dirty enough to hide the paint.
 
 ## 2. OPENINGS AND INSPECTION
@@ -54,7 +54,7 @@ All openings are animated on real hinge axes with real swing angles and stop at 
 
 The 6.6 L Duramax LLY, built at the correct scale and position:
 - The real LLY top-side layout from the diesel supplement's Engine Compartment Overview (`reference/manuals/lly-engine-compartment-diagram.png`, drawn from the front of the truck, so the left of the drawing is the passenger side). Every labeled part must be present and in its drawn position: A engine air cleaner/filter, B coolant surge tank, C two batteries (one each side), D air filter restriction indicator, E engine oil dipstick (yellow loop), F Allison transmission dipstick, G engine oil fill cap, H engine fan, I power steering fluid reservoir, J remote negative terminal, K remote positive terminal, L brake fluid reservoir, N underhood fuse block, O windshield washer fluid reservoir. No clutch fluid reservoir (M), since this truck is an automatic.
-- Also: the engine cover, the intake tube, the turbocharger, the radiator and intercooler stack with the fan shroud, the fuel filter (the supplement places it in the engine compartment on the passenger side, or on the driver-side frame rail; match the LLY reference photos and log the choice in `ACCURACY.md`), hoses with clamps, wiring looms in split loom, and the hood insulation pad.
+- Also: the engine cover, the intake tube, the turbocharger, the radiator and intercooler stack with the fan shroud, hoses with clamps, wiring looms in split loom, and the hood insulation pad.
 - Match the reference photos for every component's position. Anything not confirmed goes in `ACCURACY.md`.
 - When the engine runs: a subtle idle vibration of the engine on its mounts, the cooling fan turning, and a faint heat shimmer near the turbo under load.
 
