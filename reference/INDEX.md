@@ -38,3 +38,14 @@ alternator, A/C compressor, belts, oil fill, and the brake master cylinder.
 
 A straight-on dashboard shot, the driver's side of the engine bay, the underside from the rear (axle,
 driveshaft, exhaust), the hood underside and its hinges, and close-ups of each badge.
+
+## Manuals: `manuals/`
+
+- `2005-duramax-diesel-supplement.pdf`: GM's 2005 Duramax diesel supplement (part 15101364). The source for
+  the starting procedure, the Wait to Start light, elevated idle, the diesel driver information center messages,
+  capacities and the engine compartment overview.
+- `lly-engine-compartment-diagram.png`: the supplement's labeled engine bay drawing (page 5-14), viewed from the
+  front of the truck. Trusted for the position of every labeled under-hood part.
+- The general 2005 Silverado owner's manual is at
+  https://assets.gm.com/manuals/chevrolet/2005_chevrolet_silverado_owners.pdf (hood release, tailgate,
+  ignition positions, Tow/Haul, the cluster, axle ratio, fuel tank).
