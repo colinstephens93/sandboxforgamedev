@@ -46,7 +46,7 @@ Body:
 All openings are animated on real hinge axes with real swing angles and stop at real limits:
 - **Four doors:** open and close with E when facing the handle. Door cards, door jamb with the tire and loading placard and VIN sticker area, door check straps, interior lights come on when a door opens.
 - **Tailgate:** opens by lifting the handle while pulling the tailgate toward you, drops to horizontal and hangs on its cables; closes by pushing it firmly up until it latches (2005 owner's manual).
-- **Hood:** opens in the real order from the 2005 owner's manual: pull the release handle inside the cab, to the lower left of the steering wheel, then pull up the secondary release near the center of the grille, then lift the hood. It rises on its real support mechanism and stays up.
+- **Hood:** opens in the real order from the 2005 owner's manual: pull the release handle inside the cab, to the lower left of the steering wheel, then pull up the secondary release near the center of the grille, then lift the hood. GMT800 hoods have no prop rod and no gas struts: it is held open by the spring-loaded hinge arms at both rear corners (see `reference/04b-hood-underside-in-situ-hinges.jpg`), with the molded insulation pad underneath.
 - **Fuel door.**
 - **Inspection mode (I):** point at any part and see its name and a one-line description (for example "Allison 1000 transmission dipstick"). The label list lives in data, not in scattered code.
 

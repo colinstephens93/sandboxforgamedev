@@ -34,10 +34,27 @@ Four engine bays from other trucks with the **stock LLY**. These are trusted ove
 on the engine: the "6.6 Turbo Diesel" cover, the factory intake tube, turbo and intercooler pipe routing,
 alternator, A/C compressor, belts, oil fill, and the brake master cylinder.
 
-## Still missing (helpful if added)
+## Detail set: 01 to 07 (named files)
 
-A straight-on dashboard shot, the driver's side of the engine bay, the underside from the rear (axle,
-driveshaft, exhaust), the hood underside and its hinges, and close-ups of each badge.
+Gathered from dealer and auction listings. Per-photo sources are in `duramax-2005-photo-notes.md`; treat that
+file's claims as notes, and where it conflicts with this index or `PROMPT.md`, this index and the prompt win.
+
+| Photo | Shows | Use for | Do not use for |
+|---|---|---|---|
+| 01-dash-cluster-lit | 2005 2500HD Duramax cluster, lit, idling | Cluster faces, gauge scales, needle and DIC look | - |
+| 01b-dash-wide-driver-pov | Full dash from the driver's seat | Dash shape, steering wheel, column, headlight switch | Center stack: this is an LS; use IMG_2866 for the LT stack |
+| 02-engine-bay-driver-side | 2005 LLY bay, driver side | Brake reservoir, underhood fuse block, driver battery position | The battery itself (aftermarket brand) |
+| 03-underside-rear | Underside behind the rear axle (2001 2500HD, lifted) | Axle housing, spare tire on steel wheel, exhaust and frame layout | Ride height, shocks, tires (all aftermarket) |
+| 04-hood-underside | 2003-06 HD hood, off the truck | Insulation pad shape, inner frame stamping, latch striker | - |
+| 04b-hood-underside-in-situ-hinges | Hood up on a 2004 Tahoe | Spring-loaded hinge arms and washer hose routing only | Pad shape (different hood) |
+| 05a-bowtie | Grille bowtie | Size and position in the grille bar | Color: see open question on gold vs chrome |
+| 05b-door-badge | DURAMAX and 2500 HD badges | Badge shapes, colors, stacking order | - |
+| 05c-tailgate-badges | SILVERADO tailgate badge | Badge shape and position, left side | Proof that there is no right-side badge (photo is cropped) |
+| 05d-4x4-decal | 4x4 bedside decal (red truck) | Decal design and placement | Paint color |
+| 05e-z71-decal-white | Z71 OFF ROAD decal | Only if the truck is set to Z71 | Default build (the target wears the 4x4 decal, as on IMG_2861) |
+| 06-stock-wheel-tire | Factory 16 in polished 8-lug wheel, gold bowtie cap, LT245/75R16 E | The stock wheel and tire, exactly | - |
+| 07-overhead-console-headliner | GMT800 overhead console | Console shape, map lamps, storage bin | - |
+| 07b-crew-cab-rear-interior | Crew cab rear from the rear door | Headliner, C-pillar trim, rear bench shape, cab depth | Upholstery: cloth LS; the target is tan leather (IMG_2869 to 2871) |
 
 ## Manuals: `manuals/`
 
