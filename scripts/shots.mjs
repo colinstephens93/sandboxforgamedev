@@ -19,7 +19,7 @@ for (const name of BOOKMARK_ORDER) {
   await page.evaluate(([n]) => {
     const g = window.__game;
     const presets = {
-      hero: { rollup: true, hideRails: true }, side: { hideRails: true }, rear: { tailgate: true, straps: true, hideRails: true }, engine: { hood: true }, driver: { engine: true }, door: { door: 'fL' },
+      hero: { rollup: true, hideRails: true, fanAside: true }, side: { hideRails: true }, rear: { tailgate: true, straps: true, hideRails: true }, engine: { hood: true }, driver: { engine: true }, door: { door: 'fL' },
       dynoScreen: { run: 'stock' }, pit: { straps: true }, shopWide: { rollup: true }, wheel: { hideRails: true }, ailive: { flash: 'writing' }, compare: { compare: 'race' },
     };
     g.prepare(presets[n]); g.mode = 'fixed';
