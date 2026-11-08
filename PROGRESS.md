@@ -21,3 +21,8 @@ Running log: each increment's result, the checks run, the screenshots taken, and
 * `src/sim/startSequence.js`: key positions, Wait to Start, 15 s crank limit and 1 minute cool-down, elevated idle.
 * 46 unit tests pass.
 * Open: transmission slip makes a run dramatic (flare); idle turbo speed baseline low (18k rpm open vane); thermal numbers (coolant creeps only about 5 F per Race pull) need a look when the UI exists.
+
+## Integration log
+* Audio (7.4) merged: 42 + 14 unit tests, `scripts/audioCheck.mjs` 95/95 offline spectral checks (idle firing 45.3 Hz, whistle tracks modeled turbo rpm). Unheard: needs an ear pass. Wired into `Game.updateAudio`.
+* Shop equipment (8.1) merged: lift, 3 tool chests with 22 openable drawers, bench, tire area, compressor with piping and 3 drops, shelving with the LBZ regulator slot, office furniture, extinguishers, door and light switches. 133 tests, build, 15/15 browser checks pass. Shot `.dev/shopeq.png` reviewed: reads as a working diesel shop. Open: the empty dyno pit shows as a pale patch until the dyno hardware merges; a few wall-hugging items sit just outside their zone rectangles but clear of the truck.
+* Pending merges: wheels, dyno hardware, underside, bed/tailgate/badges, engine bay, interior/cluster, dyno + AI Live + shop-menu UI.
