@@ -113,7 +113,7 @@ export const spec = {
     transferCase: '2-speed electronic 4WD', // estimated: GMT800 2500HD 4WD NP-261; wording only
     driveLossRange: [0.15, 0.2], // confirmed: PROMPT.md (about 15 to 20 percent, 4WD automatic)
     driveLossNominal: 0.175, // estimated: midpoint of the range above, used by the model
-    drivelineInertiaKgM2: 1.9, // estimated: rear driveshaft, axle, wheels, tires referred to wheel (RES refines)
+    drivelineInertiaKgM2: 9.0, // estimated: two 45 kg wheel/tire assemblies about 7.8 kg m^2 plus axle and driveshaft referred to the wheels (derived, RES item 10 method)
   },
 
   // ---------- engine ratings and geometry ----------
@@ -171,10 +171,40 @@ export const spec = {
     voltRange: [9, 19], // confirmed: IMG_2867 (voltmeter 9-19 V)
   },
 
+  // ---------- turbocharger (RES item 2) ----------
+  turbo: {
+    model: 'Garrett GT3788VA', // confirmed: vendor listings (Garrett P/N 848212-5001S, BD Diesel), RES item 2
+    type: 'variable-geometry turbine (VNT), oil-pressure piston actuator driven by a PWM solenoid', // confirmed: DieselHub + vendor parts listings, RES item 2
+    vaneConvention: '0 percent open, higher percent more closed', // estimated: tuner forum usage (HP Academy, duramaxdiesels.com), RES item 2
+    vaneMaxClosed: 0.85, // estimated: usable travel limit offered on the Turbo Sound page; the mechanical stop is at 0.95 (RES item 2: closed end found by commanding to the stop)
+    overspeedRpm: 135000, // estimated: GT37-class danger line, no data sheet found; research range 125-140k (RES item 2)
+    overspeedHoldS: 2.0, // estimated: seconds above the line that damage the wheel (game balance)
+    typicalWotVanePct: 40, // estimated: logged LLY about 40 percent at WOT (forum, RES item 2)
+    peakBoostStockPsi: 26, // estimated: 22-26 psig typical, up to 28-30 briefly (RES item 2)
+    boostMaxRecommendedPsi: 40, // estimated: Stainless Diesel max recommended boost for drop-in turbos (RES item 2)
+  },
+
+  // ---------- thermal and failure limits (every limit sourced or estimated; PROMPT.md section 5A) ----------
+  limits: {
+    egtContinuousPreTurboF: 1300, // confirmed: GM guidance quoted by three sources (RES item 2)
+    egtPistonDamageF: 1650, // estimated: pre-turbo EGT held where aluminum piston crowns erode; sources say sustained 1,500 F starts damage, 1,600-1,700 F melts (RES item 7); tuned trucks run brief 1,600 F pulls
+    egtPistonDamageHoldS: 14, // estimated: damage accumulates over this many weighted seconds above the line (game balance)
+    egtTurboDamageF: 1800, // estimated: pre-turbo EGT that damages the turbine wheel and housing (RES item 7)
+    cylPressureSoftPsi: 2900, // estimated: head gasket distress begins (RES item 6, general diesel practice)
+    cylPressureLiftPsi: 3300, // estimated: gasket lifts when held above this (RES item 6)
+    cylPressureHoldS: 6, // estimated: seconds above the lift pressure (game balance)
+    transSumpMaxF: 250, // estimated: Allison max sump temperature quoted by Allison via forum (RES item 3)
+    transBurnF: 285, // estimated: fluid breakdown and clutch glazing region (RES item 3: GM engineer, degrades above 270 F)
+    clutchCapacityLbFt: 840, // estimated: from the magazine anecdote that stock clutches slip near 350 whp (RES item 3)
+    clutchBurnSlipEnergyKj: 250, // estimated: accumulated slip energy that burns the clutch packs (game balance)
+    coolantHotF: 235, // estimated: GM gauge hot zone (RES item 6)
+    coolantOverheatF: 250, // estimated: engine protection (REDUCED ENGINE POWER) region
+  },
+
   // ---------- chassis dyno (generic heavy-duty in-ground inertia + eddy current) ----------
   dyno: {
     rollerDiameterIn: 24, // estimated: Mustang-style truck dyno rollers 24 in (RES item 10)
-    rollerInertiaKgM2PerSet: 97, // estimated: 24 in x 36 in solid steel drum, I = 0.5 m r^2 (RES item 10)
+    rollerInertiaKgM2PerSet: 150, // estimated: 24 in steel drum set (about 97 kg m^2 solid-cylinder figure per RES item 10) plus the dyno's coupled flywheel mass; tuned for a 8-12 s pull
     rollerPairGapIn: 17, // estimated
     saeStdTempC: 25, // confirmed: SAE J1349 standard (25 C, 99 kPa dry air)
     saeStdDryPressureKpa: 99, // confirmed: SAE J1349
