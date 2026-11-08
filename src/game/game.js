@@ -20,6 +20,7 @@ import { AILive } from '../sim/flash.js';
 import { loadCal } from '../sim/calibrations.js';
 import { degFtoC } from '../data/truckSpec.js';
 import { AudioEngine } from '../audio/index.js';
+import { buildDynoHardware } from '../shop/dyno/index.js';
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 const TRUCK_Z = DYNO.truckOrigin.z;
@@ -44,9 +45,14 @@ export class Game {
     this.equipment = buildEquipment({ quality: this.R.q, shop: this.shop });
     this.scene.add(this.equipment.group);
     await nextFrame();
+    p(0.34, 'Building the dyno');
+    this.dynoHw = buildDynoHardware({ quality: this.R.q, shop: this.shop });
+    this.scene.add(this.dynoHw.group);
+    await nextFrame();
     p(0.4, 'Building the truck');
     this.truck = buildTruck({ quality: this.R.q });
     this.truck.group.position.set(DYNO.truckOrigin.x, 0, TRUCK_Z);
+    this.truck.group.rotation.x = (this.dynoHw.anchors.rearAxleDropM || 0.065) / 3.886; // rear axle seats in the roller cradle
     this.scene.add(this.truck.group);
     await nextFrame();
     p(0.7, 'Simulating the engine');
@@ -60,12 +66,12 @@ export class Game {
     await nextFrame();
 
     // colliders
-    this.colliders = [...this.shop.colliders, ...this.equipment.colliders, ...(this.truck.colliders || [])];
+    this.colliders = [...this.shop.colliders, ...this.equipment.colliders, ...this.dynoHw.colliders, ...(this.truck.colliders || [])];
     this.colliders.push(aabb(0, 1.0, TRUCK_Z + 2.55, 1.0, 1.0, 3.55)); // the truck body footprint (doors/hood handled by use, not walking through)
     this.input = new Input(this.canvas);
     this.player = new Player(this.camera, this.colliders);
     this.ui = new UI(document.getElementById('ui')); this.ui.setQuality(this.qname);
-    this.roots = [this.truck.group, this.equipment.group, this.shop.group];
+    this.roots = [this.truck.group, this.equipment.group, this.dynoHw.group, this.shop.group];
     this.interactor = new Interactor(this.camera, this.roots);
     this.ctx = { shop: this.shop, say: (t, s) => this.ui.say(t, s), animate: (fn) => this.interactor.animate(fn), state: this.state, game: this };
     this.state.dyno = this.dyno; this.state.ignition = this.ign; this.state.ailive = this.ai; this.state.plant = this.plant;
@@ -209,6 +215,9 @@ export class Game {
   visuals(dt) {
     this.shop.updateDoors(dt);
     if (this.equipment.update) this.equipment.update(dt, this.state);
+    const d = this.dyno, p = this.plant;
+    this.dynoHw.update(dt, { rollerRad: p.dl.wr, straps: d.straps, fan: d.fan, chocks: d.chocks !== false, hose: d.hoseOn, air: p.air,
+      run: { phase: d.phase, rpm: p.rpm, hp: d.last ? d.last.peakHp : 0, tq: d.last ? d.last.peakTq : 0 } });
     for (const h of this.hooks) h(dt);
     this.updateAudio(dt);
   }

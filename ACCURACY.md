@@ -36,3 +36,5 @@ every fueling table (GM calibration tables are not public).
 
 ## Entries added during the build
 (see below; each increment appends here)
+* Dyno roller pair gap is a design value (0.10 m between drum surfaces, unverified): the spec estimate of 17 in cannot keep drum tops near floor level under a 15.25 in tire. Rear axle seats about 6.5 cm lower in the cradle than at rest (`anchors.rearAxleDropM`, geometric).
+* Roller direction: at the contact patch the drum surface moves the same way as the tire surface (physical), so the drum top turns opposite to the tire top.
