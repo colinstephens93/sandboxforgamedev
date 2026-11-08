@@ -13,6 +13,7 @@ import { buildBadges, buildFuelDoor } from './badges.js';
 import { buildEngineBay } from './engine/index.js';
 import { buildHoodUnder } from './hoodUnder.js';
 import { buildUnderside } from './underside.js';
+import { buildWheel } from './wheels.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -104,11 +105,19 @@ export function buildTruck({ quality }) {
   tub(68, 40, 84, 0, 50, 65);          // cab volume (below the roofline, above the rocker)
   tub(68, 10, 80, 0, 33, 152);         // bed volume under the floor
 
-  // ---------------- placeholder wheels (replaced in 2.2) ----------------
-  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.9 });
-  for (const [z, track] of [[0, spec.dims.trackFrontIn], [WB, spec.dims.trackRearIn]]) for (const sx of [-1, 1]) {
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(15.25 * IN, 15.25 * IN, 9.8 * IN, 28), wheelMat);
-    c.rotation.z = Math.PI / 2; c.position.set(sx * (track / 2 - 0.0) * IN, 14.5 * IN, z * IN); c.name = 'wheel_placeholder'; root.add(c);
+  // ---------------- wheels and tires (wheels.js): front/rear, left/right; spin hooks live in parts.wheels ----------------
+  {
+    const wheels = { all: [] };
+    for (const [axle, z, track] of [['front', 0, spec.dims.trackFrontIn], ['rear', WB, spec.dims.trackRearIn]]) for (const side of ['L', 'R']) {
+      const w = buildWheel({ quality, axle, side });
+      w.group.position.set((side === 'R' ? 1 : -1) * (track / 2) * IN, w.centerY, z * IN);
+      w.setLoadFlat(1); // the truck stands on its tires: small contact patch at the floor
+      root.add(w.group);
+      wheels[(axle === 'front' ? 'F' : 'R') + side] = w;
+      wheels.all.push(w);
+    }
+    wheels.spin = (angle) => { for (const w of wheels.all) w.spin(angle); }; // one angle for all four (positive = rolling toward +Z)
+    parts.wheels = wheels;
   }
   // ---------------- rear: box, tailgate, bumper, lamps; badges, decals, fuel door ----------------
   const rear = buildRear({ quality }); root.add(rear.group); parts.rear = rear.parts; parts.tailgate = rear.parts.tailgate; parts.lamps = rear.lamps;
