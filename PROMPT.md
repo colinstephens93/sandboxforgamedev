@@ -1,0 +1,172 @@
+# Duramax Dyno Shop prompt
+
+The build prompt for an autonomous coding agent. It follows the showcase framework in
+`docs/FRAMEWORK.md` (adapted from the Superyat prompt). Give everything below the line to the agent.
+
+---
+
+Build a photorealistic, fully interactive 3D diesel performance shop containing a white 2005 Chevrolet Silverado 2500HD LT Crew Cab with the 6.6 L Duramax (LLY) and Allison 1000 automatic, strapped to a chassis dynamometer. Make it one runnable browser app using Three.js and WebGL. A person must be able to walk through the whole shop, inspect every tool and machine, walk around the truck, open every door, the tailgate and the hood, inspect the engine bay, climb into the cab, start the engine, and run the truck on the dyno to measure horsepower and torque. This will be shown publicly as a showcase. Accuracy to the real truck, the real engine and real dyno behavior matters more than anything else. After that, the paint, the materials and the shop lighting matter most.
+
+Work autonomously from start to finish. Do not ask me questions. Make sensible decisions, keep going, and do not stop until every item in the acceptance checklist at the end works and you have checked it with screenshots.
+
+## 0. ACCURACY RULES (read first, apply everywhere)
+
+The one failure that ruins this project is anything that is not true to the real 2005 truck, the real LLY Duramax, or a real dyno shop.
+
+- **One source of truth:** put every real-world number in `src/data/truckSpec.js` (dimensions, weights, engine ratings, gear ratios, tire size, dyno constants). Each value carries a comment with its source and a confidence tag: `confirmed` or `estimated`. Models, physics, gauges and the dyno all read from this file. No magic numbers elsewhere.
+- **Year-correct:** this is the 2003–2007 "Classic" GMT800 body, the 2005 model year, with the LLY engine and the 5-speed Allison. Never mix in parts of other years: no 2006+ LBZ engine, no 6-speed Allison, no 2007.5+ GMT900 body, no LB7 injector layout.
+- **Do not invent.** If a detail is not in this prompt, not in the `reference/` folder, and you are not certain of it, use the plainest correct option and add it to `ACCURACY.md` as "unverified". Never fill a gap with a guess that looks confident.
+- **Reference photos:** if a `reference/` folder exists, open every image in it before modeling and match it. Those photos override your memory.
+- **Units:** model in meters (1 unit = 1 m), but keep the source values in inches, feet, lb, hp and lb-ft in the spec file and convert in code. Display US units in the UI.
+
+## 1. THE TRUCK (exterior)
+
+Configuration (default, change in the spec file only):
+- 2005 Chevrolet Silverado 2500HD, LT trim, Crew Cab (four full-size doors), standard 6.5 ft box, 4WD, Summit White.
+
+Main dimensions:
+- Wheelbase 153.0 in (confirmed for the crew cab short box; the 8 ft box is 167.0 in).
+- Overall width about 79.7 in without mirrors; height about 77 in. Overall length per a verified source; record it in the spec file with its source.
+- Tires LT245/75R16, 8-lug wheels with an 8 x 6.5 in (8 x 165.1 mm) bolt pattern, 16 in polished aluminum LT wheels. Tire sidewall lettering readable at the right scale.
+- Human-scale checks: door handle height, step-in height for a 4WD HD, bed rail height and tailgate height must all look right next to a 1.78 m person.
+
+Body:
+- Summit White gloss paint with clearcoat, correct GMT800 Classic body lines: the 2003–2007 front fascia and grille with the Chevrolet bowtie, the headlamps of that body, the HD's raised hood, flared fenders, chrome bumpers as fitted to the LT, towing mirrors or standard mirrors as on the reference.
+- Build the body as smooth curved surfaces from cross-section and profile curves, not boxes. Correct panel gaps (about 4–5 mm) at every door, the hood, the tailgate and the fuel door. Real door seals and weatherstrip.
+- Glass: tinted windshield, side glass and rear glass with the black ceramic frit border.
+- Badging only where the real truck had it, in the right places and sizes. Check each badge against the reference; list any you cannot confirm in `ACCURACY.md`.
+- Bed: the inner box with stamped floor ribs, wheel tubs, tie-down hooks, stake pockets, and a working tailgate with its hinges, latches and support cables.
+- Underside: frame rails, crossmembers, front differential and IFS (torsion bars) for the 4WD, solid rear axle on leaf springs, driveshafts, transfer case, exhaust with the downpipe, fuel tank, spare tire under the bed. Visible from a low angle and from the dyno pit.
+- Light grime that a working shop truck would have: a little road dust low on the rockers and wheel wells, never dirty enough to hide the paint.
+
+## 2. OPENINGS AND INSPECTION
+
+All openings are animated on real hinge axes with real swing angles and stop at real limits:
+- **Four doors:** open and close with E when facing the handle. Door cards, door jamb with the tire and loading placard and VIN sticker area, door check straps, interior lights come on when a door opens.
+- **Tailgate:** drops to horizontal and hangs on its cables.
+- **Hood:** opens with the interior release then the safety latch at the grille, rises on its real support mechanism, and stays up.
+- **Fuel door.**
+- **Inspection mode (I):** point at any part and see its name and a one-line description (for example "Allison 1000 transmission dipstick"). The label list lives in data, not in scattered code.
+
+## 3. ENGINE BAY (the second hero)
+
+The 6.6 L Duramax LLY, built at the correct scale and position:
+- The real LLY top-side layout: the engine cover, the intake tube and the turbocharger on the correct side, the air filter box, two batteries (one on each side), the coolant reservoir and surge tank, the radiator and intercooler stack with the fan clutch and shroud, the washer fluid bottle, the fuel filter housing at the back of the engine, the engine oil fill and dipstick, the Allison transmission dipstick, the brake master cylinder, the fuse and relay center, hoses with clamps, wiring looms in split loom, and the hood insulation pad.
+- Match the reference photos for every component's position. Anything not confirmed goes in `ACCURACY.md`.
+- When the engine runs: a subtle idle vibration of the engine on its mounts, the cooling fan turning, and a faint heat shimmer near the turbo under load.
+
+## 4. CAB INTERIOR (walkable, enter with E at an open door)
+
+The 2003–2007 GMT800 interior in LT trim:
+- Leather front bucket seats with the center console, or the 40/20/40 front bench, matching the reference. Rear crew cab bench. Correct seat stitching and perforation pattern.
+- The real dashboard of that generation: the gauge cluster laid out exactly as the real one with working needles, the center stack with the radio and climate controls, the steering wheel with the bowtie and its switches, the column shift lever with the Tow/Haul button, the ignition on the dash, the parking brake pedal, and the headlight switch.
+- **Starting sequence (real diesel behavior):** key to RUN, the "wait to start" glow plug light comes on for a few seconds depending on shop temperature, the gauges sweep, then the starter cranks for a moment and the engine catches with a diesel clatter and settles to idle at about 680 rpm. The engine can be shut off with the key.
+- Gauges read the real state: tachometer, speedometer (driven by the rear wheels on the dyno rollers), coolant temperature, oil pressure, voltage, fuel level, and the driver information center.
+
+## 5. THE SHOP AND THE DYNO
+
+**The building:** a real independent diesel performance shop, about 24 x 18 m, 6 m eave height:
+- Insulated steel building with two roll-up overhead doors, polished concrete floor with control joints and realistic oil stains, LED high-bay lights, a small office, an air compressor with hard piping and drops, a 2-post lift, rolling toolboxes, a workbench with a vise, a tire changer and balancer, an oil drain, parts shelving with real-looking boxes, a shop computer, and a fire extinguisher by each door.
+- Every listed item can be walked up to and inspected (label, and a simple working action where it makes sense: toolbox drawers open, the roll-up doors raise and lower, the lights switch on and off).
+
+**The dynamometer:** an in-ground chassis dyno with large inertia rollers and an eddy-current load absorber:
+- The rear wheels sit on the rollers; the truck is in 2WD for the run. Wheel chocks at the front tires, ratchet tie-down straps from the frame to floor anchors at all four corners, a large high-velocity cooling fan in front of the grille, an exhaust extraction hose over the tailpipe, and a weather station (temperature, pressure, humidity).
+- A dyno control stand with a screen showing the live graph.
+
+**The dyno run (physically modeled, never a canned number):**
+- Engine model: a torque curve for the LLY built from the published rating of 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm (Allison-equipped), with a realistic diesel shape: strong low-end torque, flat peak, and falling torque toward the governor near 3,200 rpm. Peak values and their rpm must come out of the curve exactly as rated at the crank.
+- Drivetrain: the 5-speed Allison 1000 ratios (3.10, 1.81, 1.41, 1.00, 0.71, reverse 4.49), the torque converter locking up during the pull, the axle ratio and tire rolling diameter from the spec file, and a drivetrain loss consistent with a 4WD truck with an automatic (about 15 to 20 percent).
+- Procedure: the operator selects a gear (4th, 1:1, is the standard pull gear), the player holds full throttle, the rollers accelerate under the real inertia, the software reads roller speed and acceleration, and computes wheel horsepower and wheel torque against engine rpm.
+- Output: a graph of wheel hp and wheel lb-ft against rpm, with peak values, the SAE J1349 correction factor from the weather station, and a run history to compare runs. A stock truck must land in the real range of a stock LLY on a chassis dyno; derive it, don't hard-code it. Run-to-run variation stays within about 1 percent.
+- During and after the run: coolant and transmission temperatures rise, the fan sound, the exhaust note, the rollers spinning and the tires deforming slightly under load.
+- Safety realism: the run is refused if the straps are not attached or the hood is closed with the fan off, with a clear message, as a real operator would.
+
+## 6. SOUND
+
+Procedural audio with the Web Audio API, built from the engine state: the Duramax diesel clatter at idle, turbo spool and whistle rising with boost, the exhaust note, the starter motor, the cooling fan, the roller whine on the dyno, door and hood sounds, and the shop's large-room reverb. Audio starts on the first user click.
+
+## 7. CAMERAS AND CONTROLS
+
+- **Walk mode, the default after the intro:** first person, pointer-lock mouse look, WASD, Shift to run, eye height 1.65 m, solid collision with walls, the truck, the lift and the equipment, and the dyno pit edges. Use a BVH or simplified collision meshes so walking is smooth. Crouch (Ctrl) to look under the truck.
+- **Driver view:** seated at the correct eye point in the cab.
+- **Dyno view (C while running):** a camera at the rear quarter, low, with the graph overlay.
+- **Orbit and photo mode (O):** fly freely; H hides all UI; P saves a PNG.
+- **Cinematic intro on load, 15 to 20 seconds:** a slow walk-in through the open roll-up door toward the truck on the dyno, one low three-quarter front shot of the truck with the shop lights reflecting in the white paint and chrome, ending in walk mode. Any key skips it.
+- **Help and settings:** F1 toggles a minimal help panel with all controls and a quality setting (low, medium, high; high by default). Esc releases the mouse. A clean loading screen with progress.
+
+## 8. REALISM (art direction)
+
+- **Materials:** physically based throughout: clearcoat paint, chrome and polished aluminum, cast and machined engine metal, rubber, hard plastics with the right texture, leather with grain and stitching, carpet, glass with transmission and reflection, concrete, painted steel, and the dyno's diamond plate.
+- **Assets:** generate every texture and model yourself, in code, canvas or shaders. Do not download textures, HDRIs or 3D models. The only allowed external code is npm packages such as three, a post-processing library and a BVH collision library. Reference photos in `reference/` are for looking at only.
+- **Lighting:** an environment map of the shop itself with PMREM so the paint and chrome reflect the real room, soft shadows from the high bays, daylight through the open roll-up door, and correct exposure inside the cab and under the hood.
+- **Post-processing, photographic and never overdone:** ACES filmic tone mapping, subtle bloom, ambient occlusion and high-quality anti-aliasing.
+- **Detail:** rounded edges and real thickness everywhere, no floating parts, no gaps that the real truck does not have, no z-fighting, no stretched textures.
+- **Performance:** a stable 60 fps at 1080p on a recent laptop GPU, with instancing for repeated parts, a limited set of shadow casters, a capped pixel ratio and frustum culling.
+
+## 9. ORDER OF WORK (build the showcase shot first)
+
+1. Project setup and `src/data/truckSpec.js` with sources. Then the shop shell, the lighting, tone mapping and post-processing.
+2. The truck exterior at correct dimensions on the dyno. Check the hero shot.
+3. The openings: doors, tailgate and hood, then the engine bay.
+4. The cab interior and the starting sequence with live gauges.
+5. The engine and drivetrain model, the dyno run, the graph and the correction factor.
+6. Walk mode with collision, the cameras, the intro, the UI and the audio.
+7. The shop equipment and inspection labels, quality settings and performance.
+8. Verification, the accuracy audit and polish (section 11).
+
+If something has to be simplified, cut in this order: shop equipment actions (keep the equipment, drop the interactions), the underside detail beyond what is visible from the pit, then the rear seat detail. Never cut the accuracy of the truck's shape, the engine bay, the gauges, or the dyno physics.
+
+## 10. TECHNICAL
+
+- **Stack:** Vite plus Three.js, with clear modules: data (spec, labels), shop, truck exterior, openings, engine bay, interior, materials and procedural textures, engine and drivetrain model, dyno, player and collision, audio, cameras and UI.
+- **Code:** clean, no placeholders, no fake buttons and no pre-rendered video. Every listed control must really work.
+- **Tests:** unit tests for the engine and dyno math: the crank curve hits 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm; hp equals torque times rpm divided by 5,252 everywhere; the SAE correction factor is right for known inputs; wheel numbers fall in the configured loss range.
+- **README:** one-command setup (npm install, then npm run dev), all controls, and the architecture.
+- **Screenshot script:** `npm run shots` opens the app in Playwright, sets each named camera bookmark, and saves the screenshots below. The bookmarks are named presets in code.
+
+## 11. VERIFY, LOOK, AUDIT, IMPROVE (do not skip)
+
+Run the app in a headless browser (Playwright, with a WebGL-capable flag):
+
+- **Checks:** no console errors that matter; the intro plays and skips; every door, the tailgate and the hood open and close; the engine starts with the glow plug wait and idles; a full dyno pull completes and produces a graph and peak numbers; the run is refused without straps; walk mode reaches every corner of the shop; frame time is reasonable; the unit tests pass.
+- **Screenshots** in screenshots/:
+  1. hero: low three-quarter front view of the truck on the dyno
+  2. side profile showing the full crew cab and box proportions
+  3. rear three-quarter with the tailgate down and the straps
+  4. engine bay from above with the hood up
+  5. the driver's seat view of the dashboard and gauges at idle
+  6. an open front door with the door jamb and interior
+  7. the dyno screen with a finished run graph and peak numbers
+  8. the dyno pit view of the underside and rollers
+  9. the shop wide shot with the equipment
+  10. a close-up of the wheel, tire and badge detail
+
+**Art review:** open each screenshot and judge it as a demanding art director. Look for anything fake, flat, blocky, too dark, too bright, plastic or unfinished.
+
+**Accuracy audit:** then judge each screenshot as a GM truck technician who owns a 2005 Duramax. Compare proportions, part placement, badges, interior layout and gauge behavior against the spec file and the reference photos. Every mismatch is a bug: fix it, or if it cannot be confirmed, record it in `ACCURACY.md`. Repeat both reviews until the truck reads as the real 2005 truck.
+
+## ACCEPTANCE CHECKLIST (all must be true before you finish)
+
+- [ ] `src/data/truckSpec.js` holds every real-world number with a source and confidence tag
+- [ ] The 2005 GMT800 Classic crew cab at correct dimensions, Summit White, with real reflections
+- [ ] Correct wheels, tires, glass, badging and underside for the configuration
+- [ ] Four doors, tailgate, hood and fuel door open on real hinges with real limits
+- [ ] A year-correct LLY engine bay with labeled components
+- [ ] A walkable LT cab with live, accurate gauges
+- [ ] The real diesel start sequence with the glow plug wait
+- [ ] A physically modeled dyno pull with wheel hp and torque, SAE correction and run history
+- [ ] Stock dyno results within the real stock LLY range, derived and not hard-coded
+- [ ] A complete, inspectable shop with solid collision
+- [ ] Walk, driver, dyno and photo camera modes; the intro; the help panel; UI hiding; PNG capture
+- [ ] Procedural engine, turbo, fan and roller sound
+- [ ] Smooth performance with a quality setting, and no console errors
+- [ ] Passing unit tests for the engine and dyno math
+- [ ] README, `ACCURACY.md` and the `npm run shots` script
+- [ ] All 10 screenshots saved, art-reviewed and accuracy-audited
+
+When you finish, report:
+- what you built
+- the controls
+- the file structure
+- the screenshot files
+- every entry in `ACCURACY.md` and any other limitation that remains
