@@ -52,6 +52,10 @@ export function setupTruckOpenings(truck, { say, onLights }) {
     if (!ctl.hoodState.cabReleased) { say('The hood is still held by the primary latch: pull the release handle inside the cab first.'); return; }
     ctl.hoodState.secondaryReleased = true; say('Secondary release pulled: lift the hood.');
   };
+  // the secondary release lever sits just behind the grille: pointing at the grille/bumper bar uses it
+  if (parts.front) parts.front.traverse((m) => {
+    if (m.isMesh && /^(grille|chrome_bar|bowtie)/.test(m.name)) m.userData.interact = { prompt: () => (ctl.hoodState.secondaryReleased ? 'Secondary release (already pulled)' : 'Pull secondary hood release'), run: (ctx) => { ctl.pullSecondary(ctx); if (ctx.sfx) ctx.sfx('hoodRelease', { distance: 1.5 }); } };
+  });
   ctl.update = (dt) => {};
   return ctl;
 }

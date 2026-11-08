@@ -10,6 +10,8 @@ import { gridPanel, colPos, rowPos } from './panels.js';
 import { buildFront, buildMirror, buildHandle } from './front.js';
 import { buildRear } from './rear.js';
 import { buildBadges, buildFuelDoor } from './badges.js';
+import { buildEngineBay } from './engine/index.js';
+import { buildHoodUnder } from './hoodUnder.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -111,6 +113,10 @@ export function buildTruck({ quality }) {
   const rear = buildRear({ quality }); root.add(rear.group); parts.rear = rear.parts; parts.tailgate = rear.parts.tailgate; parts.lamps = rear.lamps;
   root.add(buildBadges({ quality }));
   const fuel = buildFuelDoor({ side: 'L' }); root.add(fuel.group); parts.fuelDoor = fuel;
+  // ---------------- engine bay (3.3) and hood underside with the spring-loaded hinges (3.2) ----------------
+  const bay = buildEngineBay({ quality }); root.add(bay.group); parts.engineBay = bay;
+  const hoodUnder = buildHoodUnder({ quality, mats: bay.mats }); hood.add(hoodUnder.group); parts.hoodUnder = hoodUnder;
+  const anchors = { ...bay.anchors, ...hoodUnder.anchors, hoodHinge: bay.anchors.hoodHinge };
   root.userData.parts = parts;
-  return { group: root, parts, colliders: [] };
+  return { group: root, parts, colliders: [], anchors, update: (dt, st) => bay.update(dt, st) };
 }

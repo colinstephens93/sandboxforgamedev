@@ -218,6 +218,8 @@ export class Game {
     const d = this.dyno, p = this.plant;
     this.dynoHw.update(dt, { rollerRad: p.dl.wr, straps: d.straps, fan: d.fan, chocks: d.chocks !== false, hose: d.hoseOn, air: p.air,
       run: { phase: d.phase, rpm: p.rpm, hp: d.last ? d.last.peakHp : 0, tq: d.last ? d.last.peakTq : 0 } });
+    const o = p.out || {};
+    if (this.truck.update) this.truck.update(dt, { rpm: p.rpm, running: p.running, fanDuty: p.fanDuty, turboRpm: o.turboRpm || 0, shimmer: Math.min(1, Math.max(0, ((o.egtPreK || 300) - 700) / 600)) });
     for (const h of this.hooks) h(dt);
     this.updateAudio(dt);
   }
