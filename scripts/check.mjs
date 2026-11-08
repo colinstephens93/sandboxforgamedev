@@ -43,6 +43,42 @@ await ev(() => { const g = window.__game; g.truck.parts.tailgate.group.userData.
 ok('tailgate closes and latches', await ev(() => window.__game.truck.parts.tailgate.open01 < 0.02));
 await ev(() => { const g = window.__game; const f = g.truck.parts.fuelDoor; f.door.userData.interact.run(g.ctx); g.advance(3); });
 ok('fuel door opens', await ev(() => window.__game.truck.parts.fuelDoor.open01 > 0.98));
+// ---- engine start, dyno, tuning (PROMPT.md section 11) ----
+await ev(() => { const g = window.__game; g.ign.setKey(2, { coolantF: 70, range: 'P' }); g.advance(0.5); });
+ok('key RUN lights the gauges and the Wait to Start light', await ev(() => window.__game.ign.gaugesOn && window.__game.ign.wtsOn));
+await ev(() => { const g = window.__game; g.advance(3); g.ign.setKey(3, { coolantF: 70, range: 'P' }); g.advance(4); g.ign.releaseStart(); g.advance(15); });
+const idle = await ev(() => ({ run: window.__game.plant.running, rpm: window.__game.plant.rpm }));
+ok('engine starts and idles near 680 rpm', idle.run && Math.abs(idle.rpm - 680) < 40, `rpm ${idle.rpm.toFixed(0)}`);
+await ev(() => { const g = window.__game; g.plant.warm(198, 188); g.dyno.runs.length = 0; });
+const refused = await ev(() => { const g = window.__game; const r = g.dyno.startRun(); return { ok: r.ok, msg: g.dyno.message }; });
+ok('dyno run refused without straps', !refused.ok && /straps/i.test(refused.msg), refused.msg);
+const pull = async (label) => {
+  await ev(() => { const g = window.__game; g.dyno.strapAll(true); g.dyno.setFan(true); g.dyno.startRun(); });
+  await ev(() => { const g = window.__game; let n = 0; while (!['done','idle','refused'].includes(g.dyno.phase) && n++ < 4000) g.advance(0.25, 0.01); });
+  return ev(() => { const r = window.__game.dyno.last; return r ? { hp: r.peakHp, tq: r.peakTq, id: r.id, invalid: !!r.invalid, rail: r.railErrPsi } : null; });
+};
+const stock = await pull('stock');
+ok('stock pull completes with a graph and peaks', stock && stock.hp > 230 && stock.hp < 265, JSON.stringify(stock));
+// flash procedure
+const env = () => ({ keyPos: 2, engineRunning: false });
+await ev(() => { const g = window.__game; g.ign.setKey(0, {}); g.advance(0.2); g.plant.stopEngine(); g.ign.setKey(2, { coolantF: 190, range: 'P' }); g.advance(0.5); g.ai.plug(true); });
+await ev(() => { const g = window.__game; g.ai.read({ keyPos: g.ign.key, engineRunning: g.ign.engineRunning }); g.advance(14); });
+const noBackup = await ev(() => { const g = window.__game; return g.ai.write({ keyPos: g.ign.key, engineRunning: g.ign.engineRunning }, 'race'); });
+ok('a backup is required before the first write', noBackup === false);
+await ev(() => { const g = window.__game; g.ai.saveBackup({ keyPos: g.ign.key, engineRunning: g.ign.engineRunning }); g.advance(7); });
+// interrupted write: key off mid-write
+await ev(() => { const g = window.__game; g.ai.setCharger(true); g.ai.write({ keyPos: g.ign.key, engineRunning: g.ign.engineRunning }, 'race'); g.advance(10); g.ign.setKey(0, {}); g.advance(1); });
+ok('an interrupted write fails and leaves a no-start state', await ev(() => window.__game.ai.bricked && !!window.__game.ai.noStartReason()));
+await ev(() => { const g = window.__game; g.ign.setKey(2, { coolantF: 190, range: 'P' }); g.advance(0.5); g.ai.write({ keyPos: g.ign.key, engineRunning: g.ign.engineRunning }, 'street'); g.advance(65); g.ign.setKey(0, {}); g.advance(1); });
+ok('a full write succeeds and recovers the truck', await ev(() => !window.__game.ai.bricked && window.__game.ai.installed === 'street'), await ev(() => window.__game.ai.message));
+ok('calibration swapped to Street after the key cycle', await ev(() => window.__game.plant.cal.id === 'street'));
+await ev(() => { const g = window.__game; g.ign.setKey(2, { coolantF: 190, range: 'P' }); g.advance(3); g.ign.setKey(3, { coolantF: 190, range: 'P' }); g.advance(4); g.ign.releaseStart(); g.advance(8); g.plant.warm(198, 188); });
+ok('truck starts again on the new tune', await ev(() => window.__game.plant.running));
+const streetLlY = await pull('street LLY');
+await ev(() => { window.__game.plant.setRegulator('LBZ'); });
+const streetLbz = await pull('street LBZ');
+ok('street with the stock regulator falls short on rail pressure and power', streetLlY.rail > 800 && streetLbz.hp > streetLlY.hp + 5, JSON.stringify([streetLlY, streetLbz]));
+ok('street with the LBZ regulator reaches stock + 175 whp', Math.abs(streetLbz.hp - stock.hp - 175) < 6, `${(streetLbz.hp - stock.hp).toFixed(1)}`);
 const errs = logs.filter((l) => /error/i.test(l) && !/WebGLShadowMap|GPU stall|ReadPixels/.test(l));
 ok('no console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
 console.log(`\n${results.filter((r) => r.ok).length}/${results.length} passed`);
