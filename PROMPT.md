@@ -115,6 +115,12 @@ The shop tunes the truck with **AI Live**, an original laptop tuning app built f
 - The selected tune changes the calibration the engine model reads: main fuel quantity, injection timing, rail pressure, boost and turbo vane targets, the smoke limiter, the torque limiters, and the Allison's shift points, line pressure and converter lockup.
 - The truck behaves differently on every level, on the dyno and at idle: power and torque curves, boost, exhaust temperature, smoke, sound and transmission behavior.
 
+**Turbo vane adjustment (the one hands-on setting):**
+- On top of any selected tune, AI Live has a **Turbo Sound** page that adjusts the variable-geometry turbo's vane position at idle and light load, the way real tuners make a Duramax whistle louder. A slider runs from the tune's own vane setting toward more closed vanes, within the real travel of the LLY's variable-geometry turbocharger (a Garrett VNT unit; record the exact model and vane range with sources in `truckSpec.js`). A second slider sets how far the vanes stay closed as throttle comes in, which shapes the spool-up hiss.
+- The change must work through the physics, not a volume knob: closing the vanes speeds up the turbine at the same exhaust flow, which raises turbo shaft speed, boost and drive pressure. The turbo whistle's pitch and loudness come from the modeled shaft speed, and the intake hiss and exhaust hiss come from airflow and drive pressure. So the adjustment changes the sound at idle, on the dyno and in the shop, and the datalog shows the vane position, turbo speed and drive pressure.
+- It has real costs: more closed vanes raise exhaust back pressure and exhaust gas temperature and cost a little efficiency, and too much at high load overspeeds the turbo or overheats it, which feeds the breakage model. Lower-load settings that only add whistle at idle and cruise stay safe.
+- Each tune stores its own vane settings, the comparison screen shows them, and **Reset** returns them to the tune's values.
+
 **Physics that pushes back:**
 - More fuel without enough air gives black smoke on the dyno, higher exhaust gas temperature and smaller gains, as on a real diesel.
 - The engine model tracks cylinder pressure, exhaust gas temperature, turbo speed, coolant and transmission temperature on every pull and over repeated pulls (heat soak).
@@ -136,7 +142,7 @@ The shop tunes the truck with **AI Live**, an original laptop tuning app built f
 
 ## 6. SOUND
 
-Procedural audio with the Web Audio API, built from the engine state: the Duramax diesel clatter at idle, turbo spool and whistle rising with boost, the exhaust note, the starter motor, the cooling fan, the roller whine on the dyno, door and hood sounds, and the shop's large-room reverb. Audio starts on the first user click.
+Procedural audio with the Web Audio API, built from the engine state: the Duramax diesel clatter at idle, the turbo whistle and spool hiss synthesized from the modeled turbo shaft speed, vane position and airflow (so they follow the Turbo Sound adjustment in section 5A), the exhaust note, the starter motor, the cooling fan, the roller whine on the dyno, door and hood sounds, and the shop's large-room reverb. Audio starts on the first user click.
 
 ## 7. CAMERAS AND CONTROLS
 
@@ -182,7 +188,7 @@ If something has to be simplified, cut in this order: shop equipment actions (ke
 
 Run the app in a headless browser (Playwright, with a WebGL-capable flag):
 
-- **Checks:** no console errors that matter; the intro plays and skips; every door, the tailgate and the hood open and close; the engine starts with the glow plug wait and idles; a full dyno pull completes and produces a graph and peak numbers; the run is refused without straps; a backup is required before the first write; a full tune write works and an interrupted write fails and is recoverable; every quick tune changes the dyno result in the expected direction; the higher tunes fall short on rail pressure with the stock regulator and reach their numbers with the LBZ regulator installed; abusing the race tune can break the transmission; walk mode reaches every corner of the shop; frame time is reasonable; the unit tests pass.
+- **Checks:** no console errors that matter; the intro plays and skips; every door, the tailgate and the hood open and close; the engine starts with the glow plug wait and idles; a full dyno pull completes and produces a graph and peak numbers; the run is refused without straps; a backup is required before the first write; a full tune write works and an interrupted write fails and is recoverable; every quick tune changes the dyno result in the expected direction; the higher tunes fall short on rail pressure with the stock regulator and reach their numbers with the LBZ regulator installed; abusing the race tune can break the transmission; closing the vanes on the Turbo Sound page measurably raises turbo speed, whistle pitch and exhaust gas temperature, and closing them too far at high load triggers the turbo overspeed failure; walk mode reaches every corner of the shop; frame time is reasonable; the unit tests pass.
 - **Screenshots** in screenshots/:
   1. hero: low three-quarter front view of the truck on the dyno
   2. side profile showing the full crew cab and box proportions
@@ -213,6 +219,7 @@ Run the app in a headless browser (Playwright, with a WebGL-capable flag):
 - [ ] A physically modeled dyno pull with wheel hp and torque, SAE correction and run history
 - [ ] Stock dyno results within the real stock LLY range, derived and not hard-coded
 - [ ] AI Live: read, backup, write with real failure on interruption, quick tunes, datalog and stock-versus-tuned comparison
+- [ ] The Turbo Sound vane adjustment changes the whistle and hiss through the modeled turbo, with real costs
 - [ ] Tuned results and breakage limits derived from sourced data, with estimates listed in `ACCURACY.md`
 - [ ] A complete, inspectable shop with solid collision
 - [ ] Walk, driver, dyno and photo camera modes; the intro; the help panel; UI hiding; PNG capture
