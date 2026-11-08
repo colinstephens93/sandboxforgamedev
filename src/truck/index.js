@@ -7,6 +7,7 @@ import * as K from './skin.js';
 import { hoodHalfWidth, hoodHeight, roofHalfWidth, roofHeight, ST, H, IN_TO_M, WB } from './skin.js';
 import { buildBodyGeometry, topPanel, topPerimeter, skirtStrip, GAP, DOOR, win, sA, ROOF_EDGE_Y } from './body.js';
 import { gridPanel, colPos, rowPos } from './panels.js';
+import { buildUnderside } from './underside.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -95,6 +96,10 @@ export function buildTruck({ quality }) {
     const c = new THREE.Mesh(new THREE.CylinderGeometry(15.25 * IN, 15.25 * IN, 9.8 * IN, 28), wheelMat);
     c.rotation.z = Math.PI / 2; c.position.set(sx * (track / 2 - 0.0) * IN, 14.5 * IN, z * IN); c.name = 'wheel_placeholder'; root.add(c);
   }
+  // ---------------- underside (frame, suspension, driveline, exhaust, fuel, spare) ----------------
+  const underside = buildUnderside({ quality });
+  root.add(underside.group);
+  parts.underside = underside.anchors;
   root.userData.parts = parts;
-  return { group: root, parts, colliders: [] };
+  return { group: root, parts, colliders: underside.colliders, underside };
 }
