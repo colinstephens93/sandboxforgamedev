@@ -275,3 +275,41 @@ Game.prototype.shot = function () { this.R.render(0.016); return this.canvas.toD
 Game.prototype.ready = function () { return this.frames > 2; };
 // advance the simulation by `sec` seconds without rendering (deterministic checks)
 Game.prototype.advance = function (sec, dt = 1 / 30) { const n = Math.ceil(sec / dt); for (let i = 0; i < n; i++) this.update(dt); };
+
+// ---- scene presets for the showcase screenshots (npm run shots) ----
+Game.prototype.pullNow = function () {
+  const d = this.dyno; d.strapAll(true); d.setFan(true);
+  d.startRun(); let n = 0; while (!['done', 'idle', 'refused'].includes(d.phase) && n++ < 8000) this.advance(0.25, 0.01);
+  return d.last;
+};
+Game.prototype.startEngineNow = function () {
+  const ig = this.ign; ig.setKey(0, {}); this.advance(0.3);
+  ig.setKey(2, { coolantF: this.plant.coolantF, range: 'P' }); this.advance(3);
+  ig.setKey(3, { coolantF: this.plant.coolantF, range: 'P' }); this.advance(4); ig.releaseStart(); this.advance(6);
+};
+Game.prototype.prepare = function (o = {}) {
+  const ctl = this.truckCtl, ctx = this.ctx;
+  this.closePanels();
+  for (const [k, d] of Object.entries(ctl.doors)) { d.target = (o.door === k) ? 1 : 0; }
+  if (ctl.hood) ctl.hood.target = o.hood ? 1 : 0;
+  const tg = this.truck.parts.tailgate; if (tg && tg.set) tg.set(o.tailgate ? 1 : 0);
+  const fd = this.truck.parts.fuelDoor; if (fd && fd.set) fd.set(0);
+  this.dyno.strapAll(!!(o.straps || o.run || o.compare));
+  this.shop.setDoor(0, true); this.shop.setDoor(1, true);
+  this.advance(3, 0.05);
+  if (o.engine && !this.plant.running) this.startEngineNow();
+  if (o.run) { this.plant.warm(198, 188); if (!this.plant.running) this.startEngineNow(); this.plant.warm(198, 188); this.dyno.runs.length = 0; this.pullNow(); this.openPanel('dyno'); }
+  if (o.compare) {
+    if (!this.plant.running) this.startEngineNow();
+    this.plant.setRegulator('LBZ'); this.plant.warm(198, 188);
+    this.plant.setCalibration(loadCal('stock')); this.dyno.runs.length = 0; this.pullNow();
+    this.plant.setCalibration(loadCal(o.compare)); this.plant.warm(198, 188); this.pullNow();
+    this.openPanel('ailive'); const p = this.panelsReg.ailive; if (p && p.go) p.go('compare');
+  }
+  if (o.flash) {
+    const ig = this.ign, ai = this.ai; this.plant.stopEngine(); ig.setKey(0, {}); this.advance(0.3); ig.setKey(2, { coolantF: 190, range: 'P' }); this.advance(0.5);
+    const env = () => ({ keyPos: ig.key, engineRunning: ig.engineRunning });
+    ai.plug(true); ai.setCharger(true); ai.read(env()); this.advance(14); ai.saveBackup(env()); this.advance(7); ai.write(env(), 'street'); this.advance(28);
+  }
+  this.advance(1, 0.05);
+};
