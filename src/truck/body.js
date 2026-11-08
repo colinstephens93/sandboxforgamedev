@@ -49,7 +49,7 @@ export function buildBodyGeometry() {
   G.fender = both((side) => gridPanel({
     nI: 46, nJ: 22, side, w: fenderW, depth: 1.3,
     pos: (u, v) => {
-      const s = lerp(K.S_FRONT + 3.2, ST.doorF0 - GAP, Math.pow(u, 1));
+      const s = lerp(-32.2, ST.doorF0 - GAP, Math.pow(u, 1));
       const a = archY(s, 0, ARCH_R);
       const yb = a != null ? a : fenderHem(s);
       return [s, lerp(yb, fenderTopY(s), v)];

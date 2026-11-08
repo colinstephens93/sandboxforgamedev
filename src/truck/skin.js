@@ -43,7 +43,7 @@ function tab(points, x) {
 
 // maximum half-width along the length (body line at the widest height)
 const W_MAX = [
-  [-38.5, 32.0], [-33, 33.8], [-28, 36.4], [-20, 38.4], [-8, 39.45], [0, 39.85], [12, 39.7], [20, 39.45],
+  [-38.5, 33.0], [-33, 37.4], [-28, 38.6], [-20, 39.2], [-8, 39.6], [0, 39.85], [12, 39.7], [20, 39.45],
   [23, 39.3], [35, 39.15], [60, 39.3], [90, 39.2], [105, 38.9], [109, 38.2],
   [111, 38.8], [125, 39.3], [140, 39.85], [153, 39.85], [166, 39.85], [178, 39.5], [191, 38.5], [199, 36.5],
 ];
@@ -84,8 +84,8 @@ export function hoodHeight(s, x) {
   const hw = hoodHalfWidth(s);
   const t = clamp(Math.abs(x) / hw, 0, 1);
   // crown with a powerdome (two raised bulges for the HD hood) and a downward roll at the edge
-  const crown = 2.1 * t * t + 2.2 * Math.pow(t, 6);
-  return hc - crown + 0.35 * (1 - Math.abs(t - 0.28) / 0.72);
+  const crown = 1.3 * t * t + 1.4 * Math.pow(t, 6);
+  return hc - crown + 0.25 * (1 - Math.abs(t - 0.28) / 0.72);
 }
 
 // roof: half width at the roof edge and crown height

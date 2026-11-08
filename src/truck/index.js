@@ -7,6 +7,7 @@ import * as K from './skin.js';
 import { hoodHalfWidth, hoodHeight, roofHalfWidth, roofHeight, ST, H, IN_TO_M, WB } from './skin.js';
 import { buildBodyGeometry, topPanel, topPerimeter, skirtStrip, GAP, DOOR, win, sA, ROOF_EDGE_Y } from './body.js';
 import { gridPanel, colPos, rowPos } from './panels.js';
+import { buildFront, buildMirror, buildHandle } from './front.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -82,6 +83,15 @@ export function buildTruck({ quality }) {
     const w = win[key];
     const g = gridPanel({ nI: 14, nJ: 10, side: side === 'R' ? 1 : -1, offset: -0.55, flange: false, pos: rowPos(w.yb, w.yt, w.sf, w.sr) });
     add(parts.doors[`${key}${side}`], g, glass, `door_glass_${key}${side}`, false);
+  }
+
+  // ---------------- front end, mirrors, handles ----------------
+  const front = buildFront({ quality }); root.add(front.group); parts.front = front.group;
+  for (const side of ['L', 'R']) {
+    const sg = side === 'R' ? 1 : -1;
+    const mir = buildMirror({ side: sg }); mir.position.set(sg * 45.0 * IN, 61.0 * IN, 28.0 * IN); parts.doors[`f${side}`].add(mir);
+    const hf = buildHandle({ side: sg, key: 'f' }); hf.position.set(sg * 39.6 * IN, 47.0 * IN, 60.5 * IN); parts.doors[`f${side}`].add(hf);
+    const hr = buildHandle({ side: sg, key: 'r' }); hr.position.set(sg * 39.5 * IN, 47.0 * IN, 100.0 * IN); parts.doors[`r${side}`].add(hr);
   }
 
   // ---------------- dark interior tub (seen through panel gaps) ----------------
