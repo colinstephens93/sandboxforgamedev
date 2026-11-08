@@ -14,6 +14,7 @@ import { buildEngineBay } from './engine/index.js';
 import { buildHoodUnder } from './hoodUnder.js';
 import { buildUnderside } from './underside.js';
 import { buildWheel } from './wheels.js';
+import { buildInterior } from './interior/index.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -102,7 +103,8 @@ export function buildTruck({ quality }) {
 
   // ---------------- dark interior tub (seen through panel gaps) ----------------
   const tub = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w * IN, h * IN, d * IN), darkTub); m.position.set(x * IN, y * IN, z * IN); root.add(m); return m; };
-  tub(68, 40, 84, 0, 50, 65);          // cab volume (below the roofline, above the rocker)
+  // the cab volume is the interior (src/truck/interior): door cards, floor, pillars and headliner are the dark backing
+  const interior = buildInterior({ quality, parts }); root.add(interior.group); parts.interior = interior;
   tub(68, 10, 80, 0, 33, 152);         // bed volume under the floor
 
   // ---------------- wheels and tires (wheels.js): front/rear, left/right; spin hooks live in parts.wheels ----------------
@@ -133,6 +135,6 @@ export function buildTruck({ quality }) {
   root.add(underside.group);
   parts.underside = underside.anchors;
   root.userData.parts = parts;
-  Object.assign(anchors, underside.anchors);
-  return { group: root, parts, colliders: underside.colliders, anchors, underside, update: (dt, st) => bay.update(dt, st) };
+  Object.assign(anchors, underside.anchors, { interior: interior.anchors });
+  return { group: root, parts, colliders: underside.colliders, anchors, underside, interior, update: (dt, st) => bay.update(dt, st) };
 }

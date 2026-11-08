@@ -18,7 +18,8 @@ import { Dyno } from '../sim/dyno.js';
 import { Ignition, KEY } from '../sim/startSequence.js';
 import { AILive } from '../sim/flash.js';
 import { loadCal } from '../sim/calibrations.js';
-import { degFtoC } from '../data/truckSpec.js';
+import { degFtoC, degCtoF } from '../data/truckSpec.js';
+import { TIRE_R } from '../sim/driveline.js';
 import { AudioEngine } from '../audio/index.js';
 import { buildDynoHardware } from '../shop/dyno/index.js';
 import { buildAILiveRig } from '../shop/ailiveRig.js';
@@ -149,6 +150,8 @@ export class Game {
         case 'KeyH': this.uiHidden = !this.uiHidden; this.ui.hideAll(this.uiHidden); break;
         case 'KeyP': this.savePNG(); break;
         case 'KeyQ': { const order = ['low', 'medium', 'high']; this.qname = order[(order.indexOf(this.qname) + 1) % 3]; this.R.setQuality(this.qname); this.ui.setQuality(this.qname); this.ui.say(`Quality: ${this.qname}`, 1.5); break; }
+        case 'KeyV': this.toggleDriver(); break;
+        case 'KeyC': if (['spinup', 'pull', 'coast'].includes(this.dyno.phase)) this.setMode(this.mode === 'dynocam' ? 'walk' : 'dynocam'); else if (this.mode === 'dynocam') this.setMode('walk'); break;
         case 'KeyO': this.setMode(this.mode === 'orbit' ? 'walk' : 'orbit'); if (this.mode === 'orbit') { this.orbit = { pos: this.camera.position.clone(), yaw: this.player.yaw, pitch: this.player.pitch }; } else this.player.applyCamera(); break;
         case 'ControlLeft': case 'ControlRight': if (this.mode === 'walk') this.player.crouch = true; break;
         default: break;
@@ -175,6 +178,16 @@ export class Game {
     return { pos: [0, 1, 2].map((k) => L(a[1][k], b[1][k])), tgt: [0, 1, 2].map((k) => L(a[2][k], b[2][k])), fov: L(a[3], b[3]) };
   }
 
+  toggleDriver() {
+    if (this.mode === 'driver') { this.player.setPose(-1.7, TRUCK_Z + 1.2, Math.PI / 2, -0.1); this.setMode('walk'); this.pedal = 0; this.brakeIn = 0; this.ui.say('Left the truck', 1.5); return; }
+    if (this.mode !== 'walk') return;
+    const d = this.truckCtl.doors.fL;
+    if (!d || d.state < 0.5) { this.ui.say('Open the driver door first (E at the door), then press V to sit in the truck.', 4); return; }
+    const near = Math.hypot(this.player.pos.x + 1.0, this.player.pos.z - (TRUCK_Z + 1.0)) < 3.2;
+    if (!near) { this.ui.say('Walk up to the open driver door, then press V.', 3); return; }
+    this.setMode('driver'); this.drv.yaw = 0; this.drv.pitch = -0.12; this.ui.say('Driver seat: E on the key (hold for START), shifter 1 P 2 R 3 N 4 D, W throttle, S brake, V to get out', 6);
+  }
+
   update(dt) {
     this.time += dt;
     for (const h of this.hooks) h(dt);
@@ -195,6 +208,13 @@ export class Game {
     } else if (this.mode === 'walk') {
       if (this.input.locked) this.player.look(this.input.mouseDX, this.input.mouseDY);
       this.player.update(dt, this.input);
+    } else if (this.mode === 'driver') {
+      if (this.input.locked) { this.drv.yaw = Math.max(-1.9, Math.min(1.9, this.drv.yaw - this.input.mouseDX * 0.0022)); this.drv.pitch = Math.max(-1.0, Math.min(0.9, this.drv.pitch - this.input.mouseDY * 0.0022)); }
+      this.camera.position.copy(this.eyeWorld); this.camera.rotation.order = 'YXZ'; this.camera.rotation.set(this.drv.pitch, this.drv.yaw, 0);
+      this.pedal += (((this.input.down('KeyW') ? 0.6 : 0) - this.pedal) * Math.min(1, dt * 6)); this.brakeIn = this.input.down('KeyS') ? 1 : 0;
+      if (this.input.tap('Digit1')) this.state.range = 'P'; if (this.input.tap('Digit2')) this.state.range = 'R'; if (this.input.tap('Digit3')) this.state.range = 'N'; if (this.input.tap('Digit4')) this.state.range = 'D';
+    } else if (this.mode === 'dynocam') {
+      this.camera.position.set(3.6, 0.85, TRUCK_Z + 6.2); this.camera.lookAt(0.8, 0.5, TRUCK_Z + 3.2);
     } else if (this.mode === 'orbit') {
       const o = this.orbit; if (this.input.locked) { o.yaw -= this.input.mouseDX * 0.0022; o.pitch = Math.max(-1.5, Math.min(1.5, o.pitch - this.input.mouseDY * 0.0022)); }
       const sp = (this.input.down('ShiftLeft') ? 6 : 2) * dt; const sin = Math.sin(o.yaw), cos = Math.cos(o.yaw);
@@ -204,6 +224,7 @@ export class Game {
     }
     // interaction
     this.interactor.update(dt, this.mode === 'walk' || this.mode === 'driver');
+    if (this.mode !== 'driver') { this.pedal = 0; this.brakeIn = 0; }
     const t = this.interactor.target;
     this.ui.setPrompt(t && t.interactable ? `E  ${typeof t.interactable.userData.interact.prompt === 'function' ? t.interactable.userData.interact.prompt() : t.interactable.userData.interact.prompt}` : '');
     this.ui.setLabel(this.interactor.inspect && t && t.labelInfo ? t.labelInfo : null);
@@ -217,12 +238,12 @@ export class Game {
   stepSim(dt) {
     // ignition/start logic drives the plant
     const p = this.plant;
-    const o = this.ign.update(dt, { coolantF: p.coolantF, airF: p.air.tempC * 1.8 + 32, range: p.dl.range === 'D' ? 'D' : (p.dl.range || 'P'), brake: 0, pedal: 0, speedMph: 0 });
+    const o = this.ign.update(dt, { coolantF: p.coolantF, airF: p.air.tempC * 1.8 + 32, range: this.state.range || 'P', brake: this.brakeIn || 0, pedal: this.pedal || 0, speedMph: p.dl.wheelSpeed() * TIRE_R * 2.23694 });
     if (o.startEngine) p.startEngine();
     if (o.stopEngine) p.stopEngine();
     p.idleTargetRpm = o.idleTargetRpm;
     p.hoodClosed = !(this.truckCtl && this.truckCtl.hood && this.truckCtl.hood.open);
-    if (this.dyno.phase === 'idle' || this.dyno.phase === 'done' || this.dyno.phase === 'refused') p.step(dt, { pedal: this.pedal || 0, range: this.range });
+    if (this.dyno.phase === 'idle' || this.dyno.phase === 'done' || this.dyno.phase === 'refused') p.step(dt, { pedal: this.pedal || 0, range: this.state.range || 'P', brake: this.brakeIn || 0 });
     else this.dyno.update(dt);
     this.ai.update(dt, { keyPos: this.ign.key, engineRunning: this.ign.engineRunning });
   }
@@ -240,7 +261,25 @@ export class Game {
     const o = p.out || {};
     if (this.truck.update) this.truck.update(dt, { rpm: p.rpm, running: p.running, fanDuty: p.fanDuty, turboRpm: o.turboRpm || 0, shimmer: Math.min(1, Math.max(0, ((o.egtPreK || 300) - 700) / 600)) });
     for (const h of this.hooks) h(dt);
+    this.updateCab(dt);
     this.updateAudio(dt);
+  }
+
+  updateCab(dt) {
+    const p = this.plant, ig = this.ign, I = this.truck.interior;
+    this.state.coolantF = p.coolantF; this.state.dt = dt;
+    const o = p.out || {};
+    let keyPos = ig.key;
+    if (ig.clusterFault && keyPos >= 2) keyPos = Math.sin(this.time * 23) + Math.sin(this.time * 7.3) > 0.2 ? 2 : 0; // failed write: cluster dark or flickering
+    const oilF = degCtoF(p.oilC);
+    const oilPsi = p.running ? Math.min(120, 22 + p.rpm * 0.02 + Math.max(0, 190 - oilF) * 0.33) : 0;
+    const msg = ig.dicNote || (p.dl.transF > 265 ? 'TRANSMISSION HOT' : p.reducedPower ? 'REDUCED ENGINE POWER' : '');
+    I.update(dt, {
+      keyPos, rpm: p.running ? p.rpm : 0, mph: p.dl.wheelSpeed() * TIRE_R * 2.23694, coolantF: p.coolantF, transF: p.dl.transF, oilPsi,
+      volts: p.running ? 14.1 : (this.ai.charger ? 13.4 : this.ai.volts), fuel: p.fuelLevel, lights: { waitToStart: ig.wtsOn, waterInFuel: false }, dicMessage: msg,
+    });
+    const open = Object.values(this.truckCtl.doors).some((d) => d.state > 0.03);
+    if (I.interiorLight) I.interiorLight.setOn(open);
   }
 
   updateAudio(dt) {
