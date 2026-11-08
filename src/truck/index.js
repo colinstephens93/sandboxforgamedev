@@ -8,6 +8,7 @@ import { hoodHalfWidth, hoodHeight, roofHalfWidth, roofHeight, ST, H, IN_TO_M, W
 import { buildBodyGeometry, topPanel, topPerimeter, skirtStrip, GAP, DOOR, win, sA, ROOF_EDGE_Y } from './body.js';
 import { gridPanel, colPos, rowPos } from './panels.js';
 import { buildFront, buildMirror, buildHandle } from './front.js';
+import { buildInterior } from './interior/index.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -96,7 +97,8 @@ export function buildTruck({ quality }) {
 
   // ---------------- dark interior tub (seen through panel gaps) ----------------
   const tub = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w * IN, h * IN, d * IN), darkTub); m.position.set(x * IN, y * IN, z * IN); root.add(m); return m; };
-  tub(68, 52, 84, 0, 44, 65);          // cab volume (below the roofline, above the rocker)
+  // the cab volume is the interior (src/truck/interior): door cards, floor, pillars and headliner are the dark backing
+  const interior = buildInterior({ quality, parts }); root.add(interior.group); parts.interior = interior;
   tub(68, 14, 80, 0, 29, 152);         // bed volume under the floor
 
   // ---------------- placeholder wheels (replaced in 2.2) ----------------
@@ -106,5 +108,5 @@ export function buildTruck({ quality }) {
     c.rotation.z = Math.PI / 2; c.position.set(sx * (track / 2 - 0.0) * IN, 14.5 * IN, z * IN); c.name = 'wheel_placeholder'; root.add(c);
   }
   root.userData.parts = parts;
-  return { group: root, parts, colliders: [] };
+  return { group: root, parts, colliders: [], interior };
 }
