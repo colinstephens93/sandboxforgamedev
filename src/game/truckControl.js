@@ -24,7 +24,7 @@ export function setupTruckOpenings(truck, { say, onLights }) {
     const door = new HingeDoor({ pivot: piv, axis: 'y', maxAngle: sg * maxAngle[key], onChange: () => { ctl.anyDoorOpen = Object.values(ctl.doors).some((d) => d.state > 0.02); onLights(ctl.anyDoorOpen); } });
     ctl.doors[`${key}${side}`] = door;
     piv.userData.labelId = `truck.door_${key}`;
-    piv.userData.interact = { prompt: () => (door.open ? 'Close door' : 'Open door'), run: (ctx) => door.toggle(ctx) };
+    piv.userData.interact = { prompt: () => (door.open ? 'Close door' : 'Open door'), run: (ctx) => { door.toggle(ctx); if (ctx.sfx) ctx.sfx(door.open ? 'doorOpen' : 'doorClose', { distance: 1.5 }); } };
     piv.name = `door_pivot_${key}${side}`;
   }
 
@@ -39,15 +39,15 @@ export function setupTruckOpenings(truck, { say, onLights }) {
     piv.userData.interact = {
       prompt: () => (hinged.open ? 'Close hood' : (ctl.hoodState.cabReleased && ctl.hoodState.secondaryReleased ? 'Lift hood' : 'Hood is latched')),
       run: (ctx) => {
-        if (hinged.open) { hinged.toggle(ctx, false); ctl.hoodState.cabReleased = false; ctl.hoodState.secondaryReleased = false; return; }
+        if (hinged.open) { hinged.toggle(ctx, false); ctl.hoodState.cabReleased = false; ctl.hoodState.secondaryReleased = false; if (ctx.sfx) ctx.sfx('hoodClose', { distance: 2 }); return; }
         if (!ctl.hoodState.cabReleased) { say('The hood is latched. Pull the hood release handle inside the cab, to the lower left of the steering wheel.'); return; }
         if (!ctl.hoodState.secondaryReleased) { say('The primary latch is released. Now pull up the secondary release near the center of the grille.'); return; }
-        hinged.toggle(ctx, true);
+        hinged.toggle(ctx, true); if (ctx.sfx) ctx.sfx('hoodOpen', { distance: 2 });
       },
     };
     ctl.hoodPivot = piv;
   }
-  ctl.releaseHoodFromCab = (ctx) => { ctl.hoodState.cabReleased = true; say('Hood release pulled: the hood pops up slightly.'); };
+  ctl.releaseHoodFromCab = (ctx) => { ctl.hoodState.cabReleased = true; say('Hood release pulled: the hood pops up slightly.'); if (ctx && ctx.sfx) ctx.sfx('hoodRelease', { inside: true }); };
   ctl.pullSecondary = (ctx) => {
     if (!ctl.hoodState.cabReleased) { say('The hood is still held by the primary latch: pull the release handle inside the cab first.'); return; }
     ctl.hoodState.secondaryReleased = true; say('Secondary release pulled: lift the hood.');

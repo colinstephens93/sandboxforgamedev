@@ -19,6 +19,7 @@ import { Ignition, KEY } from '../sim/startSequence.js';
 import { AILive } from '../sim/flash.js';
 import { loadCal } from '../sim/calibrations.js';
 import { degFtoC } from '../data/truckSpec.js';
+import { AudioEngine } from '../audio/index.js';
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 const TRUCK_Z = DYNO.truckOrigin.z;
@@ -69,6 +70,10 @@ export class Game {
     this.ctx = { shop: this.shop, say: (t, s) => this.ui.say(t, s), animate: (fn) => this.interactor.animate(fn), state: this.state, game: this };
     this.state.dyno = this.dyno; this.state.ignition = this.ign; this.state.ailive = this.ai; this.state.plant = this.plant;
     this.truckCtl = setupTruckOpenings(this.truck, { say: (t) => this.ui.say(t, 5), onLights: (on) => this.onDoorLights(on) });
+    this.audio = new AudioEngine();
+    this.ctx.sfx = (name, opts) => { try { this.audio.trigger(name, opts); } catch {} };
+    const startAudio = () => { this.audio.start(); window.removeEventListener('pointerdown', startAudio); window.removeEventListener('keydown', startAudio); };
+    window.addEventListener('pointerdown', startAudio); window.addEventListener('keydown', startAudio);
     this.bindKeys();
     this.last = performance.now(); this.setMode('intro'); this.introT = 0;
     p(1, 'Ready');
@@ -203,6 +208,23 @@ export class Game {
 
   visuals(dt) {
     this.shop.updateDoors(dt);
+    for (const h of this.hooks) h(dt);
+    this.updateAudio(dt);
+  }
+
+  updateAudio(dt) {
+    const p = this.plant, o = p.out || {}, cam = this.camera.position;
+    const tz = TRUCK_Z + 1.0;
+    const open = Object.values(this.truckCtl.doors).filter((d) => d.state > 0.05).length;
+    const st = {
+      running: p.running, cranking: this.ign.cranking, rpm: p.rpm, load: o.load || 0, qty: o.qty || 0, turboRpm: o.turboRpm, vane: o.vane,
+      boostPsi: o.boostPsi, mAir: o.mAir, driveKpa: o.driveKpa, smoke: o.smoke, coolantF: p.coolantF, fanDuty: p.fanDuty,
+      rollerRad: p.dl.wr, tccLocked: p.dl.tccLocked, cpSlipRpm: p.dl.cpSlip * 30 / Math.PI, fail: p.fail.state, doorsOpenCount: open,
+      wtsOn: this.ign.wtsOn, shopFan: this.dyno.fan, exhaustHose: this.dyno.hoseOn, hoodOpen: this.truckCtl.hood ? this.truckCtl.hood.open : false,
+    };
+    const dx = cam.x - 0, dz = cam.z - tz;
+    const listener = { x: cam.x, y: cam.y, z: cam.z, inCab: this.mode === 'driver', doorOpen: open > 0, distanceToTruck: Math.hypot(dx, dz), distanceToDyno: Math.hypot(dx, cam.z - (TRUCK_Z + 3.9)), pan: Math.max(-1, Math.min(1, -dx / 6)) };
+    try { this.audio.update(dt, st, listener); } catch (e) { /* audio must never break the frame */ }
   }
 
   loop(t) {
