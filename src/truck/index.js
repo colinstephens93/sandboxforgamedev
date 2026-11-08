@@ -8,6 +8,8 @@ import { hoodHalfWidth, hoodHeight, roofHalfWidth, roofHeight, ST, H, IN_TO_M, W
 import { buildBodyGeometry, topPanel, topPerimeter, skirtStrip, GAP, DOOR, win, sA, ROOF_EDGE_Y } from './body.js';
 import { gridPanel, colPos, rowPos } from './panels.js';
 import { buildFront, buildMirror, buildHandle } from './front.js';
+import { buildRear } from './rear.js';
+import { buildBadges, buildFuelDoor } from './badges.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -105,6 +107,10 @@ export function buildTruck({ quality }) {
     const c = new THREE.Mesh(new THREE.CylinderGeometry(15.25 * IN, 15.25 * IN, 9.8 * IN, 28), wheelMat);
     c.rotation.z = Math.PI / 2; c.position.set(sx * (track / 2 - 0.0) * IN, 14.5 * IN, z * IN); c.name = 'wheel_placeholder'; root.add(c);
   }
+  // ---------------- rear: box, tailgate, bumper, lamps; badges, decals, fuel door ----------------
+  const rear = buildRear({ quality }); root.add(rear.group); parts.rear = rear.parts; parts.tailgate = rear.parts.tailgate; parts.lamps = rear.lamps;
+  root.add(buildBadges({ quality }));
+  const fuel = buildFuelDoor({ side: 'L' }); root.add(fuel.group); parts.fuelDoor = fuel;
   root.userData.parts = parts;
   return { group: root, parts, colliders: [] };
 }
