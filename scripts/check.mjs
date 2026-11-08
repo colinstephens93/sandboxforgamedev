@@ -35,6 +35,14 @@ ok('hood refuses without the secondary release', await ev(() => window.__game.tr
 await ev(() => { const g = window.__game; g.truckCtl.pullSecondary(g.ctx); g.truckCtl.hoodPivot.userData.interact.run(g.ctx); });
 await ev(() => window.__game.advance(3));
 ok('hood opens after both releases', await ev(() => window.__game.truckCtl.hood.state === 1));
+// tailgate and fuel door
+await ev(() => { const g = window.__game; g.truck.parts.tailgate.group.userData.interact.run(g.ctx); g.advance(4); });
+const tg = await ev(() => window.__game.truck.parts.tailgate.open01);
+ok('tailgate opens to horizontal and hangs', tg > 0.98, `open01 ${tg}`);
+await ev(() => { const g = window.__game; g.truck.parts.tailgate.group.userData.interact.run(g.ctx); g.advance(4); });
+ok('tailgate closes and latches', await ev(() => window.__game.truck.parts.tailgate.open01 < 0.02));
+await ev(() => { const g = window.__game; const f = g.truck.parts.fuelDoor; f.door.userData.interact.run(g.ctx); g.advance(3); });
+ok('fuel door opens', await ev(() => window.__game.truck.parts.fuelDoor.open01 > 0.98));
 const errs = logs.filter((l) => /error/i.test(l) && !/WebGLShadowMap|GPU stall|ReadPixels/.test(l));
 ok('no console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
 console.log(`\n${results.filter((r) => r.ok).length}/${results.length} passed`);
