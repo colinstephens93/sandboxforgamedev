@@ -47,6 +47,9 @@ export function buildEquipment({ quality, shop }) {
   buildExtras(ctx);
   buildCompressorArea(ctx);
 
+  // work lights that belong to the equipment follow the shop light switch
+  updaters.push(() => { M.emissiveWhite.emissiveIntensity = shop?.lights?.on === false ? 0 : 3.5; });
+
   signs.build(group);
   const update = (dt, state) => { for (const u of updaters) u(dt, state); };
   return { group, colliders, anchors, interactables, update };

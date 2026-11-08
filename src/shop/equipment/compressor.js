@@ -1,6 +1,6 @@
 // Air system: vertical 80-gallon compressor, black-iron riser, copper header along the north and west walls (kept
 // 0.05 m off the wall surface, never through a wall), drops with hose reels and quick couplers at three places.
-import { THREE, Part, label, canvasMaterial, place } from './common.js';
+import { THREE, Part, label, canvasMaterial, place, interactive } from './common.js';
 import { gaugeCanvas } from './art.js';
 import { foot } from './plan.js';
 import { SHOP } from '../layout.js';
@@ -173,6 +173,11 @@ export function buildCompressorArea(ctx) {
   const { M, group, quality } = ctx;
   const cp = foot('compressor');
   const c = buildCompressor(M, quality); place(c, cp.x, 0, cp.z, 0); group.add(c);
+  const drain = c.children.find((o) => o.userData.labelId === 'shop.tankDrain');
+  if (drain) {
+    interactive(drain, 'Drain the air tank', (k) => k?.say?.('You crack the drain valve: rusty water spits out, then dry air. Tank drained.'));
+    ctx.interactables.push(drain);
+  }
   group.add(buildPipes(M));
   const hx = SHOP.halfX;
   const hoses = [M.orange, M.blue, M.safetyYellow];

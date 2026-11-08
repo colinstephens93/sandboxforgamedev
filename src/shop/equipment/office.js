@@ -136,7 +136,7 @@ export function buildOffice(ctx) {
 
   // ---- wall calendar and clock on the inside faces of the office walls ----
   {
-    const cal = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.45), canvasMaterial(calendarCanvas(), { roughness: 0.7 }));
+    const cal = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 0.54), canvasMaterial(calendarCanvas(), { roughness: 0.7 }));
     cal.position.set(6.46 + 0.004, 1.5, 7.6); cal.rotation.y = Math.PI / 2; cal.receiveShadow = true; O.add(cal);
     const cp = new Part(); cp.box(M.red, 0.01, 0.03, 0.12, 6.46 + 0.003, 1.74 + 0.0, 7.6); const cpg = new THREE.Group(); cp.build(cpg); O.add(cpg);
     const calg = new THREE.Group(); calg.userData.labelId = 'shop.calendar'; calg.add(cal); O.add(calg);
