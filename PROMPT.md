@@ -5,7 +5,7 @@ The build prompt for an autonomous coding agent. It follows the showcase framewo
 
 ---
 
-Build a photorealistic, fully interactive 3D diesel performance shop containing a white 2005 Chevrolet Silverado 2500HD LT Crew Cab with the 6.6 L Duramax (LLY) and Allison 1000 automatic, strapped to a chassis dynamometer. Make it one runnable browser app using Three.js and WebGL. A person must be able to walk through the whole shop, inspect every tool and machine, walk around the truck, open every door, the tailgate and the hood, inspect the engine bay, climb into the cab, start the engine, and run the truck on the dyno to measure horsepower and torque. This will be shown publicly as a showcase. Accuracy to the real truck, the real engine and real dyno behavior matters more than anything else. After that, the paint, the materials and the shop lighting matter most.
+Build a photorealistic, fully interactive 3D diesel performance shop containing a white 2005 Chevrolet Silverado 2500HD LT Crew Cab with the 6.6 L Duramax (LLY) and Allison 1000 automatic, strapped to a chassis dynamometer. Make it one runnable browser app using Three.js and WebGL. A person must be able to walk through the whole shop, inspect every tool and machine, walk around the truck, open every door, the tailgate and the hood, inspect the engine bay, climb into the cab, start the engine, run the truck on the dyno to measure horsepower and torque, tune it with the shop's laptop tuning software, AI Live, and run it again to see what the tune changed. This will be shown publicly as a showcase. Accuracy to the real truck, the real engine and real dyno behavior matters more than anything else. After that, the paint, the materials and the shop lighting matter most.
 
 Work autonomously from start to finish. Do not ask me questions. Make sensible decisions, keep going, and do not stop until every item in the acceptance checklist at the end works and you have checked it with screenshots.
 
@@ -83,12 +83,45 @@ The 2003–2007 GMT800 interior in LT trim:
 - A dyno control stand with a screen showing the live graph.
 
 **The dyno run (physically modeled, never a canned number):**
-- Engine model: a torque curve for the LLY built from the published rating of 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm (Allison-equipped), with a realistic diesel shape: strong low-end torque, flat peak, and falling torque toward the governor near 3,200 rpm. Peak values and their rpm must come out of the curve exactly as rated at the crank.
+- Engine model: torque is computed from the calibration (fuel quantity, injection timing, rail pressure and boost) and limited by the air available, not read from a fixed curve, so that tuning changes it (section 5A). With the stock calibration it must reproduce the published rating of 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm (Allison-equipped) exactly at the crank, with a realistic diesel shape: strong low-end torque, flat peak, and falling torque toward the governor near 3,200 rpm.
 - Drivetrain: the 5-speed Allison 1000 ratios (3.10, 1.81, 1.41, 1.00, 0.71, reverse 4.49; all confirmed), the torque converter locking up during the pull, the 3.73 axle ratio (the only ratio listed for the 6.6 L diesel in the K-2500 Crew Cab Short Box HD in the 2005 owner's manual) and the tire rolling diameter from the spec file, and a drivetrain loss consistent with a 4WD truck with an automatic (about 15 to 20 percent).
 - Procedure: the operator selects a gear (4th, 1:1, is the standard pull gear), the player holds full throttle, the rollers accelerate under the real inertia, the software reads roller speed and acceleration, and computes wheel horsepower and wheel torque against engine rpm.
 - Output: a graph of wheel hp and wheel lb-ft against rpm, with peak values, the SAE J1349 correction factor from the weather station, and a run history to compare runs. A stock truck must land in the real range of a stock LLY on a chassis dyno; derive it, don't hard-code it. Run-to-run variation stays within about 1 percent.
 - During and after the run: coolant and transmission temperatures rise, the fan sound, the exhaust note, the rollers spinning and the tires deforming slightly under load.
 - Safety realism: the run is refused if the straps are not attached or the hood is closed with the fan off, with a clear message, as a real operator would.
+
+## 5A. TUNING WITH AI LIVE
+
+The shop tunes the truck with **AI Live**, an original laptop tuning app built for this game. It works like real Duramax tuning tools, but its name, logo and screens are original: do not copy the name, branding or interface of any real tuning product.
+
+**The hardware and the ritual (real shop procedure):**
+- A laptop on a rolling cart, and an interface cable that plugs into the OBD-II port under the left side of the dash. A battery charger clipped to the batteries, as shops do before flashing.
+- Steps in order: plug in, key to RUN with the engine off, **read** the truck's current tune, **save a backup** of the stock tune (required before the first write), choose a tune, **write** it with a progress bar and a realistic duration, then cycle the key and start the engine.
+- A write fails if it is interrupted: the key turned off, the cable unplugged, or battery voltage too low without the charger. A failed write leaves the truck in a no-start state with the cluster dark or flickering until the backup or another tune is written. This is how real flashing behaves.
+
+**Quick tunes (the only tuning mode):**
+- A short list of named tunes, each card showing its purpose and its expected gains and risks: **Stock** (the factory calibration, always available), and four performance levels from mild to race. Model the levels on the owner's real five-position switchable LLY tune (see `reference/tuning/`); until that data is supplied, use clearly labeled estimates.
+- The selected tune changes the calibration the engine model reads: main fuel quantity, injection timing, rail pressure, boost and turbo vane targets, the smoke limiter, the torque limiters, and the Allison's shift points, line pressure and converter lockup.
+- The truck behaves differently on every level, on the dyno and at idle: power and torque curves, boost, exhaust temperature, smoke, sound and transmission behavior.
+
+**Physics that pushes back:**
+- More fuel without enough air gives black smoke on the dyno, higher exhaust gas temperature and smaller gains, as on a real diesel.
+- The engine model tracks cylinder pressure, exhaust gas temperature, turbo speed, coolant and transmission temperature on every pull and over repeated pulls (heat soak).
+- The stock **Allison 1000** has a torque capacity. Above it, the clutches slip: the transmission temperature climbs, the dyno graph turns ragged, and slip shows in the log.
+- The 2005 diesel supplement's **REDUCED ENGINE POWER** message appears when the engine computer would really go into protection.
+
+**Breakage (on, as the owner wants):** parts can fail when pushed too hard, at believable limits only, never randomly:
+- **Allison transmission:** prolonged slip burns the clutches. The truck then fails to hold the load on the dyno, and the transmission is marked as needing a rebuild.
+- **Head gaskets:** sustained high cylinder pressure lifts the heads, giving white smoke, coolant loss and climbing temperature.
+- **Turbocharger:** overspeed or extreme exhaust temperature damages it, with a change in sound and a loss of boost.
+- **Pistons:** extreme exhaust temperature held over time damages them, with a loss of power and smoke.
+- Each failure is announced clearly, explained in plain language (what failed and why), and can be repaired from the shop menu so play continues. Every limit lives in `src/data/truckSpec.js` with a source and a confidence tag. The race tune should be capable of hurting the stock transmission when abused, as on real trucks.
+
+**Datalogging and comparison:**
+- AI Live records a log during every dyno pull: rpm, fuel quantity, rail pressure, boost, airflow, injection timing, exhaust gas temperature, coolant and transmission temperature, and transmission slip.
+- After the run, the dyno screen overlays the selected tune's graph on the stock baseline, with the gain in wheel horsepower and torque. Runs and logs are saved and can be compared.
+
+**Accuracy:** GM's factory calibration tables are not public. Build the stock calibration to reproduce the published rating and the real stock dyno range, and build each tune level to reproduce the owner's real tune data or published results for LLY trucks on stock injectors, turbo and transmission. Record every value with its source in `truckSpec.js`, and list every estimate in `ACCURACY.md`.
 
 ## 6. SOUND
 
@@ -118,18 +151,19 @@ Procedural audio with the Web Audio API, built from the engine state: the Durama
 2. The truck exterior at correct dimensions on the dyno. Check the hero shot.
 3. The openings: doors, tailgate and hood, then the engine bay.
 4. The cab interior and the starting sequence with live gauges.
-5. The engine and drivetrain model, the dyno run, the graph and the correction factor.
-6. Walk mode with collision, the cameras, the intro, the UI and the audio.
-7. The shop equipment and inspection labels, quality settings and performance.
-8. Verification, the accuracy audit and polish (section 11).
+5. The engine and drivetrain model, the dyno run, the graph and the correction factor. Prove the stock numbers.
+6. AI Live: the laptop, the read, backup and write procedure, the quick tunes, the datalog, the comparison graph, and the breakage model.
+7. Walk mode with collision, the cameras, the intro, the UI and the audio.
+8. The shop equipment and inspection labels, quality settings and performance.
+9. Verification, the accuracy audit and polish (section 11).
 
-If something has to be simplified, cut in this order: shop equipment actions (keep the equipment, drop the interactions), the underside detail beyond what is visible from the pit, then the rear seat detail. Never cut the accuracy of the truck's shape, the engine bay, the gauges, or the dyno physics.
+If something has to be simplified, cut in this order: shop equipment actions (keep the equipment, drop the interactions), the underside detail beyond what is visible from the pit, then the rear seat detail, then breakage animations (keep the failure logic and messages). Never cut the stock-versus-tuned comparison, the read, backup and write procedure, and never cut the accuracy of the truck's shape, the engine bay, the gauges, or the dyno physics.
 
 ## 10. TECHNICAL
 
 - **Stack:** Vite plus Three.js, with clear modules: data (spec, labels), shop, truck exterior, openings, engine bay, interior, materials and procedural textures, engine and drivetrain model, dyno, player and collision, audio, cameras and UI.
 - **Code:** clean, no placeholders, no fake buttons and no pre-rendered video. Every listed control must really work.
-- **Tests:** unit tests for the engine and dyno math: the crank curve hits 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm; hp equals torque times rpm divided by 5,252 everywhere; the SAE correction factor is right for known inputs; wheel numbers fall in the configured loss range.
+- **Tests:** unit tests for the engine and dyno math: the crank curve hits 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm; hp equals torque times rpm divided by 5,252 everywhere; the SAE correction factor is right for known inputs; wheel numbers fall in the configured loss range; the stock calibration reproduces the rated curve; each tune level lands within its target range; each failure triggers only past its limit and never below it.
 - **README:** one-command setup (npm install, then npm run dev), all controls, and the architecture.
 - **Screenshot script:** `npm run shots` opens the app in Playwright, sets each named camera bookmark, and saves the screenshots below. The bookmarks are named presets in code.
 
@@ -137,7 +171,7 @@ If something has to be simplified, cut in this order: shop equipment actions (ke
 
 Run the app in a headless browser (Playwright, with a WebGL-capable flag):
 
-- **Checks:** no console errors that matter; the intro plays and skips; every door, the tailgate and the hood open and close; the engine starts with the glow plug wait and idles; a full dyno pull completes and produces a graph and peak numbers; the run is refused without straps; walk mode reaches every corner of the shop; frame time is reasonable; the unit tests pass.
+- **Checks:** no console errors that matter; the intro plays and skips; every door, the tailgate and the hood open and close; the engine starts with the glow plug wait and idles; a full dyno pull completes and produces a graph and peak numbers; the run is refused without straps; a backup is required before the first write; a full tune write works and an interrupted write fails and is recoverable; every quick tune changes the dyno result in the expected direction; abusing the race tune can break the transmission; walk mode reaches every corner of the shop; frame time is reasonable; the unit tests pass.
 - **Screenshots** in screenshots/:
   1. hero: low three-quarter front view of the truck on the dyno
   2. side profile showing the full crew cab and box proportions
@@ -149,6 +183,8 @@ Run the app in a headless browser (Playwright, with a WebGL-capable flag):
   8. the dyno pit view of the underside and rollers
   9. the shop wide shot with the equipment
   10. a close-up of the wheel, tire and badge detail
+  11. AI Live on the laptop during a tune write, with the cable plugged in under the dash
+  12. the dyno screen comparing the stock baseline with a performance tune
 
 **Art review:** open each screenshot and judge it as a demanding art director. Look for anything fake, flat, blocky, too dark, too bright, plastic or unfinished.
 
@@ -165,13 +201,15 @@ Run the app in a headless browser (Playwright, with a WebGL-capable flag):
 - [ ] The real diesel start sequence with the glow plug wait
 - [ ] A physically modeled dyno pull with wheel hp and torque, SAE correction and run history
 - [ ] Stock dyno results within the real stock LLY range, derived and not hard-coded
+- [ ] AI Live: read, backup, write with real failure on interruption, quick tunes, datalog and stock-versus-tuned comparison
+- [ ] Tuned results and breakage limits derived from sourced data, with estimates listed in `ACCURACY.md`
 - [ ] A complete, inspectable shop with solid collision
 - [ ] Walk, driver, dyno and photo camera modes; the intro; the help panel; UI hiding; PNG capture
 - [ ] Procedural engine, turbo, fan and roller sound
 - [ ] Smooth performance with a quality setting, and no console errors
 - [ ] Passing unit tests for the engine and dyno math
 - [ ] README, `ACCURACY.md` and the `npm run shots` script
-- [ ] All 10 screenshots saved, art-reviewed and accuracy-audited
+- [ ] All 12 screenshots saved, art-reviewed and accuracy-audited
 
 When you finish, report:
 - what you built
