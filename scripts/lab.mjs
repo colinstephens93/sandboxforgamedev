@@ -6,7 +6,7 @@ const app = await startApp(5198);
 const logs = [];
 const { browser, page } = await openPage({ url: app.url, quality: 'low', logs });
 await page.waitForFunction(() => window.__game && window.__game.frames > 1, null, { timeout: 120000 });
-await page.evaluate(() => window.__game.setCam([-10.5, 1.65, 7.5], [0, 1.4, -1], 60));
+await page.evaluate(() => window.__game.cam([-10.5, 1.65, 7.5], [0, 1.4, -1], 60));
 for (const v of variants) {
   await page.evaluate(v.js);
   await page.waitForTimeout(600);

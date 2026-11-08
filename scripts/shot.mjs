@@ -6,7 +6,7 @@ const app = await startApp();
 const logs = [];
 const { browser, page } = await openPage({ url: app.url, width: +W, height: +H, quality, logs });
 await page.waitForFunction(() => window.__game && window.__game.frames > 1, null, { timeout: 180000 });
-await page.evaluate(([c, t, f]) => window.__game.setCam(c.split(',').map(Number), t.split(',').map(Number), +f), [cam, tgt, fov]);
+await page.evaluate(([c, t, f]) => window.__game.cam(c.split(',').map(Number), t.split(',').map(Number), +f), [cam, tgt, fov]);
 await page.waitForTimeout(1500);
 const data = await page.evaluate(() => window.__game.shot());
 fs.mkdirSync('.dev', { recursive: true });

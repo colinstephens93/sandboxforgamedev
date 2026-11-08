@@ -13,6 +13,22 @@
   #loading .bar{width:320px;height:3px;background:#22252b;overflow:hidden;border-radius:2px}
   #loading .bar i{display:block;height:100%;width:0;background:#d9a441;transition:width .15s}
   #loading small{margin-top:10px;color:#6c727c;font-size:12px;height:14px}
+
+  .ui-hud{position:fixed;inset:0;pointer-events:none;font-size:14px}
+  .ui-cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(255,255,255,.75);box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+  .ui-prompt{position:absolute;left:50%;top:56%;transform:translateX(-50%);padding:6px 12px;background:rgba(10,10,12,.72);border:1px solid #3a3d44;border-radius:4px;opacity:0;transition:opacity .15s;white-space:nowrap}
+  .ui-label{position:absolute;left:50%;top:63%;transform:translateX(-50%);max-width:520px;padding:8px 12px;background:rgba(10,10,12,.78);border-left:3px solid #d9a441;opacity:0;transition:opacity .15s;font-size:13px;line-height:1.35}
+  .ui-msg{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);max-width:760px;padding:10px 16px;background:rgba(10,10,12,.82);border:1px solid #4a4d55;border-radius:4px;opacity:0;transition:opacity .3s;text-align:center;line-height:1.4}
+  .ui-fps{position:absolute;right:10px;top:8px;font-size:12px;color:#8a8f98}
+  .ui-help{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(780px,92vw);max-height:84vh;overflow:auto;padding:20px 26px;background:rgba(12,13,16,.94);border:1px solid #3a3d44;border-radius:6px;pointer-events:auto}
+  .ui-help h2{margin:0 0 2px;font-size:20px;letter-spacing:.06em} .ui-help .sub{margin:0 0 12px;color:#8a8f98}
+  .ui-help table{border-collapse:collapse;width:100%} .ui-help td{padding:5px 8px;border-top:1px solid #23252b;vertical-align:top} .ui-help td:first-child{width:92px;color:#d9a441}
+  .ui-help .q{margin-top:10px;color:#9aa0aa} .ui-help .hint{color:#6c727c;margin:8px 0 0}
+  .panel{position:fixed;z-index:20;background:rgba(14,15,18,.96);border:1px solid #3a3d44;border-radius:6px;color:#e6e6e6;pointer-events:auto;font-size:13px}
+  .panel h3{margin:0 0 8px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:#d9a441}
+  .panel button{background:#23262c;color:#e6e6e6;border:1px solid #3d414a;border-radius:3px;padding:6px 10px;cursor:pointer;font:inherit}
+  .panel button:hover{background:#2d3139} .panel button:disabled{opacity:.4;cursor:default}
+  .panel button.primary{background:#7a5a1c;border-color:#d9a441}
 </style>
 </head>
 <body>

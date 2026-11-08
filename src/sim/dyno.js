@@ -142,8 +142,14 @@ export class Dyno {
     return run;
   }
 
+  // partial analysis of the run in progress (for the live graph)
+  liveAnalysis() {
+    if (!this.rec || this.rec.t.length < 60) return null;
+    try { return this.analyze(true); } catch { return null; }
+  }
+
   // Power from roller acceleration, smoothed, binned by engine rpm, parasitic-compensated, corrected.
-  analyze() {
+  analyze(live = false) {
     const r = this.rec; const n = r.t.length;
     if (n < 40) return null;
     const dt = 1 / DYNO_CFG.sampleHz;
