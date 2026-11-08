@@ -25,6 +25,12 @@ tables against the physics).
 A GPU with WebGL2 is expected; the quality setting (Q, or F1 panel) is low / medium / high (high by default). Software rendering works
 but is slow.
 
+## Optional: Blender build tools
+
+Blender is used only through scripts in `tools/blender/` (headless `bpy`): reference overlay renders for proportion checks and baked
+lighting for the shop. Nothing is hand-modeled or downloaded, and the game runs without any of their outputs. See `docs/DECISIONS.md`
+and `tools/blender/README.md`.
+
 ## Controls
 
 | Key | Action |
