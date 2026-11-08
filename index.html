@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Duramax Dyno Shop</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0c0e;overflow:hidden;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:#e8e8e8}
+  canvas#view{display:block;width:100vw;height:100vh}
+  #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0b0c0e;z-index:50;transition:opacity .6s}
+  #loading h1{font-weight:600;letter-spacing:.18em;font-size:20px;margin:0 0 6px;text-transform:uppercase}
+  #loading p{margin:0 0 22px;color:#8a8f98;font-size:13px}
+  #loading .bar{width:320px;height:3px;background:#22252b;overflow:hidden;border-radius:2px}
+  #loading .bar i{display:block;height:100%;width:0;background:#d9a441;transition:width .15s}
+  #loading small{margin-top:10px;color:#6c727c;font-size:12px;height:14px}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="loading"><h1>Duramax Dyno Shop</h1><p>2005 Silverado 2500HD &middot; 6.6L LLY &middot; Allison 1000</p><div class="bar"><i id="loadbar"></i></div><small id="loadmsg">Starting</small></div>
+<div id="ui"></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
