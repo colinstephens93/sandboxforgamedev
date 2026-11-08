@@ -16,18 +16,19 @@ The one failure that ruins this project is anything that is not true to the real
 - **One source of truth:** put every real-world number in `src/data/truckSpec.js` (dimensions, weights, engine ratings, gear ratios, tire size, dyno constants). Each value carries a comment with its source and a confidence tag: `confirmed` or `estimated`. Models, physics, gauges and the dyno all read from this file. No magic numbers elsewhere.
 - **Year-correct:** this is the 2003–2007 "Classic" GMT800 body, the 2005 model year, with the LLY engine and the 5-speed Allison. Never mix in parts of other years: no 2006+ LBZ engine, no 6-speed Allison, no 2007.5+ GMT900 body, no LB7 injector layout.
 - **Do not invent.** If a detail is not in this prompt, not in the `reference/` folder, and you are not certain of it, use the plainest correct option and add it to `ACCURACY.md` as "unverified". Never fill a gap with a guess that looks confident.
-- **Reference photos:** if a `reference/` folder exists, open every image in it before modeling and match it. Those photos override your memory.
+- **Reference photos:** open every image in `reference/` and read `reference/INDEX.md` before modeling. The index says what each photo is trusted for. Where a photo shows something the index marks as non-stock, build the factory 2005 part instead.
+- **Stock only:** the truck in the game is a factory-stock 2005 at factory ride height. No leveling kit, lift, aftermarket tires, aftermarket intake parts, step bars or spray-in bed liner.
 - **Units:** model in meters (1 unit = 1 m), but keep the source values in inches, feet, lb, hp and lb-ft in the spec file and convert in code. Display US units in the UI.
 
 ## 1. THE TRUCK (exterior)
 
 Configuration (default, change in the spec file only):
-- 2005 Chevrolet Silverado 2500HD, LT trim, Crew Cab (four full-size doors), 6.5 ft box (confirmed by owner), 4WD, Summit White.
+- 2005 Chevrolet Silverado 2500HD, LT trim, Crew Cab (four full-size doors), 6.5 ft box, 4WD, Summit White, 6.6 L Duramax LLY, 5-speed Allison 1000, factory-stock (all confirmed by owner). Tan leather interior, as in the reference photos.
 
 Main dimensions:
 - Wheelbase 153.0 in (confirmed for the crew cab short box; the 8 ft box is 167.0 in).
 - Overall width about 79.7 in without mirrors; height about 77 in. Overall length per a verified source; record it in the spec file with its source.
-- Tires LT245/75R16, 8-lug wheels with an 8 x 6.5 in (8 x 165.1 mm) bolt pattern, 16 in polished aluminum LT wheels. Tire sidewall lettering readable at the right scale.
+- Factory tires LT245/75R16E on 16 x 6.5 in rims, 55 psi front and 80 psi rear (from the door placard in the reference photos), 8-lug wheels with an 8 x 6.5 in (8 x 165.1 mm) bolt pattern, 16 in polished aluminum LT wheels. Tire sidewall lettering readable at the right scale.
 - Human-scale checks: door handle height, step-in height for a 4WD HD, bed rail height and tailgate height must all look right next to a 1.78 m person.
 
 Body:
