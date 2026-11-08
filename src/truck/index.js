@@ -8,6 +8,8 @@ import { hoodHalfWidth, hoodHeight, roofHalfWidth, roofHeight, ST, H, IN_TO_M, W
 import { buildBodyGeometry, topPanel, topPerimeter, skirtStrip, GAP, DOOR, win, sA, ROOF_EDGE_Y } from './body.js';
 import { gridPanel, colPos, rowPos } from './panels.js';
 import { buildFront, buildMirror, buildHandle } from './front.js';
+import { buildEngineBay } from './engine/index.js';
+import { buildHoodUnder } from './hoodUnder.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -105,6 +107,10 @@ export function buildTruck({ quality }) {
     const c = new THREE.Mesh(new THREE.CylinderGeometry(15.25 * IN, 15.25 * IN, 9.8 * IN, 28), wheelMat);
     c.rotation.z = Math.PI / 2; c.position.set(sx * (track / 2 - 0.0) * IN, 14.5 * IN, z * IN); c.name = 'wheel_placeholder'; root.add(c);
   }
+  // ---------------- engine bay (3.3) and hood underside with the spring-loaded hinges (3.2) ----------------
+  const bay = buildEngineBay({ quality }); root.add(bay.group); parts.engineBay = bay;
+  const hoodUnder = buildHoodUnder({ quality, mats: bay.mats }); hood.add(hoodUnder.group); parts.hoodUnder = hoodUnder;
+  const anchors = { ...bay.anchors, ...hoodUnder.anchors, hoodHinge: bay.anchors.hoodHinge };
   root.userData.parts = parts;
-  return { group: root, parts, colliders: [] };
+  return { group: root, parts, colliders: [], anchors, update: (dt, st) => bay.update(dt, st) };
 }
