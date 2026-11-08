@@ -5,7 +5,7 @@ import fs from 'node:fs';
 export async function runScript(page, { dir, only = null }) {
   fs.mkdirSync(dir, { recursive: true });
   const ev = (fn, arg) => page.evaluate(fn, arg);
-  const shot = async (name) => { await page.waitForTimeout(300); await page.screenshot({ path: `${dir}/${name}.png` }); console.log('shot', name); };
+  const shot = async (name) => { await page.waitForTimeout(300); await page.screenshot({ path: `${dir}/${name}.png`, timeout: 300000 }); console.log('shot', name); };
   const adv = (s) => ev((s) => window.__game.advance(s), s);
   const panel = async (name) => { await ev((n) => { const g = window.__game; g.closePanels(); g.openPanel(n); }, name); await adv(0.3); };
   const start = async () => {
