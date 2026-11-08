@@ -259,6 +259,7 @@ export class Game {
   }
 
   loop(t) {
+    if (this.paused) { this.last = t; requestAnimationFrame((tt) => this.loop(tt)); return; }
     const dt = Math.min(0.05, (t - this.last) / 1000); this.last = t; this.frames++;
     this.update(dt);
     this.R.render(dt);

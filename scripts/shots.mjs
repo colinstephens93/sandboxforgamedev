@@ -25,9 +25,15 @@ for (const name of BOOKMARK_ORDER) {
     g.prepare(presets[n]); g.mode = 'fixed';
   }, [name]);
   if (b.pos) await page.evaluate(([p, t, f]) => window.__game.cam(p, t, f), [b.pos, b.tgt, b.fov]);
-  await page.waitForTimeout(2500);
-  await page.evaluate(() => window.__game.R.render(0.016));
-  await page.screenshot({ path: `screenshots/${b.file}.png` });
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => { const g = window.__game; g.paused = true; });
+  await page.waitForTimeout(500);
+  if (b.dom) await page.screenshot({ path: `screenshots/${b.file}.png`, timeout: 300000 });
+  else {
+    const data = await page.evaluate(() => { const g = window.__game; g.R.render(0.016); return g.canvas.toDataURL('image/png'); });
+    fs.writeFileSync(`screenshots/${b.file}.png`, Buffer.from(data.split(',')[1], 'base64'));
+  }
+  await page.evaluate(() => { window.__game.paused = false; });
 }
 const errs = logs.filter((l) => /error/i.test(l));
 if (errs.length) console.log('console errors:\n' + errs.join('\n'));
