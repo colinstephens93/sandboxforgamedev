@@ -19,6 +19,7 @@ import { Ignition, KEY } from '../sim/startSequence.js';
 import { AILive } from '../sim/flash.js';
 import { loadCal } from '../sim/calibrations.js';
 import { degFtoC } from '../data/truckSpec.js';
+import { registerUi } from '../ui/index.js';
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 const TRUCK_Z = DYNO.truckOrigin.z;
@@ -70,6 +71,7 @@ export class Game {
     this.state.dyno = this.dyno; this.state.ignition = this.ign; this.state.ailive = this.ai; this.state.plant = this.plant;
     this.truckCtl = setupTruckOpenings(this.truck, { say: (t) => this.ui.say(t, 5), onLights: (on) => this.onDoorLights(on) });
     this.bindKeys();
+    registerUi(this);
     this.last = performance.now(); this.setMode('intro'); this.introT = 0;
     p(1, 'Ready');
     document.getElementById('loading').style.opacity = '0'; setTimeout(() => document.getElementById('loading').remove(), 700);
@@ -152,6 +154,7 @@ export class Game {
 
   update(dt) {
     this.time += dt;
+    for (const h of this.hooks) h(dt);
     // fixed-step simulation
     this.simAcc += dt; let n = 0;
     while (this.simAcc >= 1 / 120 && n < 8) { this.stepSim(1 / 120); this.simAcc -= 1 / 120; n++; }
