@@ -112,7 +112,7 @@ export function buildShelving(ctx) {
   // side-stack neighbors so the slot reads as reserved between real stock
   addBox(0.2, 0.15, 0.3, cxl - 0.42, yd, 0.04, 0.03, 0);
   addBox(0.2, 0.15, 0.3, cxl + 0.42, yd, 0.02, -0.04, 2);
-  B.build(unit, { cast: true, name: 'partsBoxes' });
+  B.build(unit, { cast: false, name: 'partsBoxes' });
   anchors.lbzRegulatorSlot = new THREE.Object3D();
   anchors.lbzRegulatorSlot.name = 'lbzRegulatorSlot';
   anchors.lbzRegulatorSlot.position.set(cxl, yd + 0.007, 0.0);

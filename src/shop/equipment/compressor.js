@@ -8,14 +8,10 @@ import { SHOP } from '../layout.js';
 const PIPE_R = 0.0165;      // 3/4 in nominal copper / black iron (about 33 mm outside diameter)
 const WALL = 0.06;          // pipe center distance from the wall surface
 
-function gaugeMesh(M, quality, max, size = 0.045) {
-  const g = new THREE.Group();
-  const bezel = new THREE.Mesh(new THREE.CylinderGeometry(size, size, 0.022, 20), M.chrome); bezel.rotation.x = Math.PI / 2; g.add(bezel);
-  const dial = new THREE.Mesh(new THREE.CircleGeometry(size * 0.9, 24), canvasMaterial(gaugeCanvas(max, 'PSI', 128), { roughness: 0.3 }));
-  dial.position.z = 0.0115; g.add(dial);
-  const lens = new THREE.Mesh(new THREE.CircleGeometry(size * 0.9, 24), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, roughness: 0.02, clearcoat: 1 }));
-  lens.position.z = 0.012; g.add(lens);
-  return g;
+// pressure gauge facing -x: chrome bezel + a dial circle that shares one canvas material
+function gauge(P, M, dialMat, x, y, z, size = 0.045) {
+  P.cyl(M.chrome, size, 0.022, x, y, z, { axis: 'x', seg: 20 });
+  P.push(dialMat, new THREE.CircleGeometry(size * 0.9, 24), x - 0.0115, y, z, 0, -Math.PI / 2, 0);
 }
 
 function buildCompressor(M, quality) {
@@ -37,11 +33,11 @@ function buildCompressor(M, quality) {
   P.box(M.darkSteel, 0.62, 0.03, 0.58, 0, y1 + 0.02, 0.0, { r: 0.006 });
   // two-stage pump: crankcase, LP and HP cylinders with fins, heads, intercooler, air filter
   const cy = y1 + 0.17;
-  P.cyl(M.cast, 0.085, 0.3, 0.0, cy, -0.13, { axis: 'x', seg: 16 });
-  P.cyl(M.cast, 0.07, 0.03, 0.16, cy, -0.13, { axis: 'x', seg: 16 });
-  for (let k = 0; k < 7; k++) { P.cyl(M.cast, 0.074, 0.006, -0.055, cy + 0.12 + k * 0.026, -0.13, { seg: 16 }); P.cyl(M.cast, 0.045, 0.005, 0.075, cy + 0.1 + k * 0.022, -0.13, { seg: 12 }); }
-  P.cyl(M.cast, 0.062, 0.2, -0.055, cy + 0.2, -0.13, { seg: 14 });
-  P.cyl(M.cast, 0.036, 0.15, 0.075, cy + 0.17, -0.13, { seg: 12 });
+  P.cyl(M.lightSteel, 0.085, 0.3, 0.0, cy, -0.13, { axis: 'x', seg: 16 });
+  P.cyl(M.lightSteel, 0.07, 0.03, 0.16, cy, -0.13, { axis: 'x', seg: 16 });
+  for (let k = 0; k < 7; k++) { P.cyl(M.lightSteel, 0.074, 0.006, -0.055, cy + 0.12 + k * 0.026, -0.13, { seg: 16 }); P.cyl(M.lightSteel, 0.045, 0.005, 0.075, cy + 0.1 + k * 0.022, -0.13, { seg: 12 }); }
+  P.cyl(M.steel, 0.062, 0.2, -0.055, cy + 0.2, -0.13, { seg: 14 });
+  P.cyl(M.steel, 0.036, 0.15, 0.075, cy + 0.17, -0.13, { seg: 12 });
   P.cyl(M.blackIron, 0.07, 0.04, -0.055, cy + 0.32, -0.13, { seg: 14 });
   P.cyl(M.black, 0.075, 0.09, -0.055, cy + 0.395, -0.13, { seg: 14 });       // air filter
   P.cyl(M.blackIron, 0.045, 0.02, 0.075, cy + 0.26, -0.13, { seg: 12 });
@@ -70,10 +66,13 @@ function buildCompressor(M, quality) {
   P.box(M.red, 0.1, 0.012, 0.014, R + 0.08, 1.04, 0.0);
   // data plate on the tank
   P.build(g, { cast: true });
-  // gauges on the front manifold: tank pressure and regulated line pressure
-  const g1 = gaugeMesh(M, quality, 200); g1.rotation.y = -Math.PI / 2; g1.position.set(-R - 0.09, 1.19, -0.075); g.add(g1);
-  const g2 = gaugeMesh(M, quality, 200); g2.rotation.y = -Math.PI / 2; g2.position.set(-R - 0.09, 1.19, 0.075); g.add(g2);
-  const g3 = gaugeMesh(M, quality, 200, 0.032); g3.rotation.y = -Math.PI / 2; g3.position.set(-0.25 - 0.056 - 0.01, y1 + 0.12, 0.2); g.add(g3);
+  // gauges on the front manifold: tank pressure and regulated line pressure (grouped for their own label), pressure switch gauge
+  const dialMat = canvasMaterial(gaugeCanvas(200, 'PSI', 128), { roughness: 0.3 });
+  const gaugeGrp = new THREE.Group(); gaugeGrp.userData.labelId = 'shop.airGauge'; g.add(gaugeGrp);
+  const GP = new Part();
+  gauge(GP, M, dialMat, -R - 0.09, 1.19, -0.075); gauge(GP, M, dialMat, -R - 0.09, 1.19, 0.075);
+  GP.build(gaugeGrp, { cast: false });
+  const GP2 = new Part(); gauge(GP2, M, dialMat, -0.25 - 0.056 - 0.01, y1 + 0.12, 0.2, 0.032); GP2.build(g, { cast: false });
   label(g, 'shop.compressor');
   const drain = new THREE.Group(); drain.userData.labelId = 'shop.tankDrain';
   const D = new Part();
@@ -81,7 +80,6 @@ function buildCompressor(M, quality) {
   D.sph(M.brass, 0.026, 0.04, 0.13, R * 0.9 + 0.045, { seg: 10 });                         // drain: ball valve body
   D.box(M.red, 0.012, 0.012, 0.1, 0.04, 0.13 + 0.03, R * 0.9 + 0.1, { rx: 0.5 });         // drain: lever
   D.build(drain, { cast: false }); g.add(drain);
-  const gaugeGrp = new THREE.Group(); gaugeGrp.userData.labelId = 'shop.airGauge'; gaugeGrp.add(g1, g2); g.add(gaugeGrp);
   return g;
 }
 

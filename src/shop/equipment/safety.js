@@ -46,11 +46,15 @@ export function stationButtons(M, doorIndex, doorsProvider, interactables, updat
   const H = new Part();
   H.box(M.safetyYellow, 0.1, 0.24, 0.06, 0, 0, 0.03, { r: 0.008 });      // enclosure
   H.box(M.darkSteel, 0.12, 0.3, 0.05, 0, 0, -0.015);                     // backing plate (bridges the wainscot step to the wall at z = -9.0)
+  for (const y of [0.075, 0, -0.075]) H.torus(M.chrome, 0.024, 0.003, 0.014, y, 0.062, { axis: 'z', seg: 18, rseg: 5 });
+  // printed arrows and a stop square beside the buttons
+  const tri = (dirUp, y) => { const s = new THREE.Shape(); const k = dirUp ? 1 : -1; s.moveTo(-0.014, -0.012 * k); s.lineTo(0.014, -0.012 * k); s.lineTo(0, 0.014 * k); s.closePath(); H.push(M.whitePlastic, new THREE.ShapeGeometry(s), -0.026, y, 0.0604); };
+  tri(true, 0.075); tri(false, -0.075);
+  H.box(M.whitePlastic, 0.022, 0.022, 0.001, -0.026, 0, 0.0605);
   H.build(g, { cast: false });
   const mk = (y, mat, label_, prompt, run, shape) => {
-    const b = new THREE.Group(); b.position.set(0, y, 0.066);
+    const b = new THREE.Group(); b.position.set(0.014, y, 0.066);
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.021, 0.022, 20), mat); cap.rotation.x = Math.PI / 2; cap.position.z = 0.0; b.add(cap);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.023, 0.003, 6, 20), M.chrome); ring.position.z = -0.008; b.add(ring);
     g.add(b);
     b.userData.press = 0;
     interactive(b, prompt, (c) => { run(c); b.userData.press = 1; });
@@ -60,7 +64,7 @@ export function stationButtons(M, doorIndex, doorsProvider, interactables, updat
   const door = () => doorsProvider()[doorIndex];
   const up = mk(0.075, M.green, 'UP', 'Raise the overhead door', (c) => { const d = door(); if (d) { d.target = 1; c?.say?.(`Overhead door ${doorIndex + 1}: raising`); } });
   const stop = mk(0.0, M.ledRed, 'STOP', 'Stop the overhead door', (c) => { const d = door(); if (d) { d.target = d.open; c?.say?.(`Overhead door ${doorIndex + 1}: stopped`); } });
-  const down = mk(-0.075, M.black, 'DOWN', 'Lower the overhead door', (c) => { const d = door(); if (d) { d.target = 0; c?.say?.(`Overhead door ${doorIndex + 1}: lowering`); } });
+  const down = mk(-0.075, M.blue, 'DOWN', 'Lower the overhead door', (c) => { const d = door(); if (d) { d.target = 0; c?.say?.(`Overhead door ${doorIndex + 1}: lowering`); } });
   g.userData.buttons = { up, stop, down };
   label(g, 'shop.doorStation');
   // the whole station toggles with one interact as a fallback when the button is not hit directly
@@ -85,8 +89,8 @@ function firstAidCabinet(M) {
 function eyewash(M) {
   const g = new THREE.Group(); g.name = 'eyewash';
   const P = new Part();
-  P.box(M.lightSteel, 0.3, 0.46, 0.05, 0, 0.0, -0.015, { r: 0.006 });                      // backing plate
-  P.lathe(M.green, [[0.001, 0.0], [0.07, 0.012], [0.19, 0.075], [0.195, 0.1], [0.18, 0.1], [0.09, 0.05], [0.001, 0.04]], 0, -0.2, 0.2, { seg: 24 }); // bowl
+  P.box(M.lightSteel, 0.22, 0.3, 0.05, 0, -0.02, -0.015, { r: 0.006 });                     // backing plate
+  P.lathe(M.green, [[0.001, 0.0], [0.08, 0.014], [0.22, 0.085], [0.226, 0.11], [0.21, 0.11], [0.1, 0.055], [0.001, 0.045]], 0, -0.2, 0.22, { seg: 24 }); // bowl
   P.cyl(M.chrome, 0.02, 0.2, 0, -0.08, 0.04, { seg: 10 });                                  // supply
   P.cyl(M.green, 0.022, 0.05, 0, -0.18, 0.05, { seg: 10 });
   for (const s of [-1, 1]) { P.cyl(M.green, 0.016, 0.07, s * 0.07, -0.14, 0.15, { seg: 8, rx: -0.5 }); P.cyl(M.safetyYellow, 0.02, 0.016, s * 0.07, -0.11, 0.165, { seg: 8, rx: -0.5 }); }
@@ -104,7 +108,7 @@ function electricalPanel(M) {
   P.box(M.black, 0.03, 0.12, 0.02, 0.15, 0.0, 0.085, { r: 0.004 });         // handle
   P.box(M.paper, 0.1, 0.07, 0.004, -0.08, 0.2, 0.072);
   P.box(M.darkSteel, 0.42, 0.62, 0.012, 0, 0, -0.063);
-  P.cyl(M.chrome, 0.015, 0.7, 0.0, 0.62, -0.01, { seg: 8 });                // conduit up to the ceiling
+  P.cyl(M.lightSteel, 0.015, 4.15, 0.0, 2.38, -0.01, { seg: 8 });                // conduit up toward the roof
   P.cyl(M.chrome, 0.022, 0.025, 0.0, 0.3, -0.0, { seg: 8 });
   P.build(g, { cast: false });
   return g;

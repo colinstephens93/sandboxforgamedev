@@ -40,8 +40,8 @@ function whiteboardCanvas() {
 export function buildOffice(ctx) {
   const { M, group, quality, shop, anchors, interactables, updaters } = ctx;
   const O = new THREE.Group(); O.name = 'officeFurniture';
-  const laminate = new THREE.MeshStandardMaterial({ color: 0x4d4034, roughness: 0.5, metalness: 0.0 });
-  const cabGray = new THREE.MeshStandardMaterial({ color: 0x8e9498, roughness: 0.45, metalness: 0.55 });
+  const laminate = M.virt('plastic', 0x4d4034);
+  const cabGray = M.virt('steel', 0x8e9498);
   const P = new Part();
   const d = foot('office.desk');
   // ---- desk: top, modesty panel, pedestal on the south end, legs on the north end (desk runs along z) ----
@@ -63,7 +63,7 @@ export function buildOffice(ctx) {
   P.box(M.paper, 0.22, 0.04, 0.3, dx - 0.12, topY + 0.02, dz + 0.66, { r: 0.002, ry: 0.15 });  // paper stack
   P.cyl(M.whitePlastic, 0.04, 0.09, dx - 0.2, topY + 0.045, dz - 0.62, { seg: 12 });     // mug
   P.cyl(M.red, 0.04, 0.012, dx - 0.2, topY + 0.09, dz - 0.62, { seg: 12 });
-  const deskG = new THREE.Group(); deskG.name = 'desk'; P.build(deskG, { cast: true }); label(deskG, 'shop.desk'); O.add(deskG);
+  const deskG = new THREE.Group(); deskG.name = 'desk'; P.build(deskG, { cast: false }); label(deskG, 'shop.desk'); O.add(deskG);
   const compG = new THREE.Group(); compG.name = 'shopComputerParts'; O.add(compG);
   const Q = new Part();
   Q.box(M.black, 0.2, 0.012, 0.2, dx - 0.05, topY + 0.006, dz - 0.1, { r: 0.004 });      // monitor base
@@ -75,7 +75,7 @@ export function buildOffice(ctx) {
   Q.box(M.black, 0.45, 0.42, 0.2, dx + 0.0, 0.21, dz - 0.45, { r: 0.012 });
   Q.box(M.darkSteel, 0.01, 0.38, 0.17, dx - 0.226, 0.21, dz - 0.45);
   Q.cyl(M.ledGreen, 0.004, 0.004, dx - 0.232, 0.32, dz - 0.43, { axis: 'x', seg: 6 });
-  Q.build(compG, { cast: true });
+  Q.build(compG, { cast: false });
 
   // the monitor screen plane (facing the chair, -x)
   const scrMat = canvasMaterial(shopScreenCanvas(quality.tex), { roughness: 0.25, emissive: 0.9 });
@@ -102,7 +102,7 @@ export function buildOffice(ctx) {
   C.cyl(M.chrome, 0.025, 0.3, 0, seatY - 0.2, 0, { seg: 10 });
   for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; C.box(M.black, 0.05, 0.03, 0.3, Math.sin(a) * 0.15, 0.09, Math.cos(a) * 0.15, { ry: a }); C.sph(M.black, 0.03, Math.sin(a) * 0.3, 0.035, Math.cos(a) * 0.3, { seg: 8 }); }
   for (const s of [-1, 1]) { C.box(M.black, 0.04, 0.02, 0.26, s * 0.27, seatY + 0.22, -0.02); C.box(M.black, 0.03, 0.2, 0.03, s * 0.27, seatY + 0.12, 0.05); }
-  C.build(cg, { cast: true }); label(cg, 'shop.officeChair'); O.add(cg);
+  C.build(cg, { cast: false }); label(cg, 'shop.officeChair'); O.add(cg);
 
   // ---- filing cabinet ----
   const f = foot('office.cabinet');
@@ -116,7 +116,7 @@ export function buildOffice(ctx) {
     F.box(M.paper, 0.1, 0.04, 0.003, 0, y - 0.02, fd / 2 + 0.011);
   }
   F.cyl(M.chrome, 0.011, 0.01, fw / 2 - 0.05, fh - 0.06, fd / 2 + 0.01, { axis: 'z', seg: 10 });
-  F.build(fg, { cast: true }); label(fg, 'shop.filingCabinet'); O.add(fg);
+  F.build(fg, { cast: false }); label(fg, 'shop.filingCabinet'); O.add(fg);
   // coffee maker on the cabinet
   const cm = new Part(); cm.box(M.black, 0.2, 0.3, 0.2, 0, 0.15, 0, { r: 0.015 }); cm.cyl(M.glass, 0.07, 0.15, 0, 0.1, 0.0, { seg: 12 }); cm.box(M.red, 0.03, 0.02, 0.03, 0.06, 0.28, 0.101);
   const cmg = new THREE.Group(); cm.build(cmg); cmg.position.set(f.x, fh, f.z); O.add(cmg);
@@ -132,7 +132,7 @@ export function buildOffice(ctx) {
   R.box(M.paper, 0.3, 0.012, 0.2, 0, 0.62 + 0.195, 0.2);
   R.box(M.black, 0.12, 0.05, 0.03, 0.14, 0.62 + 0.23, 0.2, { rx: -0.5 });                  // panel
   R.box(M.ledGreen, 0.01, 0.01, 0.004, 0.18, 0.62 + 0.24, 0.215);
-  R.build(rg, { cast: true }); label(rg, 'shop.printer'); O.add(rg);
+  R.build(rg, { cast: false }); label(rg, 'shop.printer'); O.add(rg);
 
   // ---- wall calendar and clock on the inside faces of the office walls ----
   {
@@ -158,13 +158,13 @@ export function buildOffice(ctx) {
     const vc = new Part(); const vg = new THREE.Group(); vg.position.set(7.9, 0, 4.5); vg.rotation.y = 2.6;
     vc.box(M.blue, 0.42, 0.04, 0.4, 0, 0.45, 0, { r: 0.012 }); vc.box(M.blue, 0.4, 0.34, 0.035, 0, 0.66, -0.19, { r: 0.012, rx: -0.1 });
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) vc.box(M.darkSteel, 0.03, 0.43, 0.03, sx * 0.18, 0.215, sz * 0.17);
-    vc.build(vg, { cast: true }); label(vg, 'shop.visitorChair'); O.add(vg);
+    vc.build(vg, { cast: false }); label(vg, 'shop.visitorChair'); O.add(vg);
   }
   // ---- rug and wastebasket ----
   {
-    const rug = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.8), new THREE.MeshStandardMaterial({ color: 0x3b4655, roughness: 0.98 }));
-    rug.rotation.x = -Math.PI / 2; rug.position.set(10.75, 0.016, 5.5); rug.receiveShadow = true; O.add(rug);
-    const wb = new Part(); wb.cyl(M.black, 0.14, 0.3, 11.1, 0.15, 7.3, { seg: 14, r2: 0.12 }); const wbg = new THREE.Group(); wb.build(wbg); O.add(wbg);
+    const rb = new Part(); rb.box(M.virt('plastic', 0x3b4655), 1.5, 0.006, 1.8, 10.75, 0.015, 5.5);
+    rb.cyl(M.black, 0.14, 0.3, 11.1, 0.15, 7.3, { seg: 14, r2: 0.12 });
+    const rbg = new THREE.Group(); rb.build(rbg); O.add(rbg);
   }
   // ---- ceiling troffer: follows the shop light switch ----
   const oz = ZONES.office;

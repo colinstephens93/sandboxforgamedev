@@ -24,7 +24,7 @@ function partsWasher(M) {
   // hinged lid, standing up against the wall behind the sink (fusible link)
   P.box(M.safetyYellow, 0.02, 0.62, 0.9, -0.32, 1.1, 0.0, { r: 0.004, rz: -0.12 });
   P.box(M.darkSteel, 0.03, 0.03, 0.94, -0.3, 0.8, 0.0);
-  P.build(g, { cast: true });
+  P.build(g, { cast: false });
   label(g, 'shop.partsWasher');
   return g;
 }
@@ -83,7 +83,7 @@ function drainPan(M) {
   P.hose(M.black, [[0.0, 0.17, 0.27], [0.1, 0.12, 0.36], [0.25, 0.05, 0.38]], 0.012, { segs: 12, radial: 6 });
   // push handle
   P.rod(M.darkSteel, [-0.2, 0.5, -0.2], [-0.2, 0.9, -0.3], 0.012); P.rod(M.darkSteel, [0.2, 0.5, -0.2], [0.2, 0.9, -0.3], 0.012); P.cyl(M.black, 0.015, 0.4, 0, 0.9, -0.3, { axis: 'x', seg: 8 });
-  P.build(g, { cast: true });
+  P.build(g, { cast: false });
   label(g, 'shop.oilDrain');
   return g;
 }
@@ -96,7 +96,7 @@ function usedOilDrum(M) {
   P.torus(M.darkSteel, 0.295, 0.012, 0, 0.88, 0, { axis: 'y', seg: 24, rseg: 5 });
   P.lathe(M.safetyYellow, [[0.01, 0.0], [0.04, 0.0], [0.15, 0.12], [0.155, 0.15], [0.14, 0.15], [0.04, 0.04]], 0.0, 0.88, 0, { seg: 20 });  // funnel
   P.cyl(M.chrome, 0.03, 0.02, 0.17, 0.895, 0.1, { seg: 10 });
-  P.build(g, { cast: true });
+  P.build(g, { cast: false });
   label(g, 'shop.usedOilDrum');
   return g;
 }
@@ -108,7 +108,7 @@ function trashCan(M) {
   P.torus(M.grayPlastic, 0.26, 0.012, 0, 0.8, 0, { axis: 'y', seg: 22, rseg: 5 });
   P.cyl(M.black, 0.245, 0.12, 0, 0.8, 0, { seg: 22, open: true });                         // liner bag cuff
   P.box(M.grayPlastic, 0.08, 0.05, 0.02, 0.26, 0.55, 0.0);                                  // handle
-  P.build(g, { cast: true });
+  P.build(g, { cast: false });
   label(g, 'shop.trashCan');
   return g;
 }

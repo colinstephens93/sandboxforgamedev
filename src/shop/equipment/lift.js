@@ -30,7 +30,6 @@ function buildColumn(M, side) {
 }
 
 function buildArm(M, longer) {
-  const g = new THREE.Group();
   const P = new Part();
   const L1 = longer ? 0.95 : 0.8, L2 = longer ? 0.75 : 0.6;
   P.box(M.steel, 0.095, 0.08, L1, 0, 0.0, L1 / 2 + 0.02, { r: 0.01 });          // outer tube
@@ -46,8 +45,7 @@ function buildArm(M, longer) {
   P.cyl(M.chrome, 0.012, 0.016, 0, 0.062, 0.0, { seg: 8 });
   // arm restraint gear segment
   P.box(M.black, 0.09, 0.025, 0.05, 0, 0.052, 0.08);
-  P.build(g, { cast: false });
-  return g;
+  return P;
 }
 
 export function buildLift(ctx) {
@@ -56,36 +54,29 @@ export function buildLift(ctx) {
   const lift = new THREE.Group(); lift.name = 'lift'; group.add(lift);
   label(lift, 'shop.lift');
   const cz = W.z;
-  // floor plate between the columns (3/8 in steel with a ramped edge)
-  const base = new Part();
-  base.box(M.darkSteel, E.x - W.x + 0.34, 0.026, 0.5, (W.x + E.x) / 2, 0.013, cz, { r: 0.008 });
-  base.box(M.steel, E.x - W.x - 0.3, 0.004, 0.2, (W.x + E.x) / 2, 0.027, cz); // wear strip / cable cover
-  // equalizer cable running in the plate (visible entering the columns)
-  base.build(lift, { cast: false });
+  // floor plate between the columns (3/8 in steel with a ramped edge) and both columns in one static mesh set
+  const S = new Part();
+  S.box(M.darkSteel, E.x - W.x + 0.34, 0.026, 0.5, (W.x + E.x) / 2, 0.013, cz, { r: 0.008 });
+  S.box(M.steel, E.x - W.x - 0.3, 0.004, 0.2, (W.x + E.x) / 2, 0.027, cz); // wear strip / cable cover
+  for (const [col, side] of [[W, 1], [E, -1]]) S.merge(buildColumn(M, side), col.x, 0, col.z);
+  S.build(lift, { cast: true, name: 'liftStatic' });
 
   const carriages = [];
   for (const [col, side] of [[W, 1], [E, -1]]) {
-    const colG = new THREE.Group(); colG.position.set(col.x, 0, col.z); lift.add(colG);
-    const cp = buildColumn(M, side);
-    cp.build(colG, { cast: true, name: 'liftColumn' });
-    // carriage: rides on the bay side of the column
+    // carriage: rides on the bay side of the column; the swing arms are merged into it so it moves as one piece
     const car = new THREE.Group(); car.position.set(col.x, 0.02, col.z); lift.add(car);
     const cpt = new Part();
     const bx = side === 1 ? 0.2 : -0.2;
-    cpt.box(M.yellow, 0.07, 0.62, 0.5, bx - side * 0.0, 0.31, 0, { r: 0.008 });                       // carriage plate on the bay side
-    cpt.box(M.yellow, 0.4, 0.62, 0.035, side * 0.03, 0.31, 0.2575, { r: 0.006 });                                 // cheeks around the column
+    cpt.box(M.yellow, 0.07, 0.62, 0.5, bx, 0.31, 0, { r: 0.008 });                                      // carriage plate on the bay side
+    cpt.box(M.yellow, 0.4, 0.62, 0.035, side * 0.03, 0.31, 0.2575, { r: 0.006 });                       // cheeks around the column
     cpt.box(M.yellow, 0.4, 0.62, 0.035, side * 0.03, 0.31, -0.2575, { r: 0.006 });
     cpt.box(M.black, 0.075, 0.08, 0.2, bx, 0.02, 0);                                                    // slide blocks
     cpt.box(M.darkSteel, 0.06, 0.1, 0.14, bx + (side === 1 ? 0.05 : -0.05), 0.55, 0);                   // lock latch housing
-    cpt.build(car, { cast: false, name: 'liftCarriage' });
     // swing arms: front pair longer, rear pair shorter (asymmetric style); stowed parallel to the posts
-    const mk = (zEnd, longer) => {
-      const arm = buildArm(M, longer);
-      arm.position.set(bx + (side === 1 ? 0.05 : -0.05), 0.06, zEnd);
-      arm.rotation.y = zEnd > 0 ? -side * 0.2 : Math.PI + side * 0.2;
-      car.add(arm);
-    };
-    mk(0.3, false); mk(-0.3, true);
+    for (const [zEnd, longer] of [[0.3, false], [-0.3, true]]) {
+      cpt.merge(buildArm(M, longer), bx + (side === 1 ? 0.05 : -0.05), 0.06, zEnd, zEnd > 0 ? -side * 0.2 : Math.PI + side * 0.2);
+    }
+    cpt.build(car, { cast: false, name: 'liftCarriage' });
     carriages.push(car);
   }
 
@@ -105,19 +96,13 @@ export function buildLift(ctx) {
   // hoses: reservoir/valve block to the column cylinder, up the outboard side of the column
   pp.hose(M.black, [[-0.1, 0.7, -0.1], [-0.05, 0.9, -0.2], [-0.03, 1.5, -0.21], [-0.03, 2.4, -0.21], [-0.03, 3.3, -0.2], [0.06, 3.46, -0.1]], 0.012);
   pp.hose(M.black, [[-0.1, 0.62, -0.1], [-0.12, 0.5, -0.32], [-0.14, 0.4, -0.45]], 0.011);
+  // control: UP push button and lowering lever on a small box
+  pp.box(M.darkSteel, 0.05, 0.16, 0.1, -0.025, 1.18, 0.2, { r: 0.006 });
+  pp.cyl(M.green, 0.018, 0.02, -0.065, 1.22, 0.2, { axis: 'x', seg: 14 });
+  pp.cyl(M.red, 0.005, 0.1, -0.1, 1.14, 0.2, { axis: 'x', seg: 8 });
+  pp.sph(M.red, 0.014, -0.15, 1.14, 0.2, { seg: 8 });
+  pp.hose(M.black, [[-0.1, 0.93, 0.18], [-0.2, 0.6, 0.5], [-0.8, 0.02, 0.9]], 0.007);     // power cord
   pp.build(pu, { cast: false });
-  // control: UP push button and lowering lever
-  const ctl = new THREE.Group(); ctl.position.set(-0.025, 1.18, 0.2); pu.add(ctl);
-  const cp = new Part();
-  cp.box(M.darkSteel, 0.05, 0.16, 0.1, 0, 0, 0, { r: 0.006 });
-  cp.build(ctl, {});
-  const upBtn = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.02, 14), M.green);
-  upBtn.rotation.z = Math.PI / 2; upBtn.position.set(-0.04, 0.04, 0); ctl.add(upBtn);
-  const lever = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.1, 8), M.red);
-  lever.rotation.z = Math.PI / 2; lever.position.set(-0.075, -0.04, 0); ctl.add(lever);
-  const leverKnob = new THREE.Mesh(new THREE.SphereGeometry(0.014, 10, 8), M.red); leverKnob.position.set(-0.125, -0.04, 0); ctl.add(leverKnob);
-  // power cord from the unit
-  const cord = new Part(); cord.hose(M.black, [[-0.1, 0.93, 0.18], [-0.2, 0.6, 0.5], [-0.8, 0.02, 0.9]], 0.007); cord.build(pu);
   label(pu, 'shop.liftPower');
   const state = { h: 0, target: 0 };
   interactive(pu, () => (state.target > 0 ? 'Lower the lift' : 'Raise the lift'), (c) => {

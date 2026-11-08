@@ -142,7 +142,7 @@ export function buildBench(ctx) {
   }
   G.box(M.black, 0.06, 0.04, 0.06, gx + 0.07, TOP_Y + 0.06, gz, { r: 0.006 });                 // switch
   G.box(M.red, 0.02, 0.012, 0.02, gx + 0.1, TOP_Y + 0.065, gz);
-  P.build(bench, { cast: true });
+  P.build(bench, { cast: false });
   // pegboard on the wall above the bench (1.25 .. 2.15 m)
   const peg = new THREE.Group();
   const board = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.9, 2.4), M.pegboard);
@@ -161,8 +161,8 @@ export function buildBench(ctx) {
   bench.add(peg);
   place(bench, f.x, 0, f.z, 0);
   label(bench, 'shop.workbench');
-  const viseG = new THREE.Group(); viseG.name = 'vise'; V.build(viseG, { cast: true }); bench.add(viseG); label(viseG, 'shop.vise');
-  const grinderG = new THREE.Group(); grinderG.name = 'grinder'; G.build(grinderG, { cast: true }); bench.add(grinderG); label(grinderG, 'shop.grinder');
+  const viseG = new THREE.Group(); viseG.name = 'vise'; V.build(viseG, { cast: false }); bench.add(viseG); label(viseG, 'shop.vise');
+  const grinderG = new THREE.Group(); grinderG.name = 'grinder'; G.build(grinderG, { cast: false }); bench.add(grinderG); label(grinderG, 'shop.grinder');
   label(peg, 'shop.pegboard');
   group.add(bench);
   return bench;

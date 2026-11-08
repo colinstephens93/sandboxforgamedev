@@ -104,7 +104,7 @@ function buildChanger(M, kit) {
   // pedals
   for (let i = 0; i < 3; i++) { P.box(M.black, 0.1, 0.02, 0.14, -0.2 + i * 0.2, 0.06, 0.34, { rx: -0.2 }); P.box(M.safetyYellow, 0.03, 0.03, 0.12, -0.2 + i * 0.2, 0.1, 0.27); }
   P.cyl(M.chrome, 0.012, 0.06, 0.3, 0.36, 0.265, { axis: 'z', seg: 8 });
-  P.build(g, { cast: true });
+  P.build(g, { cast: false });
   // wheel on the turntable: tire flat
   const w = buildWheel(M, kit); w.position.set(0, 0.805 + SEC_W / 2 + 0.0, -0.05); g.add(w);
   label(g, 'shop.tireChanger');
@@ -130,14 +130,16 @@ function buildBalancer(M, kit, quality) {
   P.cyl(M.darkSteel, 0.07, 0.06, -0.05, 0.9, 0.55, { axis: 'z', seg: 12 });
   // wheel weights: tape and clip-on boxes on the tray
   for (let i = 0; i < 7; i++) P.box(M.lightSteel, 0.04, 0.018, 0.08, -0.06 + i * 0.05, 1.015, -0.6, { ry: 0.0 });
-  P.build(g, { cast: true });
-  // hood: a half cylinder hinged behind the wheel, swung up out of the way
+  P.build(g, { cast: false });
+  // hood: a half-round shield on two arms from the housing, swung up and back out of the way
   const hoodMat = M.black.clone(); hoodMat.side = THREE.DoubleSide;
-  const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.34, 24, 1, true, 0, Math.PI), hoodMat);
-  hood.rotation.x = Math.PI / 2;
-  const hoodPivot = new THREE.Group(); hoodPivot.position.set(-0.05, 0.9, -0.1);
-  hoodPivot.add(hood); hoodPivot.rotation.x = 0.9; hood.position.set(0, 0, 0.0); g.add(hoodPivot);
-  // screen plane
+  const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.34, 24, 1, true, Math.PI / 2, Math.PI), hoodMat);
+  hood.rotation.x = Math.PI / 2; hood.castShadow = false;
+  const hoodPivot = new THREE.Group(); hoodPivot.position.set(-0.05, 1.18, -0.02);
+  hoodPivot.add(hood); hoodPivot.rotation.x = 0.55; g.add(hoodPivot);
+  const arm = new Part();
+  for (const sx of [-1, 1]) arm.rod(M.darkSteel, [-0.05 + sx * 0.4, 1.0, -0.2], [-0.05 + sx * 0.46, 1.5, -0.02], 0.012);
+  arm.build(g, {});  // screen plane
   const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.24), canvasMaterial(balancerScreenCanvas(), { roughness: 0.3, emissive: 1.1 }));
   scr.position.set(-0.08, 1.2, -0.565); scr.rotation.x = -0.3; scr.translateZ(0.003); g.add(scr);
   // wheel on the shaft, axis along z
@@ -159,7 +161,7 @@ function buildRack(M) {
   }
   for (const sx of [-1, 1]) P.box(M.safetyYellow, 0.04, 0.04, D, sx * (L / 2 - 0.025), H - 0.02, 0);
   P.box(M.safetyYellow, L, 0.04, 0.04, 0, H - 0.02, D / 2 - 0.02); P.box(M.safetyYellow, L, 0.04, 0.04, 0, H - 0.02, -D / 2 + 0.02);
-  P.build(g, { cast: true });
+  P.build(g, { cast: false });
   label(g, 'shop.tireRack');
   return g;
 }

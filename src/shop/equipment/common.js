@@ -29,6 +29,16 @@ export class Part {
     _q.setFromEuler(_e.set(rx, ry, rz, 'YXZ'));
     _m.compose(_p.set(x, y, z), _q, _s.set(sx, sy, sz));
     geo.applyMatrix4(_m);
+    return this._raw(mat, geo);
+  }
+  // append another Part's geometry (transformed by a placement) into this one
+  merge(other, x = 0, y = 0, z = 0, ry = 0) {
+    const m = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, ry, 0)), new THREE.Vector3(1, 1, 1));
+    for (const [mat, geos] of other.map) for (const g of geos) { g.applyMatrix4(m); this._push(mat, g); }
+    other.map.clear();
+    return this;
+  }
+  _push(mat, geo) {
     if (!this.map.has(mat)) this.map.set(mat, []);
     this.map.get(mat).push(geo);
     this.tris += geo.attributes.position.count / 3;
@@ -73,11 +83,18 @@ export class Part {
     const mid = A.clone().add(B).multiplyScalar(0.5);
     return this._raw(mat, g.applyMatrix4(new THREE.Matrix4().compose(mid, q, _one)));
   }
+  // Materials with userData.bake = { base, color } are drawn through a shared base material with the color baked
+  // into a vertex color attribute, so many painted parts collapse into very few draw calls.
   _raw(mat, geo) {
-    if (!this.map.has(mat)) this.map.set(mat, []);
-    this.map.get(mat).push(geo);
-    this.tris += geo.attributes.position.count / 3;
-    return this;
+    const bake = mat.userData && mat.userData.bake;
+    if (bake) {
+      const four = !!bake.base.userData.vcol4, k = four ? 4 : 3;
+      const n = geo.attributes.position.count, arr = new Float32Array(n * k), c = bake.color;
+      for (let i = 0; i < n; i++) { arr[i * k] = c.r; arr[i * k + 1] = c.g; arr[i * k + 2] = c.b; if (four) arr[i * k + 3] = bake.alpha; }
+      geo.setAttribute('color', new THREE.BufferAttribute(arr, k));
+      mat = bake.base;
+    }
+    return this._push(mat, geo);
   }
   // polyline pipe with elbow spheres at the corners
   tube(mat, pts, r, o = {}) {
@@ -146,36 +163,53 @@ export function makeMaterials(quality) {
   const M = {};
   const phys = (o) => new THREE.MeshPhysicalMaterial(o);
   const std = (o) => new THREE.MeshStandardMaterial(o);
-  M.red = phys({ color: 0xbd1d21, roughness: 0.36, metalness: 0.12, clearcoat: 0.8, clearcoatRoughness: 0.1, envMapIntensity: 1.0 });
-  M.black = phys({ color: 0x141518, roughness: 0.42, metalness: 0.3, clearcoat: 0.45, clearcoatRoughness: 0.18, envMapIntensity: 0.9 });
-  M.chrome = coreMat.chrome();
-  M.satin = phys({ color: 0xc9cdd0, metalness: 1.0, roughness: 0.32, envMapIntensity: 1.2 });
-  M.steel = std({ color: 0x5f666b, metalness: 0.55, roughness: 0.5, envMapIntensity: 0.8 });
-  M.lightSteel = std({ color: 0x9aa1a5, metalness: 0.6, roughness: 0.42, envMapIntensity: 0.9 });
-  M.darkSteel = std({ color: 0x25282c, metalness: 0.6, roughness: 0.5, envMapIntensity: 0.8 });
-  M.cast = std({ color: 0x3b3f43, metalness: 0.8, roughness: 0.62, envMapIntensity: 0.8 });
-  M.zinc = std({ color: 0xb6bcbf, metalness: 0.9, roughness: 0.4, envMapIntensity: 1.0, normalMap: sprinkleNormal(256, 5, 24, 1.2), normalScale: new THREE.Vector2(0.35, 0.35) });
-  M.yellow = phys({ color: 0xe0a216, roughness: 0.42, metalness: 0.2, clearcoat: 0.3, clearcoatRoughness: 0.3 });
-  M.safetyYellow = std({ color: 0xf1c200, roughness: 0.5, metalness: 0.1 });
-  M.blue = phys({ color: 0x15498f, roughness: 0.4, metalness: 0.2, clearcoat: 0.5, clearcoatRoughness: 0.2 });
-  M.orange = std({ color: 0xd2601a, roughness: 0.48, metalness: 0.2 });
-  M.green = std({ color: 0x2d5a3d, roughness: 0.5, metalness: 0.25 });
-  M.gray = std({ color: 0x8b9094, roughness: 0.5, metalness: 0.3 });
-  M.rubber = coreMat.rubber();
-  M.plastic = coreMat.blackPlastic(0.5);
-  M.whitePlastic = std({ color: 0xe6e8e6, roughness: 0.45, metalness: 0.0 });
-  M.grayPlastic = std({ color: 0x777b7e, roughness: 0.55, metalness: 0.0 });
-  M.beige = std({ color: 0xcfc7b3, roughness: 0.55, metalness: 0.0 });
-  M.brass = phys({ color: 0xc89b3c, metalness: 1.0, roughness: 0.28, envMapIntensity: 1.3 });
-  M.copper = phys({ color: 0xb4693a, metalness: 1.0, roughness: 0.26, envMapIntensity: 1.3 });
-  M.blackIron = std({ color: 0x232426, metalness: 0.7, roughness: 0.58, envMapIntensity: 0.7 });
+  // Shared base materials: the color of each "virtual" material below is baked into a vertex color so that all
+  // painted / steel / plastic / bare-metal parts of an item merge into one draw call per base.
+  // 'uber' draws paint, satin metal and chrome in one material: the vertex color alpha selects the finish
+  // (0 = clearcoated paint, 0.5 = satin metal such as brass and copper, 1 = chrome). Steel and plastic have their own bases.
+  const uber = phys({ color: 0xffffff, vertexColors: true, roughness: 0.4, metalness: 0.25, clearcoat: 0.45, clearcoatRoughness: 0.15, envMapIntensity: 1.0 });
+  uber.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
+      #ifdef USE_COLOR_ALPHA
+        float finishAmt = step(0.25, vColor.a);
+        metalnessFactor = mix(metalnessFactor, 1.0, finishAmt);
+        roughnessFactor = mix(roughnessFactor, mix(0.3, 0.06, clamp((vColor.a - 0.5) * 2.0, 0.0, 1.0)), finishAmt);
+      #endif`);
+  };
+  uber.customProgramCacheKey = () => 'equipment-uber';
+  uber.userData.vcol4 = true;
+  const direct = {
+    paint: phys({ color: 0xffffff, roughness: 0.4, metalness: 0.25, clearcoat: 0.45, clearcoatRoughness: 0.15, envMapIntensity: 1.0 }),
+    steel: std({ color: 0xffffff, roughness: 0.5, metalness: 0.55, envMapIntensity: 0.85 }),
+    plastic: std({ color: 0xffffff, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.7 }),
+    chrome: phys({ color: 0xffffff, roughness: 0.07, metalness: 1.0, envMapIntensity: 1.6 }),
+    metal: phys({ color: 0xffffff, roughness: 0.3, metalness: 1.0, envMapIntensity: 1.3 }),
+  };
+  const base = {
+    uber,
+    steel: std({ color: 0xffffff, vertexColors: true, roughness: 0.5, metalness: 0.55, envMapIntensity: 0.85 }),
+    plastic: std({ color: 0xffffff, vertexColors: true, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.7 }),
+  };
+  M.base = base;
+  // kind = which look; the baked material (uber/steel/plastic) and the finish alpha follow from it
+  const BAKE = { paint: ['uber', 0], chrome: ['uber', 1], metal: ['uber', 0.5], steel: ['steel', 1], plastic: ['plastic', 1] };
+  const virt = (kind, hex) => {
+    const m = direct[kind].clone(); m.color.set(hex);
+    const [b, alpha] = BAKE[kind];
+    m.userData.bake = { base: base[b], color: new THREE.Color(hex), alpha };
+    return m;
+  };
+  M.virt = virt;
+  M.red = virt('paint', 0xbd1d21); M.black = virt('paint', 0x141518); M.blue = virt('paint', 0x15498f); M.yellow = virt('paint', 0xe0a216);
+  M.safetyYellow = virt('paint', 0xf1c200); M.orange = virt('paint', 0xd2601a); M.green = virt('paint', 0x2d5a3d);
+  M.steel = virt('steel', 0x5f666b); M.lightSteel = virt('steel', 0x9aa1a5); M.darkSteel = virt('steel', 0x25282c);
+  M.cast = virt('steel', 0x3b3f43); M.blackIron = virt('steel', 0x232426); M.gray = virt('steel', 0x8b9094); M.zinc = virt('steel', 0xb6bcbf);
+  M.plastic = virt('plastic', 0x141517); M.whitePlastic = virt('plastic', 0xe6e8e6); M.grayPlastic = virt('plastic', 0x777b7e);
+  M.beige = virt('plastic', 0xcfc7b3); M.foam = virt('plastic', 0x2f3237); M.foamRed = virt('plastic', 0x8c1a1a); M.fabric = virt('plastic', 0x2b3038);
+  M.rubber = virt('plastic', 0x0e0e0f); M.paper = virt('plastic', 0xe9e7df); M.stone = virt('plastic', 0x8e8d86); M.rubberTread = virt('plastic', 0x1a1a1b);
+  M.chrome = virt('chrome', 0xf2f4f6); M.satin = virt('metal', 0xc9cdd0); M.brass = virt('metal', 0xc89b3c); M.copper = virt('metal', 0xb4693a);
+  M.polishedAlu = virt('chrome', 0xdde1e4);
   M.glass = coreMat.glassClear();
-  M.paper = std({ color: 0xe9e7df, roughness: 0.85 });
-  M.stone = std({ color: 0x8e8d86, roughness: 0.95, metalness: 0 });
-  M.foam = std({ color: 0x2c2f33, roughness: 0.9, metalness: 0 });
-  M.foamRed = std({ color: 0x8c1a1a, roughness: 0.9, metalness: 0 });
-  M.fabric = std({ color: 0x2b3038, roughness: 0.95, metalness: 0 });
-  M.rubberTread = std({ color: 0x1a1a1b, roughness: 0.9 });
   M.oil = phys({ color: 0x0b0a07, roughness: 0.15, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08 });
   M.jugWhite = phys({ color: 0xe7e9e4, roughness: 0.35, transmission: 0, metalness: 0, clearcoat: 0.3 });
   const wt = tex(woodTexture(T), { repeat: [1 / 0.6, 1 / 0.6], aniso: A });
