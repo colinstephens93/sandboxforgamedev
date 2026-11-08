@@ -6,6 +6,7 @@ import { bakeEnvironment } from './core/env.js';
 import { buildEquipment } from './shop/equipment/index.js';
 import { buildTruck } from './truck/index.js';
 import { DYNO } from './shop/layout.js';
+import { buildDynoHardware } from './shop/dyno/index.js';
 
 const canvas = document.getElementById('view');
 const loadbar = document.getElementById('loadbar');
@@ -28,6 +29,8 @@ async function boot() {
   scene.environmentIntensity = 0.28;
   const equipment = buildEquipment({ quality: R.q, shop });
   scene.add(equipment.group);
+  const dynoHw = buildDynoHardware({ quality: R.q, shop });
+  scene.add(dynoHw.group);
   progress(0.35, 'Building the truck');
   const truck = buildTruck({ quality: R.q });
   truck.group.position.set(DYNO.truckOrigin.x, 0, DYNO.truckOrigin.z);
@@ -40,7 +43,9 @@ async function boot() {
   await nextFrame();
   progress(1, 'Ready');
 
-  const state = { R, scene, camera, shop, equipment, truck, frames: 0, last: performance.now(), fps: 0 };
+  // Placeholder dyno state until the integrator wires ctx.state.dyno / the simulation (plausible values for the look).
+  const dynoState = { rollerRad: 0, straps: [true, true, true, true], fan: false, chocks: true, hose: true, air: { tempC: 24.0, pressureKpa: 101.0, humidityPct: 45 }, run: undefined };
+  const state = { R, scene, camera, shop, equipment, truck, dynoHw, dynoState, frames: 0, last: performance.now(), fps: 0 };
   window.__game = state;
   state.setCam = (p, t, fov = 60) => { camera.position.set(...p); camera.fov = fov; camera.updateProjectionMatrix(); camera.lookAt(...t); };
   state.renderOnce = () => R.render(0.016);
@@ -50,6 +55,7 @@ async function boot() {
     const dt = Math.min(0.05, (t - state.last) / 1000); state.last = t;
     state.fps = state.fps * 0.9 + (1 / Math.max(dt, 1e-3)) * 0.1;
     shop.updateDoors(dt);
+    dynoHw.update(dt, dynoState);
     R.render(dt);
     state.frames++;
     requestAnimationFrame(loop);
