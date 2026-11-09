@@ -51,3 +51,27 @@ every fueling table (GM calibration tables are not public).
 * **Hood line (measured).** `hoodHeight` was raised and flattened to follow the traced photo silhouette (50.5-53.1 in from the leading edge to a third of the way back). The absolute heights still depend on the vertical calibration, which is anchored on the roof line of a lifted truck, so they remain `estimated`.
 * **Glass widths (estimated, changed in the finishing pass).** The windshield is now 62.8 in wide at its base and 54.4 in at the top, and the back glass 61.2/56.4 in: the first pass was 56/49 in, which forced a 10-12 in wide A-pillar that read as a flat white sail. The real GMT800 glass width was not measured from a source (the front photo is a low-angle shot); it is inferred from the body width minus a plausible pillar width and is logged as `estimated`.
 * **Pillar faces (estimated, added in the finishing pass).** The outer A-pillar and C-pillar faces are new ruled surfaces between the glass edge and the body side (they did not exist, which left an open wedge into the cab). Their crown (0.4-0.45 in) and edge treatment are design values.
+
+## Unverified or simplified in the final render review (screenshots/)
+
+* **Glass frit.** The black ceramic frit border that `PROMPT.md` section 1 asks for is **not modelled**: the side
+  and rear glass are a tinted material only (`mat.glassTinted`), with no printed frit band or dot matrix. The
+  tint (opacity 0.72, colour 0x0a1513) is an estimate, not a measured transmission value.
+* **Front fascia and headlamps** are simplified geometry: the grille's slat count and the lamp internals
+  (reflector bowls, projector, turn signal section) do not match the reference photos one for one, and the lens
+  materials are approximations. The overall arrangement (chrome bar with the gold bowtie, two grille openings,
+  cat-eye lamps) matches `IMG_2853`.
+* **Seats and cluster bezel** remain simplified, as handed over: stitching, perforation and bolster shapes are
+  present but coarse, and the cluster bezel is a plain moulding.
+* **Engine bay** contents follow the diesel supplement's diagram (parts A to O in their drawn positions) but the
+  bay is cleaner and emptier than `IMG_2874` to `IMG_2877`: hose and pipe routing, bracket shapes and small
+  components (clamps, clips, loom splits) are approximations, and the hood's insulation pad is a plain surface
+  without the moulded cut-outs.
+* **Outside world** seen through the open roll-up doors is placeholder geometry (stylised trees and a car park
+  plane), not a modelled environment. It appears in the shop-wide and engine-bay screenshots.
+* **Bed rail caps and bed floor**: plain black caps and a ribbed floor; the factory tie-down and stake-pocket
+  details exist but the cap profile is a straight extrusion.
+* **Paint and lighting** were tuned by eye against the reference photos, not measured; the environment
+  intensity (0.5) and the glass tint are art decisions.
+* **Audio** was never listened to by a person (see PROGRESS.md); 56 unit tests and 95 offline spectral checks
+  only prove the synthesis runs and tracks the simulated firing frequency, whistle pitch and fan speed.

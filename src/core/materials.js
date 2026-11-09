@@ -1,4 +1,4 @@
-// Shared physically based materials. All textures are generated in code.
+﻿// Shared physically based materials. All textures are generated in code.
 import * as THREE from 'three';
 import { makeCanvas, noiseField, canvasFromField, heightToNormal, tex, rng } from './proc.js';
 
@@ -28,7 +28,7 @@ export const mat = {
   blackPlastic(rough = 0.55) { return new THREE.MeshStandardMaterial({ color: 0x141517, roughness: rough, metalness: 0.0, envMapIntensity: 0.7 }); },
   rubber(color = 0x0e0e0f) { return new THREE.MeshStandardMaterial({ color, roughness: 0.92, metalness: 0.0, envMapIntensity: 0.4 }); },
   glassTinted() {
-    return new THREE.MeshPhysicalMaterial({ color: 0x1b2a27, metalness: 0, roughness: 0.02, transmission: 0.0, transparent: true, opacity: 0.55, envMapIntensity: 1.5, ior: 1.52, side: THREE.DoubleSide });
+    return new THREE.MeshPhysicalMaterial({ color: 0x0a1513, metalness: 0.05, roughness: 0.03, transmission: 0.0, transparent: true, opacity: 0.72, envMapIntensity: 1.9, ior: 1.52, side: THREE.DoubleSide });
   },
   glassClear() {
     return new THREE.MeshPhysicalMaterial({ color: 0xcfe0e0, metalness: 0, roughness: 0.02, transparent: true, opacity: 0.25, envMapIntensity: 1.4, ior: 1.5, side: THREE.DoubleSide });
@@ -36,3 +36,4 @@ export const mat = {
 };
 
 export function clearCache() { for (const k in cache) delete cache[k]; }
+

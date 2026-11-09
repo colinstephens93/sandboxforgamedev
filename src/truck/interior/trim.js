@@ -1,4 +1,4 @@
-// The cab shell: carpet and transmission tunnel with rubber mats, door sills, B/C pillar trim, headliner and rails, overhead console
+﻿// The cab shell: carpet and transmission tunnel with rubber mats, door sills, B/C pillar trim, headliner and rails, overhead console
 // with map lamps, sun visors, rear view mirror, grab handles, rear wall and window trim, and the tire/loading placard.
 // Reference: 07-overhead-console-headliner, 07b-crew-cab-rear-interior, IMG_2858 (placard), IMG_2868 (jamb), IMG_2869 to IMG_2871 (floor, mats).
 import * as THREE from 'three';
@@ -80,7 +80,7 @@ export function buildCabShell(env) {
       c.font = '600 26px Arial'; c.fillText('TIRE SIZE', 170, 446); c.fillText('RIM', 470, 446); c.fillText('COLD TIRE PRESSURE', 600, 480);
       const tsize = 'LT245/75R16E';
       [['FRT', '16X6.5J', '380KPA(55PSI)'], ['RR', '16X6.5J', '550KPA(80PSI)'], ['SPA', '16X6.5J', '550KPA(80PSI)']].forEach(([pos, rim, pr], i) => { const y = 500 + i * 42; c.fillText(pos, 70, y); c.fillText(tsize, 170, y); c.fillText(rim, 470, y); c.fillText(pr, 640, y); });
-      c.font = '600 22px Arial'; c.fillText('SEE OWNER’S MANUAL FOR MORE INFORMATION.', 120, 690);
+      c.font = '600 22px Arial'; c.fillText('SEE OWNERâ€™S MANUAL FOR MORE INFORMATION.', 120, 690);
     }, { aniso: quality.aniso });
     const pl = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 4.05), new THREE.MeshStandardMaterial({ map: plac, roughness: 0.55, metalness: 0 }));
     pl.name = 'placard'; pl.userData.labelId = 'interior.placard';
@@ -90,7 +90,7 @@ export function buildCabShell(env) {
 
   // ---------------- headliner ----------------
   const hlH = (x, s) => { const crest = lerp(73.5, 74.5, sm((s - 44) / 10)) - 1.0 * sm((s - 100) / 8); return crest - 1.7 * Math.pow(Math.abs(x) / 31.5, 3) - 0.0; };
-  const hl = new THREE.Mesh(surfaceG(36, 50, (u, v) => { const x = u * 31.6, s = lerp(44.2, 106.8, (v + 1) / 2); return [x, hlH(x, s), s, x, s]; }, { flip: false }), MT.headliner);
+  const hl = new THREE.Mesh(surfaceG(36, 50, (u, v) => { const x = u * 30.4, s = lerp(44.2, 106.8, (v + 1) / 2); return [x, hlH(x, s), s, x, s]; }, { flip: false }), MT.headliner);
   hl.name = 'headliner'; hl.userData.labelId = 'interior.headliner'; g.add(hl);
   // roof rails above the side glass and the front and rear headers
   for (const sx of [-1, 1]) B.add(softBox({ w: 3.4, h: 2.2, d: 62.5, r: 0.7, step: 6 }), 'tanPlastic', M(sx * 31.9, 72.9, 75.5, 0, 0, sx * 0.32));
@@ -152,3 +152,4 @@ export function buildCabShell(env) {
   const update = () => {};
   return { anchors: {}, lamps, lampMat, update };
 }
+

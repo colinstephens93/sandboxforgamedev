@@ -62,14 +62,27 @@ export function cableRoute({ start, port, plugged, rest }) {
   return pts;
 }
 
-// Charger lead route: from the charger terminal to the battery post (clamped) or a short coil hanging on the charger (rest).
-export function leadRoute({ from, to, clamped, rest, sag = 0.18 }) {
+// Charger lead route: from the charger terminal to the battery post (clamped) or a short coil hanging on the
+// charger (rest). The clamped lead arcs over the fender and hood line (`via`, a control point at the top of the
+// arch) so it does not pass through the bodywork, which the first pass did.
+export function leadRoute({ from, to, clamped, rest, sag = 0.18, via = null }) {
   const a = v3(from); const b = v3(clamped ? to : rest);
+  const arch = clamped && via ? v3(via) : null;
   const pts = [a.clone()];
-  const n = 8;
+  const n = 10;
   for (let i = 1; i < n; i++) {
-    const t = i / n; const q = a.clone().lerp(b, t);
-    q.y += clamped ? Math.sin(t * Math.PI) * 0.12 - sag * Math.sin(t * Math.PI) * (1 - Math.abs(t - 0.5) * 2) * 0.25 : -Math.sin(t * Math.PI) * 0.07;
+    const t = i / n;
+    let q;
+    if (arch) {
+      const w0 = (1 - t) * (1 - t), w1 = 2 * (1 - t) * t, w2 = t * t;
+      q = new THREE.Vector3(
+        a.x * w0 + arch.x * w1 + b.x * w2,
+        a.y * w0 + arch.y * w1 + b.y * w2,
+        a.z * w0 + arch.z * w1 + b.z * w2);
+    } else {
+      q = a.clone().lerp(b, t);
+      q.y += -Math.sin(t * Math.PI) * 0.07;
+    }
     pts.push(q);
   }
   pts.push(b);
@@ -268,7 +281,24 @@ export function buildAILiveRig({ quality = { tex: 1024, aniso: 4 }, shop, game }
   const cableHit = new THREE.Mesh(new THREE.BufferGeometry(), hitMat); cableHit.userData.labelId = 'shop.ailive_cable'; group.add(cableHit);
   const cableGroup = new THREE.Group(); cableGroup.userData.labelId = 'shop.ailive_cable'; // pickable cable end: dongle + cable + proxy
   cableMesh.userData.labelId = 'shop.ailive_cable';
-  const cableUse = { prompt: () => (game && game.ai.cable ? 'Unplug the interface from the OBD-II port' : 'Plug the interface into the OBD-II port'), run: (ctx) => { const g = (ctx && ctx.game) || game; if (!g) return; g.ai.plug(!g.ai.cable); if (ctx && ctx.say) ctx.say(g.ai.cable ? 'Interface plugged into the OBD-II port under the dash.' : 'Interface unplugged and set back on the cart.', 3.5); } };
+  // The OBD-II port is under the left of the dash: with the driver's door shut the cable would have to pass
+  // through the door skin (the clipping defect), so plugging in requires the door open, as it does in reality.
+  // A rig built without a truck (the unit tests) has no door state to check and is left alone.
+  const driverDoorOpen = () => {
+    const doors = game && game.truckCtl && game.truckCtl.doors;
+    const d = doors && doors.fL;
+    if (!d) return true;
+    return d.state > 0.35;
+  };
+  const cableUse = {
+    prompt: () => (game && game.ai.cable ? 'Unplug the interface from the OBD-II port' : 'Plug the interface into the OBD-II port'),
+    run: (ctx) => {
+      const g = (ctx && ctx.game) || game; if (!g) return;
+      if (!g.ai.cable && !driverDoorOpen()) { if (ctx && ctx.say) ctx.say('Open the driver\'s door to reach the OBD-II port under the dash.', 4); return; }
+      g.ai.plug(!g.ai.cable);
+      if (ctx && ctx.say) ctx.say(g.ai.cable ? 'Interface plugged into the OBD-II port under the dash.' : 'Interface unplugged and set back on the cart.', 3.5);
+    },
+  };
   for (const o of [dongle, cableMesh, cableHit]) { o.userData.interact = cableUse; interactables.push(o); }
 
   // ================================================================ charger
@@ -364,8 +394,13 @@ export function buildAILiveRig({ quality = { tex: 1024, aniso: 4 }, shop, game }
     clampP.rotation.set(0, on ? Math.PI : 0, on ? -0.15 : Math.PI / 2); clampM.rotation.set(0, on ? 0 : 0, on ? 0.15 : Math.PI / 2);
     clampP.updateMatrixWorld(true); clampM.updateMatrixWorld(true);
     const endP = clampP.localToWorld(new THREE.Vector3(-0.05, 0, 0)), endM = clampM.localToWorld(new THREE.Vector3(-0.05, 0, 0));
-    setTube(leadP, leadRoute({ from: termPlus, to: endP, clamped: on, rest: endP }), 0.0085, 70, 8);
-    setTube(leadM, leadRoute({ from: termMinus, to: endM, clamped: on, rest: endM, sag: 0.3 }), 0.0085, 70, 8);
+    // arc the clamped leads over the fender / hood line instead of through it
+    const arch = (from, to) => new THREE.Vector3(
+      from.x + Math.sign(from.x || -1) * 0.10,
+      Math.max(from.y, to.y) + 0.26,
+      (from.z + to.z) * 0.5);
+    setTube(leadP, leadRoute({ from: termPlus, to: endP, clamped: on, rest: endP, via: arch(termPlus, endP) }), 0.0085, 70, 8);
+    setTube(leadM, leadRoute({ from: termMinus, to: endM, clamped: on, rest: endM, sag: 0.3, via: arch(termMinus, endM) }), 0.0085, 70, 8);
     state.charger = on;
   }
   function place() { placeCable(); placeLeads(); state.port = anchors.obdPort.toArray().join(); state.batt = anchors.batteryPlus.toArray().join() + anchors.batteryMinus.toArray().join(); }

@@ -29,7 +29,12 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 const TRUCK_Z = DYNO.truckOrigin.z;
 
 export class Game {
-  constructor(canvas, progress) { this.canvas = canvas; this.progress = progress; this.mode = 'boot'; this.time = 0; this.frames = 0; this.fps = 60; this.state = {}; this.hooks = []; }
+  constructor(canvas, progress) {
+    this.canvas = canvas; this.progress = progress; this.mode = 'boot'; this.time = 0; this.frames = 0; this.fps = 60; this.state = {}; this.hooks = [];
+    // driver view state (the seat look direction and the seat eye point in the world)
+    this.drv = { yaw: 0, pitch: 0 };
+    this.eyeWorld = new THREE.Vector3();
+  }
 
   async init() {
     const p = this.progress;
@@ -42,7 +47,7 @@ export class Game {
     await nextFrame();
     p(0.12, 'Building the shop');
     this.shop = buildShop({ quality: this.R.q });
-    this.scene.add(this.shop.group); this.scene.environmentIntensity = 0.28;
+    this.scene.add(this.shop.group); this.scene.environmentIntensity = 0.5; // the paint, chrome and glass should show the real room (PROMPT.md section 8)
     await nextFrame();
     p(0.28, 'Stocking the shop');
     this.equipment = buildEquipment({ quality: this.R.q, shop: this.shop });
@@ -210,6 +215,10 @@ export class Game {
       this.player.update(dt, this.input);
     } else if (this.mode === 'driver') {
       if (this.input.locked) { this.drv.yaw = Math.max(-1.9, Math.min(1.9, this.drv.yaw - this.input.mouseDX * 0.0022)); this.drv.pitch = Math.max(-1.0, Math.min(0.9, this.drv.pitch - this.input.mouseDY * 0.0022)); }
+      // seat eye point from the interior (truck frame), transformed by the truck's placement on the dyno;
+      // this.eyeWorld used to be undefined, which made driver mode throw on the first frame
+      const eye = this.truck.anchors && this.truck.anchors.interior && this.truck.anchors.interior.eye;
+      if (eye) { this.truck.group.updateMatrixWorld(true); eye.getWorldPosition(this.eyeWorld); }
       this.camera.position.copy(this.eyeWorld); this.camera.rotation.order = 'YXZ'; this.camera.rotation.set(this.drv.pitch, this.drv.yaw, 0);
       this.pedal += (((this.input.down('KeyW') ? 0.6 : 0) - this.pedal) * Math.min(1, dt * 6)); this.brakeIn = this.input.down('KeyS') ? 1 : 0;
       if (this.input.tap('Digit1')) this.state.range = 'P'; if (this.input.tap('Digit2')) this.state.range = 'R'; if (this.input.tap('Digit3')) this.state.range = 'N'; if (this.input.tap('Digit4')) this.state.range = 'D';
@@ -246,6 +255,16 @@ export class Game {
     if (this.dyno.phase === 'idle' || this.dyno.phase === 'done' || this.dyno.phase === 'refused') p.step(dt, { pedal: this.pedal || 0, range: this.state.range || 'P', brake: this.brakeIn || 0 });
     else this.dyno.update(dt);
     this.ai.update(dt, { keyPos: this.ign.key, engineRunning: this.ign.engineRunning });
+    // rear lamps follow the real state: tail lamps with the key on, brake lamps on the pedal, reverse lamps
+    // in R (PROMPT.md section 4 lists the lamp set; this wires rear.js lamps.set to the simulation)
+    if (this.truck.parts.lamps) {
+      this.truck.parts.lamps.set({
+        tail: this.ign.key >= 1 ? 0.7 : 0,
+        brake: (this.brakeIn || 0) > 0.12 ? 1 : 0,
+        turn: 0,
+        reverse: (this.state.range === 'R' && this.ign.key >= 2) ? 1 : 0,
+      });
+    }
   }
 
   visuals(dt) {
@@ -330,24 +349,41 @@ Game.prototype.startEngineNow = function () {
 Game.prototype.prepare = function (o = {}) {
   const ctl = this.truckCtl, ctx = this.ctx;
   this.closePanels();
-  for (const [k, d] of Object.entries(ctl.doors)) { d.target = (o.door === k) ? 1 : 0; }
-  if (ctl.hood) ctl.hood.target = o.hood ? 1 : 0;
+  // doors and hood animate through HingeDoor.toggle (which registers the per-frame step), not by setting
+  // `target` alone; the earlier preset code set the target and nothing moved
+  for (const [k, d] of Object.entries(ctl.doors)) d.toggle(ctx, o.door === k);
+  if (ctl.hood) {
+    if (o.hood) { ctl.hoodState.cabReleased = true; ctl.hoodState.secondaryReleased = true; ctl.hood.toggle(ctx, true); }
+    else ctl.hood.toggle(ctx, false);
+  }
   const tg = this.truck.parts.tailgate; if (tg && tg.set) tg.set(o.tailgate ? 1 : 0);
   const fd = this.truck.parts.fuelDoor; if (fd && fd.set) fd.set(0);
   this.dyno.strapAll(!!(o.straps || o.run || o.compare));
   this.shop.setDoor(0, true); this.shop.setDoor(1, true);
   // photo presets may lift the removable pit guard rails so they do not hide the wheels (they are chained rails in a real shop)
-  const fanG = this.dynoHw.group.getObjectByName('dyno_fan'); if (fanG) { fanG.userData.baseX ??= fanG.position.x; fanG.position.x = fanG.userData.baseX + (o.fanAside ? 2.9 : 0); }
+  const fanG = this.dynoHw.group.getObjectByName('dyno_fan');
+  if (fanG) {
+    fanG.userData.baseX ??= fanG.position.x; fanG.userData.baseZ ??= fanG.position.z;
+    // a wheeled fan: roll it clear of the camera for the wide shots (6.2 m aside, 0.8 m further forward)
+    fanG.position.x = fanG.userData.baseX + (o.fanAside ? 6.2 : 0);
+    fanG.position.z = fanG.userData.baseZ + (o.fanAside ? 0.8 : 0);
+  }
   const rails = this.dynoHw.group.getObjectByName('pit_rails'); if (rails) rails.visible = !o.hideRails;
   this.advance(3, 0.05);
   if (o.engine && !this.plant.running) this.startEngineNow();
   if (o.run) { this.plant.warm(198, 188); if (!this.plant.running) this.startEngineNow(); this.plant.warm(198, 188); this.dyno.runs.length = 0; this.pullNow(); this.openPanel('dyno'); }
   if (o.compare) {
+    // clear any half-finished flash left by an earlier preset, or the comparison shot shows the no-start state
+    this.ai.bricked = false; this.ai.stage = 'idle'; this.ai.needsKeyCycle = false; this.ai.pendingApply = null;
+    this.ai.progress = 0; this.ai.writing = null; this.ai.message = '';
+    this.plant.pp.sound = { close: 0, hold: 0 };
     if (!this.plant.running) this.startEngineNow();
     this.plant.setRegulator('LBZ'); this.plant.warm(198, 188);
     this.plant.setCalibration(loadCal('stock')); this.dyno.runs.length = 0; this.pullNow();
     this.plant.setCalibration(loadCal(o.compare)); this.plant.warm(198, 188); this.pullNow();
-    this.openPanel('ailive'); const p = this.panelsReg.ailive; if (p && p.go) p.go('compare');
+    this.openPanel('ailive');
+    const p = (this.uiPanels && this.uiPanels.ailive) || this.panelsReg.ailive;
+    if (p && p.go) p.go('compare');
   }
   if (o.flash) {
     const ig = this.ign, ai = this.ai; this.plant.stopEngine(); ig.setKey(0, {}); this.advance(0.3); ig.setKey(2, { coolantF: 190, range: 'P' }); this.advance(0.5);
@@ -356,3 +392,5 @@ Game.prototype.prepare = function (o = {}) {
   }
   this.advance(1, 0.05);
 };
+
+

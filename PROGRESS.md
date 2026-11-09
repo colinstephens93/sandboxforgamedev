@@ -86,3 +86,171 @@ Acted only where Task A measured a real error or the screenshots showed a real d
   against).
 * Checks after the change: `npm test` **276/276**, `npm run build` ok, `GPU=1 node scripts/check.mjs`
   **29/29**. The Blender overlay was re-run: the outline is still exactly 237.30 x 77.00 in.
+
+### Task C: verification scripts and the cheap defects (done)
+* `scripts/check.mjs` extended from 29 to **46 checks**, all passing (`GPU=1 node scripts/check.mjs`
+  -> `46/46 passed`). New checks:
+  * every quick tune is written through the full AI Live procedure and lands at stock + its owner gain:
+    Heavy Tow +29.7, Light Tow +60.1, Economy +119.7, Street +175.3, Race +229.9 whp; the six calibrations
+    form an increasing ladder 252 < 282 < 312 < 372 < 427 < 482 whp.
+  * closing the Turbo Sound vanes at idle raises turbo speed 17,741 -> 38,042 rpm (+114 percent), exhaust gas
+    temperature 327 -> 348 F and the vane position 0.40 -> 0.79, all through the engine model.
+  * vanes held closed at full load overspeed the turbo (152,789 rpm peak) and the failure model reports the
+    turbo as damaged.
+  * repeated Race pulls burn the stock Allison: 28 pulls, 259 kJ of clutch slip energy,
+    "ALLISON CLUTCHES BURNED".
+  * walk mode reaches the walkable area at all four shop corners (the office and the equipment own parts of
+    the corners, so the check finds the free point nearest each corner and walks to it from a nearby free
+    start), and **47 of 48 solid colliders block the player**.
+  * the AI Live cable refuses to plug in through a closed driver door.
+  * the rear lamps follow the brake pedal and reverse (the `lamps.set` wiring below) and the driver view sits
+    at the cab eye point.
+* Bugs the new checks found and fixed (not by weakening the checks):
+  * **Driver mode threw on its first frame**: `this.eyeWorld` and `this.drv` were never initialised, so
+    `V` (sit in the truck) crashed. The eye is now taken from the interior's `anchors.eye` (truck frame
+    -16, 56, 66 in) transformed by the truck's placement; verified at (-0.41, 1.39, 0.90) in the shop.
+  * `lamps.set()` was never called: the tail, brake and reverse lamps are now wired to the key position, the
+    brake pedal and the shifter range in `Game.update`.
+  * the AI Live cable clipped through a closed driver door; plugging it in now requires the door open (as it
+    does in reality, since the OBD-II port is under the left of the dash), and the charger leads arc over the
+    fender/hood line (`leadRoute` gained a `via` control point) instead of through the bodywork.
+* `scripts/perf.mjs` added: measures the real per-frame cost (update + render with `gl.finish()`, 45 frames
+  after a warm-up) at 1920 x 1080 for low / medium / high, prints average and 95th percentile and writes
+  `.dev/perf.json`. **Headless Chromium on this machine has no GPU** (it falls back to SwiftShader), so the
+  frame times below were measured with `HEADED=1 GPU=1` on the real GPU, an Intel Arc 140V (8 GB):
+  see the table in the milestone summary at the end of this file.
+* Open: headless WebGL cannot reach the GPU here, so `GPU=1` in the headless scripts still runs software
+  rendering; the browser checks therefore run at 1280 x 720 low/medium and take longer than they would on a
+  GPU. `check.mjs` passes in that mode (46/46).
+
+### Task D: the 12 screenshots (done, reviewed, imperfect)
+`HEADED=1 GPU=1 SHOTS_QUALITY=high node scripts/shots.mjs` at 1920 x 1080. All 12 exist in `screenshots/` and
+were retaken after Task B and the Task C/D fixes:
+`01-hero`, `02-side-profile`, `03-rear-tailgate-down`, `04-engine-bay`, `05-driver-dash`, `06-open-door`,
+`07-dyno-run`, `08-pit-underside`, `09-shop-wide`, `10-wheel-badge`, `11-ailive-write`, `12-compare-baseline-vs-tune`.
+
+Shot defects found and fixed while reviewing them (the presets were broken, not just the framing):
+* the engine-bay preset set the hood's `target` but never ran the release sequence or the hinge animation, so
+  shot 04 showed a closed hood from above. `Game.prepare` now sets both releases and calls `HingeDoor.toggle`,
+  which is what actually animates.
+* the door preset did the same, so shot 06 showed the truck with every door shut. Same fix.
+* shot 12 opened the AI Live panel on CONNECT: `panelsReg.ailive` is a wrapper without `go()`. It now uses
+  `uiPanels.ailive.go('compare')`, and the preset clears a half-finished flash state first (the previous shot
+  leaves one behind, which showed "WRITE FAILED" instead of the comparison).
+* the hero shot was filled by the cooling fan: the `fanAside` preset now rolls the fan 6.2 m aside and 0.8 m
+  forward (a wheeled fan), and the hero/side/rear/door/pit/AI Live cameras were re-aimed.
+* the chrome/glass read flat: `scene.environmentIntensity` was 0.28 (the shop PMREM barely showed in the
+  paint); it is now 0.5, the tinted glass is darker (opacity 0.72, colour 0x0a1513) and the headliner is 0.4 in
+  narrower so its edge no longer shows between the roof and the door headers at the top of the glass.
+
+**Review 1, demanding art director** (problems found; the shots above are the state after the fixes):
+* hero: composed well now, but the front fascia is a plain white slab, the headlamp lenses read as white boxes
+  with a milky face, and the paint still has little reflection variation over the big flat surfaces.
+* side: proportions and stance now track the reference photo, the glass reads as dark tint, but the roof still
+  reads as a cap sitting on thin pillars, and the bed rail cap is a heavy black band.
+* rear: the dropped tailgate and the bed read, the straps are visible, but the tailgate's inner face is almost
+  black and the rear bumper is a thin chrome line.
+* engine bay: the open hood, the 6.6 cover, both batteries, the surge tank, the air box, the fan shroud and the
+  cowl read; the bay is much emptier and cleaner than the LLY reference photos and the hood pad is a plain
+  surface with no hinge arms visible.
+* driver: the cluster (0-120 mph, 0-5 x1000 tach with the red zone, coolant, trans, oil, volts), the DIC
+  odometer, the steering wheel with switches, the center stack and the transfer-case switch read well; the dash
+  top is a flat tan expanse and the glass tint over the view out is subtle.
+* open door: the tan door card (armrest, switch panel, speaker grille, map pocket), the jamb, the placard and
+  the cab interior read; the switches themselves are simplified.
+* dyno screen: strong. Graph, peaks (251.9 whp at 3,000, 491 lb-ft at 1,675), SAE 0.997, gear, straps, fan,
+  history and weather all read.
+* pit: the underside, the spare's sidewall lettering, the axle and the rollers read, but the roller/absorber
+  assembly dominates the lower half and the frame is dark.
+* shop wide: reads as a working diesel shop (lift, reels, dyno with the control stand, shelving, office).
+  Weak: plain walls, a very clean floor, and the outside world through the doors is placeholder geometry.
+* wheel: strong. MICHELIN LTX M/S2, LT245/75R16, the 8-lug polished wheel, the gold bowtie cap, the rotor and
+  caliper behind it.
+* AI Live: the laptop shows WRITING STREET with a progress bar and a countdown and the cable runs off the cart;
+  the cable's last run to the dash is partly hidden behind the cart.
+* compare: strong. Stock 251.9 whp / 491 lb-ft against Race 481.2 whp / 881 lb-ft, +229.3 whp and +390 lb-ft,
+  with the per-run table (regulator, vane, max EGT, boost, rail error).
+
+**Review 2, a technician who owns a 2005 Duramax** (checked against `reference/` and `src/data/truckSpec.js`):
+* cluster faces, scales and warning lamps match `01-dash-cluster-lit` and the DIC shows the odometer; the
+  transmission temperature band (100-300 F) and the 265 F hot lamp match the diesel supplement.
+* badges: gold bowtie in the grille and on the wheel caps, DURAMAX and 2500 HD on the front doors, 4x4 on the
+  bed sides, SILVERADO on the tailgate with no CHEVROLET lettering, no Z71. Correct for the configuration.
+* the two batteries (one per side), the coolant surge tank, the air cleaner, the remote terminals, the fan
+  shroud and the 6.6 cover match the engine-compartment diagram's arrangement; the hood is held by its spring
+  hinges with no prop rod, as the handbook says.
+* the tailgate drops to horizontal on its cables; the tire lettering, size and 8-lug pattern match
+  `06-stock-wheel-tire.jpg`.
+* deviations that remain: the overall-length conflict in `ACCURACY.md` (the photos measure 220.7/225.3 in
+  against the published 237.3 in, so the nose and rear bumper are longer than the photo truck), the front
+  fascia and headlamps are simplified, the seats and cluster bezel are simplified (as handed over), and the
+  bed rail caps/liner are plain. Nothing was found that contradicts `truckSpec.js`.
+* the visual review above was done by the model on the rendered images; a human eye on the paint, the audio and
+  the overall feel is still owed.
+
+### Frame times (Task C), real GPU
+`HEADED=1 GPU=1 node scripts/perf.mjs`, 1920 x 1080, 45 frames each after a warm-up; per-frame cost is
+update + render with `gl.finish()`, so it includes the GPU. GPU: Intel Arc 140V (8 GB), D3D11. (Headless
+Chromium on this machine falls back to SwiftShader, hence `HEADED=1`.)
+
+| Quality | Average | p50 | p95 | Max | Average fps |
+|---|---:|---:|---:|---:|---:|
+| low | 9.07 ms | 9.50 ms | 11.70 ms | 12.00 ms | 110.3 |
+| medium | 13.73 ms | 13.60 ms | 17.90 ms | 21.30 ms | 72.8 |
+| high | 18.85 ms | 19.70 ms | 26.80 ms | 31.20 ms | 53.1 |
+
+High quality at 1080p averages **18.85 ms (53 fps)** on this integrated GPU, not a locked 60. The 95th
+percentile is 26.8 ms. Low and medium are comfortably above 60 fps. Before the finishing pass the same
+machine measured 20.6 ms at high; the small gain came from the narrower headliner and the glass, not from any
+quality reduction. No quality setting was lowered to make the number look better.
+
+## Acceptance checklist (PROMPT.md) with the evidence
+
+| # | Item | State | Evidence |
+|---|---|:--:|---|
+| 1 | `src/data/truckSpec.js` holds every real-world number with a source and confidence tag | yes | `tests/spec.test.js` (3 tests) enforces a tag comment on every leaf; 276/276 tests pass |
+| 2 | 2005 GMT800 Classic crew cab at correct dimensions, Summit White, real reflections | yes | overlay outline bbox 237.30 x 77.00 in = the spec; `02-side-profile`, `01-hero`; env intensity 0.5 |
+| 3 | Correct wheels, tires, glass, badging and underside for the configuration | yes | `10-wheel-badge` (LT245/75R16E, 8-lug, gold cap), `08-pit-underside`, badges checked in review 2 |
+| 4 | Four doors, tailgate, hood and fuel door open on real hinges with real limits | yes | `check.mjs`: 4 doors to 72/78 deg, hood sequence refusals, tailgate, fuel door; `06-open-door` |
+| 5 | Year-correct LLY engine bay with labeled components | yes | `04-engine-bay`; engine-bay label tests; the A-O parts follow the supplement diagram (see ACCURACY.md) |
+| 6 | Walkable LT cab with live, accurate gauges | yes | `05-driver-dash`; cluster tests; driver view check at (-0.41, 1.39, 0.90) |
+| 7 | Real diesel start sequence with the glow plug wait | yes | `check.mjs`: key RUN lights WTS, engine starts at 680 rpm; start-sequence unit tests |
+| 8 | Physically modelled dyno pull with wheel hp and torque, SAE correction, run history | yes | `07-dyno-run`: 251.9 whp, 491 lb-ft, SAE 0.997; sim tests |
+| 9 | Stock dyno results in the real stock LLY range, derived not hard-coded | yes | 251.9 whp from the physics; `tests/sim.test.js` (310 hp / 605 lb-ft at the crank) |
+| 10 | AI Live: read, backup, write with real failure on interruption, quick tunes, datalog, comparison | yes | `check.mjs` (backup required, interrupted write no-start, recovery, five tunes at their gains); `12-compare` |
+| 11 | Turbo Sound vane adjustment changes whistle/hiss through the modeled turbo, with real costs | yes | `check.mjs`: turbo 17.7k -> 38.0k rpm, EGT +21 F; overspeed failure at full load |
+| 12 | Tuned results and breakage limits derived from sourced data, estimates in `ACCURACY.md` | yes | `12-compare` gains; `check.mjs` transmission burn; ACCURACY.md |
+| 13 | Complete, inspectable shop with solid collision | yes | `09-shop-wide`; 47/48 colliders block the player; four corner walks |
+| 14 | Walk, driver, dyno and photo camera modes; intro; help panel; UI hiding; PNG capture | yes | `check.mjs` intro + walk; driver view fixed and checked; `V`/`C`/`O`/`H`/`P` paths in game.js |
+| 15 | Procedural engine, turbo, fan and roller sound | yes (unheard) | `scripts/audioCheck.mjs` 95/95 spectral checks, 56 audio unit tests; **never listened to by a person** |
+| 16 | Smooth performance with a quality setting, no console errors | yes, with a caveat | frame table above (high 53 fps on the Intel Arc 140V); `check.mjs` no console errors |
+| 17 | Passing unit tests for the engine and dyno math | yes | 276/276 |
+| 18 | README, `ACCURACY.md` and the `npm run shots` script | yes | README updated; ACCURACY.md; `scripts/shots.mjs` |
+| 19 | All 12 screenshots saved, art-reviewed and accuracy-audited | yes | `screenshots/` 12 files; both reviews above |
+
+## What is still owed or imperfect
+* **A human ear on the audio.** Levels were set from spectra (95/95 offline checks, 56 unit tests) and were
+  never listened to; this is the largest unverified area.
+* **A human eye on the art.** The two reviews above were done by the model on the renders. The paint, the
+  lighting and the overall feel have not been judged by a person.
+* The overall-length conflict between the photos and the published 237.3 in (`ACCURACY.md`): unresolved by
+  decision.
+* High quality averages 53 fps at 1080p on the measured integrated GPU rather than a locked 60.
+* The front fascia, headlamps, seats, cluster bezel and the outside world are simplified; the engine bay is
+  cleaner and emptier than the reference photos.
+* Headless Chromium has no GPU on this machine. The checks and shots therefore either run software rendering
+  (`GPU=1` headless) or need `HEADED=1` for the real GPU (the shots and the frame times).
+
+## Final report
+See the last message of the finishing session; the same text is kept here.
+
+The project is a single-page Three.js app. `npm install && npm run dev` serves it at http://127.0.0.1:5173
+(`docs/DEEPSEEK_PROMPT.md` section 3). Controls: WASD/Shift/Ctrl walk, E use, I inspect, T dyno panel, L AI
+Live, M shop menu, V driver, C dyno camera, O orbit/photo, F1 help, Q quality, H hide UI, P save PNG.
+Architecture and the physics are described in `README.md`; the shipping tree is
+`src/data` (spec, labels), `src/sim` (pure physics), `src/truck` (body, front, rear, underside, interior,
+engine bay), `src/shop` (shell, equipment, dyno hardware, AI Live rig), `src/game`, `src/ui`, `src/audio`,
+`tests`, `scripts`, `tools/blender`.
+
+Checks: `npm test` 276/276, `npm run build` ok, `GPU=1 node scripts/check.mjs` 46/46, `HEADED=1 GPU=1 node
+scripts/perf.mjs` frame table above.

@@ -17,10 +17,21 @@ npm install
 npm run dev        # http://127.0.0.1:5173
 ```
 
-Other commands: `npm test` (unit tests: engine, dyno, tuning, failures, start sequence, flash procedure), `npm run build`,
-`npm run shots` (Playwright, headless Chromium: saves the 12 showcase screenshots to `screenshots/`),
-`node scripts/check.mjs` (scripted verification of doors, hood, intro, dyno and tuning), `node scripts/fit.mjs` (re-fit the calibration
-tables against the physics).
+Other commands: `npm test` (unit tests: engine, dyno, tuning, failures, start sequence, flash procedure, UI),
+`npm run build`, `npm run shots` (Playwright: saves the 12 showcase screenshots to `screenshots/` at 1920 x 1080;
+`SHOTS_QUALITY=low|medium|high`), `node scripts/check.mjs` (46 scripted verification checks: intro, every
+opening, the start sequence, the dyno refusals and pull, the whole AI Live procedure, all five quick tunes, the
+Turbo Sound vanes and the turbo overspeed failure, the race tune burning the transmission, walk collision and
+reachability, the cable/door rule, the rear lamps and the driver eye point), `node scripts/perf.mjs` (frame
+time at each quality: average, p50 and p95, written to `.dev/perf.json`), `node scripts/fit.mjs` (re-fit the
+calibration tables against the physics) and `node tools/blender/overlay.py` under Blender (the measurement
+overlay, see below).
+
+Playwright needs `npm run setup:browser` once. Headless Chromium on Windows can fall back to software WebGL
+(SwiftShader); `GPU=1` asks for the real GPU and `HEADED=1` opens a visible window, which is the only way to
+get the GPU on a machine where headless has none (the frame-time numbers in `PROGRESS.md` were measured that
+way). Setting `HEADED=1` is also worth it for the screenshots.
+
 
 A GPU with WebGL2 is expected; the quality setting (Q, or F1 panel) is low / medium / high (high by default). Software rendering works
 but is slow.
@@ -50,7 +61,7 @@ and `tools/blender/README.md`.
 * **Hood**: pull the release handle in the cab (lower left of the steering wheel), then the secondary release at the grille, then lift. GMT800 hoods have no prop rod: spring-loaded hinge arms hold it.
 * **Start**: shifter in PARK or NEUTRAL, key to RUN, wait for the Wait to Start light to go off, key to START. Over 15 s of cranking requires a one-minute starter cool-down.
 * **Dyno run**: strap all four corners, turn the fan on (or open the hood), pick a gear (4th is the standard pull), start the run. The run is refused without straps or with the hood closed and the fan off.
-* **Tuning**: plug the AI Live cable into the OBD-II port under the dash, key to RUN with the engine off, clip on the charger, read the truck, save a backup, then write a tune. An interrupted write leaves the truck in a no-start state until another write succeeds.
+* **Tuning**: plug the AI Live cable into the OBD-II port under the dash (open the driver's door first), key to RUN with the engine off, clip on the charger, read the truck, save a backup, then write a tune. An interrupted write leaves the truck in a no-start state until another write succeeds.
 * **LBZ regulator**: the owner's five tunes were written for an LLY with the LBZ fuel pressure regulator. The truck arrives with the stock regulator; the upgrade is on the parts shelf (shop menu). Without it the higher tunes fall short on rail pressure.
 * **Turbo Sound**: AI Live page that closes the VGT vanes at idle and light load for more whistle. The sound follows the modeled turbo shaft speed; it also raises back pressure and exhaust temperature, and too much at high load overspeeds the turbo.
 * **Breakage**: transmission clutches, head gaskets, turbo and pistons fail only past their documented limits and can be repaired from the shop menu.
@@ -69,7 +80,10 @@ src/audio/                 procedural Web Audio: diesel, turbo from modeled shaf
 src/game/                  input, walk controller and collision, interaction, openings, cameras, the Game loop
 src/ui/                    overlay, dyno panel and graph, AI Live app, shop menu
 tests/                     vitest unit tests
-scripts/                   fit.mjs (calibration fit), check.mjs, shots.mjs, shot.mjs and probe.mjs helpers
+scripts/                   fit.mjs (calibration fit), check.mjs (46 checks), perf.mjs (frame time), shots.mjs,
+                           shot.mjs and probe.mjs helpers
+tools/blender/             optional scripted Blender tools: exportProfile.mjs + overlay.py (the reference
+                           overlay and the measurement report)
 ```
 
 ### The dyno and the physics
