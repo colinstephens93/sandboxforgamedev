@@ -12,11 +12,19 @@ import { buildBay } from './bay.js';
 import { buildCooling } from './cooling.js';
 import { buildBits, buildEngineWiring } from './bits.js';
 import { ENGINE_LABELS } from './labels.js';
+import { buildDetailedEngine } from './detailedEngine.js';
 
 export { ENGINE_LABELS };
 export { hoodPose, buildHoodUnder } from '../hoodUnder.js';
 
-export function buildEngineBay({ quality } = {}) {
+// The parts of the simple engine that the detailed long block replaces (it has its own block, heads, covers, manifolds,
+// front drive with alternator and water pump, turbo, up-pipes, fuel system and harness).
+const SUPERSEDED = ['block', 'bank_driver', 'bank_passenger', 'intake_manifold', 'cp3', 'belt', 'pulleys', 'water_pump', 'tensioner', 'alternator', 'turbo', 'crossovers', 'vgt_actuator', 'engine_wiring', 'fasteners_engine'];
+// mid-length of the detailed engine along the truck, in bay inches (the heads then sit where the simple engine's banks were)
+const CORE_S = 2.4;
+
+// detailed: false builds the earlier simple engine only (no internals)
+export function buildEngineBay({ quality, detailed = true } = {}) {
   quality = quality || { tex: 512 };
   const d = quality.tex >= 2048 ? 1 : quality.tex >= 1024 ? 0.75 : 0.5;
   const mats = makeMats(quality);
@@ -32,13 +40,21 @@ export function buildEngineBay({ quality } = {}) {
 
   // the engine, free to move on its mounts: pivot at the crankshaft centerline
   const c = ENGINE.crank;
-  const mount = new THREE.Group(); mount.name = 'engine_mount'; mount.position.set(c.x, c.y, c.s); inch.add(mount);
+  const mount = new THREE.Group(); mount.name = 'engine_mount'; mount.userData.dynamic = true; mount.position.set(c.x, c.y, c.s); inch.add(mount);
   const body = new THREE.Group(); body.name = 'engine_body'; body.position.set(-c.x, -c.y, -c.s); mount.add(body);
   const efast = new Fasteners(mats);
   const pt = buildPowertrain({ mats, d, fast: efast }); body.add(pt.group);
   const turbo = buildTurbo({ mats, d, fast: efast }, pt.group);
   buildEngineWiring({ mats, d, fast: efast }, pt.group);
   { const fg = new THREE.Group(); fg.name = 'fasteners_engine'; fg.userData.labelId = 'engine.fasteners'; pt.group.add(fg); efast.flush(fg); }
+
+  // ---- the detailed long block (src/truck/engine/detailedEngine.js) takes the place of the simple block and its dress ----
+  let core = null;
+  if (detailed) {
+    for (const name of SUPERSEDED) { const o = pt.group.getObjectByName(name); if (o) o.parent.remove(o); }
+    core = buildDetailedEngine({ crank: { x: c.x, y: c.y, s: CORE_S } });
+    pt.group.add(core.group);
+  }
 
   // ---- anchors (Object3Ds) for labels and interaction; letters follow the supplement diagram ----
   const A = {
@@ -62,10 +78,10 @@ export function buildEngineBay({ quality } = {}) {
     remotePos: pt.anchors.remotePos,
     fan: pt.anchors.fan,
     engineCover: pt.anchors.engineCover,
-    turbo: turbo.turbo,
+    turbo: core ? core.model.assemblies.get('turbo') : turbo.turbo,
     intercooler: cooling.anchors.intercooler,
     radiator: cooling.anchors.radiator,
-    alternator: pt.anchors.alternator,
+    alternator: core ? core.model.assemblies.get('front-drive') : pt.anchors.alternator,
     acCompressor: pt.anchors.acCompressor,
     positions: POS,
   };
@@ -93,8 +109,9 @@ export function buildEngineBay({ quality } = {}) {
     shimmer += (clamp(sh, 0, 1) - shimmer) * clamp(dt * 2.5, 0, 1);
     shm.uniforms.uTime.value = t; shm.uniforms.uAmt.value = shimmer;
     turbo.shimmer.visible = shimmer > 0.01;
+    if (core) { core.update(dt, st); const open = core.cutaway || core.exploded; if (A.engineCover.visible === open) A.engineCover.visible = !open; } // the plastic cover lifts away for the cutaway and exploded views
   }
   // count triangles / draw calls for the budget check
   const stats = () => { let tris = 0, meshes = 0; root.traverse((o) => { if (o.isMesh) { meshes++; const g = o.geometry; const n = g.index ? g.index.count / 3 : g.attributes.position.count / 3; tris += o.isInstancedMesh ? n * o.count : n; } }); return { tris: Math.round(tris), meshes }; };
-  return { group: root, anchors: A, update, labels: ENGINE_LABELS, stats, mats, parts: { engine: mount, fanSpin: spin } };
+  return { group: root, anchors: A, update, labels: ENGINE_LABELS, stats, mats, core, parts: { engine: mount, fanSpin: spin } };
 }

@@ -88,7 +88,7 @@ export function buildControls(env) {
 
   // ---------------- column shift lever with the Tow/Haul button ----------------
   const shifter = new THREE.Group(); shifter.name = 'shift_lever'; shifter.userData.labelId = 'interior.shifter';
-  const leverPivot = new THREE.Group(); shifter.add(leverPivot);
+  const leverPivot = new THREE.Group(); leverPivot.userData.dynamic = true; shifter.add(leverPivot);
   {
     const P = [[2.0, -0.4, -3.3], [4.4, -0.3, -2.9], [6.5, 1.2, -1.8]];
     leverPivot.add(new THREE.Mesh(tubeG(P, 0.3, 12, 10), MT.black));

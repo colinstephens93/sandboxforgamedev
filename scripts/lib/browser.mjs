@@ -18,12 +18,13 @@ export async function startApp(port = 5300 + Math.floor(Math.random() * 2500)) {
   return { url: `http://127.0.0.1:${port}/`, close: () => server.close() };
 }
 
-export async function openPage({ url, width = 1280, height = 720, dpr = 1, quality = 'medium', logs = [] }) {
-  const browser = await pw.chromium.launch({ args: CHROME_FLAGS, headless: process.env.HEADED !== '1' });
+export async function openPage({ url, width = 1280, height = 720, dpr = 1, quality = 'medium', logs = [], path = '', query = '' }) {
+  // CHROME_PATH: use an already installed Chromium instead of the one Playwright downloads
+  const browser = await pw.chromium.launch({ args: CHROME_FLAGS, headless: process.env.HEADED !== '1', ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: dpr });
   const page = await ctx.newPage();
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(`[${m.type()}] ${m.text()}`); });
   page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}\n${e.stack || ''}`));
-  await page.goto(url + `?quality=${quality}&test=1`);
+  await page.goto(url + path + `?quality=${quality}&test=1${query}`);
   return { browser, page, logs };
 }

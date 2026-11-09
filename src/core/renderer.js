@@ -4,8 +4,9 @@ import { EffectComposer, RenderPass, EffectPass, NormalPass, SSAOEffect, BloomEf
 import { QUALITY } from './quality.js';
 
 export class Renderer {
-  constructor(canvas, qualityName) {
-    this.canvas = canvas;
+  // opts.persist = false: do not remember the quality choice (the truck studio must not change the game's setting)
+  constructor(canvas, qualityName, opts = {}) {
+    this.canvas = canvas; this.persist = opts.persist !== false; this.qOverride = null;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: false, stencil: false, depth: true });
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.autoUpdate = false; // shadows are refreshed on a schedule (see render)
@@ -19,11 +20,12 @@ export class Renderer {
     this.setQuality(qualityName);
   }
 
-  get q() { return QUALITY[this.qualityName]; }
+  // qOverride: per-setting overrides on top of the preset (used by the truck studio to switch single effects on and off)
+  get q() { const q = QUALITY[this.qualityName]; return this.qOverride ? { ...q, ...this.qOverride } : q; }
 
   setQuality(name) {
     this.qualityName = QUALITY[name] ? name : 'high';
-    try { localStorage.setItem('dds.quality', this.qualityName); } catch {}
+    if (this.persist) { try { localStorage.setItem('dds.quality', this.qualityName); } catch {} }
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio));
     this.renderer.shadowMap.needsUpdate = true;
     if (this.scene) this.build(this.scene, this.camera);

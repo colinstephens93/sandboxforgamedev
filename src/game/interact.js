@@ -1,10 +1,12 @@
 // Pointing at things: names and descriptions (inspection mode, I), and use (E) on anything with userData.interact.
 import * as THREE from 'three';
 import { labelFor } from '../data/labels/index.js';
+import { PICK_LAYER } from '../truck/optimize.js';
 
 export class Interactor {
   constructor(camera, roots) {
     this.camera = camera; this.roots = roots; this.ray = new THREE.Raycaster(); this.ray.far = 6;
+    this.ray.layers.enable(PICK_LAYER); // merged truck parts keep their originals on this layer for pointing
     this.target = null; this.hit = null; this.timer = 0; this.maxUse = 2.9;
     this.inspect = false; this.animations = [];
     this.center = new THREE.Vector2(0, 0);

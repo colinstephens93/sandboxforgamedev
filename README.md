@@ -43,6 +43,51 @@ Playwright needs `npm run setup:browser` once. Headless Chromium on Windows can 
 get the GPU on a machine where headless has none (the frame-time numbers in `PROGRESS.md` were measured that
 way). Setting `HEADED=1` is also worth it for the screenshots.
 
+## Truck studio (truck and engine only)
+
+`studio.html` loads the truck and its engine alone on a neutral backdrop: no shop, no dyno, no equipment, no simulation and no audio.
+It exists so the truck's rendering, materials and frame cost can be worked on without the scenery in the way. It uses the same
+renderer, quality presets, materials and hidden-part culling as the game, so what is tuned and measured there carries over.
+
+```bash
+npm run studio     # opens http://127.0.0.1:5173/studio.html (add ?quality=low|medium|high)
+```
+
+* **Views** (keys 1 to 9 and 0): hero, side, rear, wheel, engine bay with the hood up, the engine alone, engine cutaway (castings faded, internals moving), engine exploded, driver's seat, underside. Drag to orbit, right-drag to pan, wheel to zoom.
+* **Parts shown**: body, wheels, interior, engine, the rest of the engine bay, hood underside and underside can each be switched off; each lists its draw calls and triangles.
+* **Truck**: hood, doors, tailgate, engine running with an rpm slider, engine cutaway and exploded.
+* **Render**: shadows, ambient occlusion, bloom, anti-aliasing, render scale and shadow map size switch one at a time on top of the preset, so the cost of each can be read off. Two generated lighting setups (studio softboxes, daylight).
+* **Readout**: frame rate, CPU and GPU time per frame, draw calls, triangles, shader programs, textures.
+* **Run benchmark**: times whole frames (finished on the GPU, so the display's refresh rate does not cap the result) for five views and shows a table that can be copied as JSON.
+
+The same from the command line (`GPU=1` uses the real graphics card; `CHROME_PATH=...` uses an installed Chromium):
+
+```bash
+GPU=1 node scripts/studio.mjs perf                 # frame time per view at low / medium / high -> .dev/studio-perf.json
+GPU=1 node scripts/studio.mjs perf high 1280x720   # one preset, another resolution
+GPU=1 node scripts/studio.mjs shots high           # one PNG per view -> .dev/studio-<view>.png
+```
+
+Code: `src/studio/studio.js` (scene, views, benchmark), `src/studio/main.js` (panels), `src/truck/culling.js` (the culling rule shared with the game).
+
+### Draw-call merging
+
+The truck is built from about 950 labelled parts. `src/truck/optimize.js` merges parts that share a material and never move
+relative to each other into one mesh for drawing, and keeps the originals on a raycast-only layer so pointing at a part still
+finds that part's own name and action. Merging stops at anything that moves: nodes marked `userData.dynamic`, anything usable
+with E, and named anchors; a mesh that changes on its own is marked `userData.noMerge`. `tests/optimize.test.js` drives every
+moving part and fails if a merged part would have moved, hidden or changed. Add `?merge=0` to the game or studio URL (or
+`MERGE=0` for `scripts/studio.mjs`) to draw the unmerged truck for comparison.
+
+### Detailed engine
+
+The engine block, heads, internals, front drive, turbo and fuel system are the detailed LLY model from the
+[duramaxsimulator](https://github.com/colinstephens93/duramaxsimulator) repository, copied unchanged into
+`src/truck/engine/detailed/` (see the README there) and fitted into the bay by `src/truck/engine/detailedEngine.js`. The
+truck keeps its own dress around it (engine cover, fan, air conditioning compressor, power steering, dipstick, downpipe,
+hoses and wiring) and its own sump, which is shaped around the front axle. Its crank, pistons, cam and valvetrain turn with
+engine speed and are only drawn while the castings are cut away or the engine is exploded.
+
 ## Listening to the audio (the ear pass)
 
 The audio is procedural. A small mapping adjustment (turbo whistle base gain 0.42 → 0.48) was made in the

@@ -815,7 +815,7 @@ export function buildWheel({ quality, axle = 'front', side = 'R' } = {}) {
   const group = new THREE.Group();
   group.name = `wheel_${axle}_${side}`;
   if (side === 'L') group.rotation.y = Math.PI; // same wheel turned around (not mirrored): lettering reads correctly from outside
-  const spinG = new THREE.Group(); spinG.name = 'spin';
+  const spinG = new THREE.Group(); spinG.name = 'spin'; spinG.userData.dynamic = true;
   group.add(spinG);
 
   const add = (parent, geom, material, name, { cast = false, label = null } = {}) => {

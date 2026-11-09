@@ -440,7 +440,7 @@ export function buildRear({ quality } = {}) {
       g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array((N + 1) * RAD * 2), 2));
       const idx = []; for (let i = 0; i < N; i++) for (let k = 0; k < RAD; k++) { const a = i * RAD + k, b = i * RAD + (k + 1) % RAD, c = a + RAD, d = b + RAD; idx.push(a, b, c, b, d, c); }
       g.setIndex(idx);
-      const mesh = new THREE.Mesh(g, cableMat); mesh.name = `tailgate_cable_${sg > 0 ? 'R' : 'L'}`; mesh.userData.labelId = L('truck.tailgate_cable'); mesh.frustumCulled = false; mesh.castShadow = false; root.add(mesh);
+      const mesh = new THREE.Mesh(g, cableMat); mesh.name = `tailgate_cable_${sg > 0 ? 'R' : 'L'}`; mesh.userData.noMerge = true; /* its vertices follow the gate */ mesh.userData.labelId = L('truck.tailgate_cable'); mesh.frustumCulled = false; mesh.castShadow = false; root.add(mesh);
       cables[sg] = { mesh, update(angle) {
         const A = [sg * GATE.cable.box[0], GATE.cable.box[1], GATE.cable.box[2] + 0.1];
         const B = gatePointAt(angle, [sg * GATE.cable.gate[0], GATE.cable.gate[1], GATE.cable.gate[2]]);
