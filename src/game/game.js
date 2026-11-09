@@ -78,6 +78,7 @@ export class Game {
     } catch (e) { console.warn('battery ports', e); }
     this.R.onQuality = (q) => this.shop.lights.setFill(q.fillLights);
     this.setupTruckCulling();
+    this.pruneFarShadowCasters();
     p(0.78, 'Baking shop reflections');
     this.truck.group.visible = false;
     bakeEnvironment(this.R.renderer, this.scene, new THREE.Vector3(0, 1.4, 0), this.R.q.envSize);
@@ -154,6 +155,17 @@ export class Game {
       bay: bay ? meshes(bay) : [], hood: hu ? meshes(hu) : [], under: this.truck.underside ? meshes(this.truck.underside.group) : [],
       box: bay ? new THREE.Box3().setFromObject(bay) : null, shown: { bay: true, under: true },
     };
+  }
+
+  // Far equipment (tool chests, shelving, office) does not need to cast shadows: that work is only worth doing near the truck.
+  pruneFarShadowCasters() {
+    const cx = DYNO.truckOrigin.x, cz = TRUCK_Z + 1.9, R2 = 7 * 7, box = new THREE.Box3(), c = new THREE.Vector3();
+    this.equipment.group.updateMatrixWorld(true);
+    this.equipment.group.traverse((o) => {
+      if (!o.isMesh || !o.castShadow) return;
+      box.setFromObject(o).getCenter(c);
+      if ((c.x - cx) ** 2 + (c.z - cz) ** 2 > R2) o.castShadow = false;
+    });
   }
 
   updateTruckCulling() {

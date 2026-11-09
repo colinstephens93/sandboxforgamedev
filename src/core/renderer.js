@@ -6,7 +6,7 @@ import { QUALITY } from './quality.js';
 export class Renderer {
   constructor(canvas, qualityName) {
     this.canvas = canvas;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true, stencil: false, depth: true });
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: false, stencil: false, depth: true });
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.autoUpdate = false; // shadows are refreshed on a schedule (see render)
     this.renderer.shadowMap.needsUpdate = true;
