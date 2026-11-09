@@ -1,5 +1,22 @@
 # PROGRESS
 
+## Improvement pass summary (November 2026)
+
+All planned review improvements have been implemented and pushed to this branch:
+
+| Phase | Commit | Summary |
+|---|---|---|
+| 1.1–1.2 | e5c0bf1 | Odometer fix + placeholder cleanup |
+| 2.1 | bc1f943 | Front fascia / headlamp materials and depth |
+| 2.2 | 4877039 | Engine bay density (extra looms and hoses) |
+| 2.3 | 9dddd7a | Stronger PBR paint, chrome, glass; env intensity 0.7 |
+| 3.1 | 7f18a10 | High-quality performance pass |
+| 3.2 | 8c8e97f | Exterior world and floor atmosphere |
+| 4.1 | 2d7527b | Audio whistle gain adjustment (ear pass still outstanding) |
+
+All 276 unit tests pass and `npm run build` succeeds. See the detailed logs below and `ACCURACY.md` for estimates.
+
+
 Running log: each increment's result, the checks run, the screenshots taken, and any problem left open.
 
 

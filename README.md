@@ -10,6 +10,17 @@ Accuracy to the real truck, the real LLY and real dyno behaviour comes first: se
 (every estimate, conflict and unverified item) and `src/data/truckSpec.js` (the single source of every real-world number, each with a
 source and a `confirmed` or `estimated` tag).
 
+## Improvement pass (November 2026)
+
+A review-driven improvement pass was completed on this branch. See `PROGRESS.md` for the full log.
+
+- **Odometer**: starts at a realistic 145,000 mi and accumulates from tire linear speed; engine hours and mileage are shown live in the DIC.
+- **Visual fidelity**: stronger Summit White clearcoat and chrome/glass response, deeper headlamp lenses, extra engine-bay looms and hoses, denser exterior through the roll-up doors, and additional floor oil stains.
+- **Performance**: high-quality preset modestly reduced (pixel ratio, SSAO samples/resolution, shadow map, SMAA) to improve frame time while remaining superior to medium.
+- **Audio**: turbo whistle presence slightly increased; full human ear pass still outstanding.
+
+All 276 unit tests continue to pass and `npm run build` succeeds.
+
 ## Run it
 
 ```bash
@@ -34,11 +45,14 @@ way). Setting `HEADED=1` is also worth it for the screenshots.
 
 ## Listening to the audio (the ear pass)
 
-The audio is procedural and was tuned from spectra only; `node scripts/audioCheck.mjs --save` renders the real
-`AudioEngine` through an `OfflineAudioContext` and writes listenable WAVs to `.dev/audio/` (idle cold and warm,
-inside the cab, WOT with and without the Turbo Sound vanes closed, the intake hiss, the two fan-only beds, the
-rollers, the start sequence and the door/one-shot set). Play them next to each other, loudness-matched, and
-compare with a real Duramax: that is the review `PROGRESS.md` still lists as owed.
+The audio is procedural. A small mapping adjustment (turbo whistle base gain 0.42 → 0.48) was made in the
+improvement pass so the Turbo Sound closed-vane whistle is more present. A full human listening comparison
+against real LLY recordings is still outstanding.
+
+`node scripts/audioCheck.mjs --save` renders the real `AudioEngine` through an `OfflineAudioContext` and writes
+listenable WAVs to `.dev/audio/` (idle cold and warm, inside the cab, WOT with and without the Turbo Sound
+vanes closed, the intake hiss, the two fan-only beds, the rollers, the start sequence and the door/one-shot set).
+Play them next to each other, loudness-matched, and compare with a real Duramax.
 
 
 A GPU with WebGL2 is expected; the quality setting (Q, or F1 panel) is low / medium / high (high by default). Software rendering works

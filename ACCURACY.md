@@ -67,14 +67,15 @@ every fueling table (GM calibration tables are not public).
   bay is cleaner and emptier than `IMG_2874` to `IMG_2877`: hose and pipe routing, bracket shapes and small
   components (clamps, clips, loom splits) are approximations, and the hood's insulation pad is a plain surface
   without the moulded cut-outs.
-* **Outside world** seen through the open roll-up doors is placeholder geometry (stylised trees and a car park
-  plane), not a modelled environment. It appears in the shop-wide and engine-bay screenshots.
+* **Outside world** seen through the open roll-up doors is procedural geometry (sky, distant industrial buildings,
+  tree billboards, and a textured apron). Enhanced in Phase 3.2. It appears in the shop-wide and engine-bay screenshots.
 * **Bed rail caps and bed floor**: plain black caps and a ribbed floor; the factory tie-down and stake-pocket
   details exist but the cap profile is a straight extrusion.
 * **Paint and lighting** were tuned by eye against the reference photos, not measured; the environment
-  intensity (0.5) and the glass tint are art decisions.
-* **Audio** was never listened to by a person (see PROGRESS.md); 56 unit tests and 95 offline spectral checks
-  only prove the synthesis runs and tracks the simulated firing frequency, whistle pitch and fan speed.
+  intensity is currently 0.7 (raised in Phase 2.3) and the glass tint are art decisions.
+* **Audio** has not yet received a full human listening pass against real LLY recordings (see PROGRESS.md).
+  Unit tests and offline spectral checks prove the synthesis runs and tracks the simulated firing frequency,
+  whistle pitch and fan speed. A small whistle-gain adjustment was made in Phase 4.1.
 
 ## Odometer (Phase 1.1)
 * Starting value set to 145,000 mi (estimated for a 2005 working shop truck). Accumulates from tire linear speed during dyno or rolling. Engine hours tracked and displayed. Logged 2026-11-09.
