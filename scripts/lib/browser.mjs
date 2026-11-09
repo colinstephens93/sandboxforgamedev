@@ -5,10 +5,12 @@ const require = createRequire(import.meta.url);
 let pw;
 try { pw = require('playwright'); } catch { pw = require('/opt/node22/lib/node_modules/playwright'); }
 
-export const CHROME_FLAGS = [
-  '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--use-gl=angle',
-  '--ignore-gpu-blocklist', '--enable-webgl', '--no-sandbox', '--autoplay-policy=no-user-gesture-required',
-];
+// Software WebGL (SwiftShader) is the default so the scripts run on machines without a GPU (slow).
+// Set GPU=1 to use the machine's real GPU (much faster; recommended on a desktop).
+export const CHROME_FLAGS = process.env.GPU === '1'
+  ? ['--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--enable-webgl', '--no-sandbox', '--autoplay-policy=no-user-gesture-required']
+  : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--use-gl=angle',
+    '--ignore-gpu-blocklist', '--enable-webgl', '--no-sandbox', '--autoplay-policy=no-user-gesture-required'];
 
 export async function startApp(port = 5300 + Math.floor(Math.random() * 2500)) {
   const server = await createServer({ server: { port, host: '127.0.0.1' }, logLevel: 'error' });
@@ -17,7 +19,7 @@ export async function startApp(port = 5300 + Math.floor(Math.random() * 2500)) {
 }
 
 export async function openPage({ url, width = 1280, height = 720, dpr = 1, quality = 'medium', logs = [] }) {
-  const browser = await pw.chromium.launch({ args: CHROME_FLAGS, headless: true });
+  const browser = await pw.chromium.launch({ args: CHROME_FLAGS, headless: process.env.HEADED !== '1' });
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: dpr });
   const page = await ctx.newPage();
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(`[${m.type()}] ${m.text()}`); });
