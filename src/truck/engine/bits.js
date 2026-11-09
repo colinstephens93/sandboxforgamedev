@@ -248,7 +248,7 @@ export function buildBits({ mats, d, fast }) {
     // small hose from surge tank area toward the radiator
     b.add('rubber', tube([[-8.0, 42.0, -6.0], [-6.0, 40.5, -2.0], [-4.0, 38.0, 2.0], [-2.5, 36.5, 6.0]], 0.28, { radial: 6, segs: 24 }));
     // intercooler-to-engine charge pipe segment detail
-    b.add('aluminum', tube([[8.0, 30.0, -14.0], [6.0, 32.5, -8.0], [3.0, 34.0, -2.0]], 0.9, { radial: 8, segs: 16 }));
+    b.add('alumPipe', tube([[8.0, 30.0, -14.0], [6.0, 32.5, -8.0], [3.0, 34.0, -2.0]], 0.9, { radial: 8, segs: 16 }));
     b.flush(g, mats, { name: 'xd' });
   }
 
