@@ -254,3 +254,78 @@ engine bay), `src/shop` (shell, equipment, dyno hardware, AI Live rig), `src/gam
 
 Checks: `npm test` 276/276, `npm run build` ok, `GPU=1 node scripts/check.mjs` 46/46, `HEADED=1 GPU=1 node
 scripts/perf.mjs` frame table above.
+
+## Final report (also the closing message of the finishing session)
+
+### What was built
+The **Duramax Dyno Shop**: one runnable Three.js/WebGL browser app of a factory-stock 2005 Chevrolet
+Silverado 2500HD LT Crew Cab (Summit White, 6.6 L Duramax LLY, Allison 1000, 4WD, 6.5 ft box) strapped to an
+in-ground chassis dynamometer in a 24 x 18 m diesel performance shop, with the original AI Live laptop tuning
+app. Everything (models, textures, sound) is generated in code.
+
+Walk the shop; open all four doors, the tailgate, the hood (cab release, secondary latch, spring hinges) and the
+fuel door; inspect every part (I); sit in the cab; start the diesel with the real glow-plug procedure; run the
+truck on the dyno and read wheel hp/lb-ft with SAE correction and a run history; plug AI Live in, read, back up
+and write any of the five owner tunes plus stock; adjust the VGT vanes on the Turbo Sound page and hear the
+turbo follow the modeled shaft speed; abuse it until the Allison, the head gaskets, the turbo or the pistons
+fail, and repair them from the shop menu.
+
+### Controls
+W A S D, Shift (run), Ctrl (crouch), mouse look (click to lock, Esc to release); E use (openings, drawers,
+roll-up doors, sit, key); I inspection mode; T dyno panel; L AI Live; M shop menu; V driver view; C dyno camera
+while running; O orbit/photo mode; F1 help; Q quality (low/medium/high); H hide UI; P save a PNG; any key skips
+the intro.
+
+### File structure
+`src/data/truckSpec.js` (every real-world number with a source and a `confirmed`/`estimated` tag) and
+`src/data/labels/`; `src/sim/` pure physics (engine, turbo, driveline, plant, dyno, atmos, failures,
+calibrations + `src/data/calFit.js`, startSequence, flash); `src/core/` (renderer and post-processing,
+procedural textures, materials, shop environment map, quality); `src/shop/` (shell, layout, equipment, dyno
+hardware, AI Live rig); `src/truck/` (parametric skin and panels, body, front end, wheels, rear, interior,
+engine bay, underside); `src/game/` (loop, input, player and collision, interaction, openings, cameras,
+bookmarks); `src/ui/` (dyno panel and graph, AI Live app, shop menu); `src/audio/`; `tests/`; `scripts/`;
+`tools/blender/`.
+
+### The screenshots
+`screenshots/01-hero.png`, `02-side-profile.png`, `03-rear-tailgate-down.png`, `04-engine-bay.png`,
+`05-driver-dash.png`, `06-open-door.png`, `07-dyno-run.png`, `08-pit-underside.png`, `09-shop-wide.png`,
+`10-wheel-badge.png`, `11-ailive-write.png`, `12-compare-baseline-vs-tune.png` — all 1920 x 1080, all retaken
+after the proportion work, each judged twice (art director and Duramax technician); the problem lists are above.
+
+### ACCURACY.md, in short (the file has the full text)
+* Conflicts: LLY compression ratio 17.5:1; governed rpm 3,200 (PROMPT.md wins); Allison input torque 565 lb-ft
+  and slip onset about 350 whp; converter stall 1,500 rpm and ratio 1.8; overall length 237.3 in estimated from
+  one source — and, new, the photos measure **220.7 / 225.3 in**, so the nose and rear bumper are longer than
+  the photo truck. That is the largest unresolved accuracy item; the task text pins the envelope at 237.3 in,
+  so the game keeps it.
+* Estimated (all tagged): dimensions and weights other than wheelbase and width, ride heights, box and cab
+  measurements, panel gaps, tach and gauge bands read from the photos, glow-plug times, every failure limit,
+  every tune's torque gain and every fueling table, the roller diameter/inertia, the drivetrain inertia, the
+  glass widths (62.8/54.4 in windshield, 61.2/56.4 in back glass), the pillar crown and the new hood line.
+* Unverified: owner's-manual excerpts (read from the photos), the washer reservoir position, the hood release
+  and tailgate procedure as standard GMT800, the SAE J1349 text (the ISO 1585 form is implemented), the vane
+  sign convention, the exhaust side and fuel-filter conflicts (resolved from the photos and the owner), and the
+  finishing-pass items: the glass frit border is **not modelled**, the front fascia/headlamps, seats, cluster
+  bezel and engine-bay plumbing are simplified, the outside world is a placeholder, and the paint/lighting were
+  tuned by eye.
+
+### Results
+* `npm test`: **276/276 passed** (14 files), including `tests/sim.test.js` and `tests/flash.test.js`.
+* `npm run build`: succeeds (1.43 MB bundle, 459 kB gzip).
+* `GPU=1 node scripts/check.mjs`: **46/46 passed**, no console errors that matter (`headless: 1280x720`).
+* `HEADED=1 GPU=1 node scripts/perf.mjs`, 1920 x 1080, Intel Arc 140V: low 9.07 ms avg / 11.70 p95, medium
+  13.73 / 17.90, high 18.85 / 26.80 (53.1 fps average at high).
+* `blender --background --python tools/blender/overlay.py`: two overlays plus the report, outline bbox exactly
+  237.30 x 77.00 in.
+* Pushed to `claude/youthful-rubin-gg2uno`; no pull request.
+
+### What I could not do, and why
+* **Listen to the audio.** No audio device/ear in this session; levels remain spectrum-derived (95/95 offline
+  checks and 56 unit tests prove the synthesis tracks the simulated firing frequency, turbo speed and fan, not
+  that it sounds right).
+* **Judge the art as a person would.** The two reviews were done on the renders by the model; a human eye on
+  the paint, the lighting and the overall feel is still owed.
+* **Reach 60 fps at high quality on this hardware.** 53 fps average at 1080p on an integrated Intel Arc 140V;
+  no quality setting was lowered to hide it.
+* **Measure in headless mode.** Headless Chromium has no GPU here (SwiftShader), so the frame times and the
+  screenshots were produced with `HEADED=1`; the scripted checks run headless in software rendering.
