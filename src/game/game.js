@@ -296,6 +296,7 @@ export class Game {
     I.update(dt, {
       keyPos, rpm: p.running ? p.rpm : 0, mph: p.dl.wheelSpeed() * TIRE_R * 2.23694, coolantF: p.coolantF, transF: p.dl.transF, oilPsi,
       volts: p.running ? 14.1 : (this.ai.charger ? 13.4 : this.ai.volts), fuel: p.fuelLevel, lights: { waitToStart: ig.wtsOn, waterInFuel: false }, dicMessage: msg,
+      odometerMi: p.odometerKm / 1.609344, engineHours: p.engineSeconds / 3600,
     });
     const open = Object.values(this.truckCtl.doors).some((d) => d.state > 0.03);
     if (I.interiorLight) I.interiorLight.setOn(open);

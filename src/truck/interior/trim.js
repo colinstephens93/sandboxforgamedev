@@ -76,7 +76,7 @@ export function buildCabShell(env) {
       c.fillText('MFD BY GENERAL MOTORS CORP', 250, 64);
       c.font = '700 30px Arial'; c.fillText(`GVWR  ${kg(I.gvwrLb)}KG(${I.gvwrLb}LB)`, 190, 112); c.fillText(`GAWR FRT ${kg(I.gawrFrontLb)}KG(${I.gawrFrontLb}LB)`, 400, 160); c.fillText(`GAWR RR ${kg(I.gawrRearLb)}KG(${I.gawrRearLb}LB)`, 520, 204);
       c.font = '600 24px Arial'; ['THIS VEHICLE CONFORMS TO ALL APPLICABLE U.S. FEDERAL MOTOR', 'VEHICLE SAFETY STANDARDS IN EFFECT ON THE DATE OF', 'MANUFACTURE SHOWN ABOVE.'].forEach((t, i) => c.fillText(t, 70, 262 + i * 32));
-      c.font = '700 32px Arial'; c.fillText('VIN  XXXXXXXXXXXXXXXXX', 70, 390); c.font = '600 28px Arial'; c.fillText('TYPE: TRUCK', 640, 390);
+      c.font = '700 32px Arial'; c.fillText('VIN  1GC1C43U55FXXXXXX', 70, 390);  // placeholder format, no real serial c.font = '600 28px Arial'; c.fillText('TYPE: TRUCK', 640, 390);
       c.font = '600 26px Arial'; c.fillText('TIRE SIZE', 170, 446); c.fillText('RIM', 470, 446); c.fillText('COLD TIRE PRESSURE', 600, 480);
       const tsize = 'LT245/75R16E';
       [['FRT', '16X6.5J', '380KPA(55PSI)'], ['RR', '16X6.5J', '550KPA(80PSI)'], ['SPA', '16X6.5J', '550KPA(80PSI)']].forEach(([pos, rim, pr], i) => { const y = 500 + i * 42; c.fillText(pos, 70, y); c.fillText(tsize, 170, y); c.fillText(rim, 470, y); c.fillText(pr, 640, y); });

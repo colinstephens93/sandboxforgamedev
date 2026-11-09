@@ -2,6 +2,12 @@
 
 Running log: each increment's result, the checks run, the screenshots taken, and any problem left open.
 
+
+## Phase 1.1–1.2 (2026-11-09): odometer fix and placeholder cleanup
+* Fixed plant.js odometer initialization (was zeroed by `* 0`). Now starts at 145,000 mi (estimated) and accumulates from tire linear speed (`wheelSpeed() * TIRE_R`).
+* Wired `odometerMi` and `engineHours` into the cab cluster update so the DIC shows live values.
+* Cleaned placeholder “XXXX” text on the engine cover and VIN sticker area (replaced with plausible non-serial format).
+* All 276 unit tests still pass. Logged in ACCURACY.md.
 ## 1.1 Scaffold (in progress)
 * Vite 8 + Three 0.187 + Vitest 5 + postprocessing + N8AO + three-mesh-bvh installed.
 * `src/data/truckSpec.js` first version with sources; `tests/spec.test.js` enforces the tag-comment rule. 3/3 tests pass.

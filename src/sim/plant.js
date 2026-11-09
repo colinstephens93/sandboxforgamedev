@@ -1,7 +1,7 @@
 // The whole truck as one simulation: powerplant + driveline + thermal state. Pure JS, no rendering.
 import { spec, degCtoF, LBFT } from '../data/truckSpec.js';
 import { Powerplant } from './engine.js';
-import { Driveline, DL } from './driveline.js';
+import { Driveline, DL, TIRE_R } from './driveline.js';
 import { makeAir } from './atmos.js';
 import { clamp, lag, interp } from './util.js';
 import { FailureModel } from './failures.js';
@@ -31,7 +31,8 @@ export class Plant {
     this.out = this.pp.compute(1, { qty: 0 });
     this.messages = new Set();
     this.reducedPower = false;
-    this.odometerKm = 193469 * 1.609344 * 0 + 0;
+    // starting odometer ~145,000 mi for a 20-year-old working truck (estimated; see ACCURACY.md)
+    this.odometerKm = 145000 * 1.609344;
     this.engineSeconds = 0;
   }
 
@@ -87,6 +88,9 @@ export class Plant {
     this.fail.update(dt, this, out);
     this.out = out;
     if (this.running) this.engineSeconds += dt;
+    // accumulate odometer from tire linear speed
+    const speedMs = Math.abs(this.dl.wheelSpeed() * TIRE_R);
+    this.odometerKm += (speedMs * dt) / 1000;
     return out;
   }
 

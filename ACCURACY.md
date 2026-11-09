@@ -75,3 +75,6 @@ every fueling table (GM calibration tables are not public).
   intensity (0.5) and the glass tint are art decisions.
 * **Audio** was never listened to by a person (see PROGRESS.md); 56 unit tests and 95 offline spectral checks
   only prove the synthesis runs and tracks the simulated firing frequency, whistle pitch and fan speed.
+
+## Odometer (Phase 1.1)
+* Starting value set to 145,000 mi (estimated for a 2005 working shop truck). Accumulates from tire linear speed during dyno or rolling. Engine hours tracked and displayed. Logged 2026-11-09.
