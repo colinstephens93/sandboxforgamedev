@@ -1,6 +1,18 @@
 import { defineConfig } from 'vite';
 export default defineConfig({
   server: { host: '127.0.0.1', port: 5173 },
-  build: { target: 'es2022', chunkSizeWarningLimit: 4000 },
+  build: {
+    target: 'es2022',
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (/node_modules[\\/](three|postprocessing|three-mesh-bvh)[\\/]/.test(id)) return 'vendor-three';
+          if (/src[\\/]truck[\\/]/.test(id)) return 'truck-mesh';
+          return undefined;
+        },
+      },
+    },
+  },
   test: { environment: 'node', include: ['tests/**/*.test.js'] },
 });

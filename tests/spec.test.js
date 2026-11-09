@@ -31,3 +31,10 @@ describe('truckSpec', () => {
     expect(HP).toBeGreaterThan(745);
   });
 });
+
+describe('truckSpec immutability', () => {
+  it('throws a TypeError when mutated (module code is strict)', () => {
+    expect(() => { spec.engine.idleRpm = 1; }).toThrow(TypeError);
+    expect(() => { spec.newKey = 1; }).toThrow(TypeError);
+  });
+});

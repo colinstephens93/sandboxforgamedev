@@ -97,8 +97,10 @@ export class Game {
     this.truckCtl = setupTruckOpenings(this.truck, { say: (t) => this.ui.say(t, 5), onLights: (on) => this.onDoorLights(on) });
     this.audio = new AudioEngine();
     this.ctx.sfx = (name, opts) => { try { this.audio.trigger(name, opts); } catch {} };
+    this._abort = new AbortController();
+    const sig = { signal: this._abort.signal };
     const startAudio = () => { this.audio.start(); window.removeEventListener('pointerdown', startAudio); window.removeEventListener('keydown', startAudio); };
-    window.addEventListener('pointerdown', startAudio); window.addEventListener('keydown', startAudio);
+    window.addEventListener('pointerdown', startAudio, sig); window.addEventListener('keydown', startAudio, sig);
     this.bindKeys();
     registerUi(this);
     this.last = performance.now(); this.setMode('intro'); this.introT = 0;
@@ -109,6 +111,7 @@ export class Game {
 
   initSim() {
     const cal = loadCal('stock');
+    if (!cal) throw new Error('Stock calibration failed to load');
     this.plant = new Plant({ cal, regulator: 'LLY', weather: { tempC: 24, pressureKpa: 101.0, humidityPct: 45 } });
     this.plant.setCalibration(cal);
     this.dyno = new Dyno(this.plant);
@@ -128,8 +131,14 @@ export class Game {
   closePanels() { for (const p of Object.values(this.panelsReg || {})) { if (p.isOpen) { p.close(); p.isOpen = false; } } this.panelOpen = false; }
   // shop air temperature drives the elevated-idle demonstration (PROMPT.md section 4)
   setShopTemp(f) {
-    this.shopTempF = f; const c = (f - 32) / 1.8; const w = { tempC: c, pressureKpa: this.plant.air.pressureKpa, humidityPct: this.plant.air.humidityPct };
-    import('../sim/atmos.js').then(({ makeAir }) => { const air = makeAir(w); this.plant.air = air; this.plant.pp.air = air; });
+    this.shopTempF = f;
+    this.plant.setWeather({ tempC: degFtoC(f), pressureKpa: this.plant.air.pressureKpa, humidityPct: this.plant.air.humidityPct });
+  }
+
+  dispose() {
+    this._abort?.abort();
+    this.R?.composer?.dispose?.();
+    this.R?.renderer?.dispose?.();
   }
 
   onDoorLights(on) { /* interior lights follow door state (interior module hooks this) */ this.state.doorOpen = on; }
@@ -162,8 +171,9 @@ export class Game {
         default: break;
       }
     });
-    window.addEventListener('keyup', (e) => { if ((e.code === 'ControlLeft' || e.code === 'ControlRight') && this.mode === 'walk') this.player.crouch = false; });
-    window.addEventListener('resize', () => this.R.resize());
+    const sig = { signal: (this._abort ||= new AbortController()).signal };
+    window.addEventListener('keyup', (e) => { if ((e.code === 'ControlLeft' || e.code === 'ControlRight') && this.mode === 'walk') this.player.crouch = false; }, sig);
+    window.addEventListener('resize', () => this.R.resize(), sig);
   }
 
   savePNG() {

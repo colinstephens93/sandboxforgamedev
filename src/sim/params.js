@@ -35,4 +35,8 @@ export const P = {
   polyN: 1.3, // polytropic exponent for compression pressure
   firePerMm3: 1.0, // bar of combustion pressure rise per mm3 of burned fuel at reference timing
   fireTimingK: 0.032, // fractional rise per deg of advance beyond 10
+  // ---- idle governor (Plant._idleQty), mm3/stroke ----
+  idlePid: { ki: 0.0016, kp: 0.06, base: 8, iMax: 60, maxQty: 45 },
+  // ---- reduced engine power (limp mode) ----
+  limpMode: { pedalScale: 0.55, maxQtyMm3: 45.0 },
 };

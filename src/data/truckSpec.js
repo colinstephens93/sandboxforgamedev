@@ -31,7 +31,15 @@ export const degCtoF = (c) => c * (9 / 5) + 32;
 export const RPM = (2 * Math.PI) / 60; // rad/s per rpm
 export const HP_CONST = 5252; // hp = torque(lb-ft) * rpm / 5252 (5252.11)
 
-export const spec = {
+const deepFreeze = (obj) => {
+  if (obj && typeof obj === 'object' && !Object.isFrozen(obj)) {
+    Object.freeze(obj);
+    for (const v of Object.values(obj)) deepFreeze(v);
+  }
+  return obj;
+};
+
+export const spec = deepFreeze({
   identity: {
     year: 2005, // confirmed: owner
     make: 'Chevrolet', // confirmed: owner
@@ -210,4 +218,4 @@ export const spec = {
     saeStdDryPressureKpa: 99, // confirmed: SAE J1349
     maxRunsHeatSoakAfter: 3, // estimated: game-balance
   },
-};
+});

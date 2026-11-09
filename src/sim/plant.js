@@ -5,6 +5,7 @@ import { Driveline, DL, TIRE_R } from './driveline.js';
 import { makeAir } from './atmos.js';
 import { clamp, lag, interp } from './util.js';
 import { FailureModel } from './failures.js';
+import { P } from './params.js';
 
 const E = spec.engine;
 
@@ -50,10 +51,22 @@ export class Plant {
   }
   stopEngine() { this.running = false; }
 
+  // update ambient air (shop temperature slider): keeps plant.air and the powerplant's air in sync
+  setWeather(weather = {}) {
+    this.air = makeAir({
+      tempC: weather.tempC ?? this.air.tempC,
+      pressureKpa: weather.pressureKpa ?? this.air.pressureKpa,
+      humidityPct: weather.humidityPct ?? this.air.humidityPct,
+    });
+    this.pp.air = this.air;
+    if (!this.running && this.engineSeconds === 0) { this.coolantC = this.air.tempC; this.oilC = this.air.tempC; }
+  }
+
   _idleQty(rpm, dt) {
+    const k = P.idlePid;
     const e = this.idleTargetRpm - rpm;
-    this.idleI = clamp(this.idleI + e * 0.0016 * dt * 60, 0, 60);
-    return clamp(8 + this.idleI + e * 0.06, 0, 45);
+    this.idleI = clamp(this.idleI + e * k.ki * dt * 60, 0, k.iMax);
+    return clamp(k.base + this.idleI + e * k.kp, 0, k.maxQty);
   }
 
   step(dt, { pedal = 0, brake = 0, brakeNm = 0, range, gear, tcc } = {}) {
@@ -70,7 +83,11 @@ export class Plant {
       const qPed = qFull * pedal;
       const qIdle = this._idleQty(rpm, dt);
       demand = qPed > qIdle ? { pedal } : { qty: qIdle };
-      if (this.reducedPower) demand = demand.qty != null ? demand : { pedal: pedal * 0.55 };
+      if (this.reducedPower) {
+        demand = demand.qty != null
+          ? { ...demand, qty: Math.min(demand.qty, P.limpMode.maxQtyMm3) }
+          : { ...demand, pedal: pedal * P.limpMode.pedalScale };
+      }
     } else demand = { qty: 0 };
     const out = this.pp.compute(rpm, demand, dt);
     let tEng = out.torqueNm;

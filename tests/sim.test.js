@@ -207,3 +207,21 @@ describe('real runs never trip a failure inside the safe envelope', () => {
     expect(many.plant.fail.state.transmission).toBe(true);
   });
 });
+
+describe('remediation regressions', () => {
+  it('setWeather keeps plant.air and plant.pp.air in sync synchronously', () => {
+    const plant = new Plant({ cal: loadCal('stock'), regulator: 'LLY', weather: { tempC: 24, pressureKpa: 101, humidityPct: 45 } });
+    plant.setWeather({ tempC: 35 });
+    expect(plant.air.tempC).toBe(35);
+    expect(plant.pp.air).toBe(plant.air);
+    expect(plant.coolantC).toBe(35);
+  });
+
+  it('reducedPower caps explicit fuel quantity overrides', () => {
+    const plant = new Plant({ cal: loadCal('stock'), regulator: 'LLY', weather: { tempC: 24, pressureKpa: 101, humidityPct: 45 } });
+    plant.startEngine();
+    plant.reducedPower = true;
+    plant.step(0.01, { pedal: 1 });
+    expect(plant.out.qty ?? 0).toBeLessThanOrEqual(45.0 + 1e-9);
+  });
+});
