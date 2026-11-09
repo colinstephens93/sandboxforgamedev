@@ -1,5 +1,7 @@
 # Handoff: finishing the Duramax Dyno Shop
 
+> The complete self-contained prompt for the finishing agent is `docs/DEEPSEEK_PROMPT.md`. This file is the shorter reference version.
+
 Read this first. The project is a browser game (Three.js) of a stock 2005 Silverado 2500HD LT crew cab, 6.6 L Duramax LLY, on a chassis
 dyno, with AI Live tuning. Everything is built and merged; what remains is measurement, proportion fixes, the final screenshots and
 documentation. The full specification is `PROMPT.md` (source of truth); the running log is `PROGRESS.md`; every estimate and conflict is in
