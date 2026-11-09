@@ -14,6 +14,11 @@ Running log: each increment's result, the checks run, the screenshots taken, and
 ## Phase 3.1 (2026-11-09): performance pass
 
 ## Phase 3.2 (2026-11-09): outside world and shop atmosphere
+
+## Phase 4.1 (2026-11-09): audio ear-pass preparation
+* Playwright browsers are not installed in this environment, so offline WAV rendering (`node scripts/audioCheck.mjs --save`) could not be completed here.
+* Small mapping adjustment: turbo whistle base gain raised from 0.42 to 0.48 so the Turbo Sound (closed-vane idle/light-load) whistle is more present. Audio unit tests (42) still pass.
+* A true human ear pass against real LLY recordings is still required. Once Playwright is set up, run `node scripts/audioCheck.mjs --save` and compare the generated `.dev/audio/` WAVs (idle cold/warm, cab, WOT with/without vanes closed, start sequence, rollers) to reference recordings.
 * Exterior through the roll-up doors: ground apron switched to MeshStandardMaterial with slight roughness variation; added a simple distant industrial skyline (5 buildings); increased and better-spread tree billboards; sky sphere enlarged and tinted.
 * Floor wear: four additional oil-stain decals placed around the work areas.
 * All 276 tests and `npm run build` pass. Walk-to-corner collision checks remain valid (no new solid colliders added in the walkable interior).

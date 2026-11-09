@@ -93,3 +93,6 @@ every fueling table (GM calibration tables are not public).
 
 ## Exterior and floor (Phase 3.2)
 * Outside world is procedural placeholder geometry (sky, distant buildings, tree billboards, apron). Oil stains are decorative decals. No real-world measurements introduced.
+
+## Audio (Phase 4.1)
+* Turbo whistle base gain raised from 0.42 to 0.48 (estimated adjustment for better Turbo Sound presence). Full human listening pass against real LLY recordings is still outstanding.

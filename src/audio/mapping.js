@@ -106,7 +106,7 @@ export function turboWhistleGain({ turboRpm = 0, mAir = 0, vane = 0.4, boostPsi 
   const vaneT = 0.55 + 0.90 * sat(vane);
   const driveT = 0.75 + 0.50 * sat((driveKpa - 100) / 250);
   const boostT = 0.85 + 0.30 * sat(boostPsi / 30);
-  return 0.42 * speedT * flowT * vaneT * driveT * boostT;
+  return 0.48 * speedT * flowT * vaneT * driveT * boostT; // Phase 4.1: slightly stronger whistle presence
 }
 // siren share of the whistle: narrowband noise around the blade-pass tone, stronger with closed vanes and drive pressure
 export const sirenAmount = (vane, driveKpa) => clamp01(0.15 + 0.85 * Math.pow(sat(vane), 1.5) * sat((driveKpa - 101.3) / 250));
