@@ -8,6 +8,13 @@ Running log: each increment's result, the checks run, the screenshots taken, and
 ## Phase 2.1 (2026-11-09): front fascia and headlamp refinement
 
 ## Phase 2.2 (2026-11-09): engine bay density
+
+## Phase 2.3 (2026-11-09): cab interior detail and stronger PBR
+* Summit White paint: lower base roughness, tighter clearcoat roughness, higher env intensity and stronger orange-peel normal.
+* Chrome and tinted glass materials strengthened (lower roughness, higher env response, slight transmission on glass).
+* Scene environmentIntensity raised from 0.5 to 0.7 so reflections read more clearly on paint, chrome and glass.
+* Interior leather roughness slightly reduced for better grain response. Seat stitching and perforated inserts already present.
+* All 276 tests and `npm run build` pass.
 * Added extra visible loom runs (driver-side apron harness, passenger-side sensor loom) and additional hose/charge-pipe segments in `src/truck/engine/bits.js`.
 * Existing hood insulation pad (embossed, dusty normal map, clips) and spring-loaded hinge arms remain; the new plumbing reduces empty regions seen from the open-hood camera.
 * All 276 tests and `npm run build` pass. Further density (more clamps, specific intercooler pipe routing) can be added against the LLY reference photos if needed.

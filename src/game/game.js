@@ -47,7 +47,7 @@ export class Game {
     await nextFrame();
     p(0.12, 'Building the shop');
     this.shop = buildShop({ quality: this.R.q });
-    this.scene.add(this.shop.group); this.scene.environmentIntensity = 0.5; // the paint, chrome and glass should show the real room (PROMPT.md section 8)
+    this.scene.add(this.shop.group); this.scene.environmentIntensity = 0.7; // the paint, chrome and glass should show the real room (PROMPT.md section 8)
     await nextFrame();
     p(0.28, 'Stocking the shop');
     this.equipment = buildEquipment({ quality: this.R.q, shop: this.shop });

@@ -84,3 +84,6 @@ every fueling table (GM calibration tables are not public).
 
 ## Engine bay density (Phase 2.2)
 * Additional loom and hose geometry added for visual density. Positions are approximate (estimated) to fill empty regions while remaining consistent with the labeled A–O layout. No new confirmed real-world numbers.
+
+## PBR materials (Phase 2.3)
+* Paint, chrome and glass material parameters adjusted for stronger clearcoat and reflections. No new real-world numbers. Environment intensity raised to 0.7.
