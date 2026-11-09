@@ -61,9 +61,9 @@ export function buildFront({ quality }) {
   const black = mat.blackPlastic(0.55);
   const blackGloss = new THREE.MeshPhysicalMaterial({ color: 0x0d0e10, roughness: 0.32, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.2 });
   const bumperBlack = new THREE.MeshStandardMaterial({ color: 0x1c1d1f, roughness: 0.62, metalness: 0.05 });
-  const lens = new THREE.MeshPhysicalMaterial({ color: 0xe9efee, roughness: 0.04, metalness: 0, transmission: 0, transparent: true, opacity: 0.42, clearcoat: 1, envMapIntensity: 1.6, ior: 1.5 });
-  const amberLens = new THREE.MeshPhysicalMaterial({ color: 0xff8a14, roughness: 0.1, transparent: true, opacity: 0.8, clearcoat: 1, envMapIntensity: 1.2 });
-  const reflector = new THREE.MeshStandardMaterial({ color: 0xdfe3e6, metalness: 1, roughness: 0.12, envMapIntensity: 1.6 });
+  const lens = new THREE.MeshPhysicalMaterial({ color: 0xf5f8f7, roughness: 0.02, metalness: 0, transmission: 0.92, transparent: true, opacity: 0.85, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2.0, ior: 1.5, thickness: 0.02 });
+  const amberLens = new THREE.MeshPhysicalMaterial({ color: 0xff9a22, roughness: 0.08, metalness: 0, transmission: 0.75, transparent: true, opacity: 0.9, clearcoat: 1, envMapIntensity: 1.4, ior: 1.5 });
+  const reflector = new THREE.MeshStandardMaterial({ color: 0xe8ecef, metalness: 0.95, roughness: 0.08, envMapIntensity: 2.2 });
   const bulb = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.15, roughness: 0.3 });
   const add = (g, m, name, cast = true) => { const mesh = new THREE.Mesh(g, m); mesh.name = name; mesh.castShadow = cast; mesh.receiveShadow = true; group.add(mesh); return mesh; };
 
@@ -122,9 +122,9 @@ export function buildFront({ quality }) {
     const mk = (cx, cy, w, h, depth, name) => {
       const sh = rrShape(w, h, Math.min(w, h) * 0.28);
       // housing (black), reflector bowl and lens
-      const housing = bentExtrude(sh, depth, { bevel: 0.08, cx: sx * cx, cy, off: -0.2 });
-      const lensG = bentExtrude(rrShape(w - 0.5, h - 0.5, Math.min(w, h) * 0.24), 0.18, { bevel: 0.2, cx: sx * cx, cy, off: 0.15 });
-      const refl = bentExtrude(rrShape(w - 1.3, h - 1.1, Math.min(w, h) * 0.22), 0.2, { bevel: 0.35, cx: sx * cx, cy, off: -0.15 });
+      const housing = bentExtrude(sh, depth + 0.4, { bevel: 0.1, cx: sx * cx, cy, off: -0.35 });
+      const lensG = bentExtrude(rrShape(w - 0.35, h - 0.35, Math.min(w, h) * 0.22), 0.22, { bevel: 0.25, cx: sx * cx, cy, off: 0.28 });
+      const refl = bentExtrude(rrShape(w - 1.1, h - 0.9, Math.min(w, h) * 0.2), 0.25, { bevel: 0.4, cx: sx * cx, cy, off: -0.1 });
       const parts = { housing, lensG, refl };
       add(housing, black, `${name}_housing`); add(refl, reflector, `${name}_reflector`, false); add(lensG, lens, `${name}_lens`, false);
       // bulb

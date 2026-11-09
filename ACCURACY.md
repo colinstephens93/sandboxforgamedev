@@ -78,3 +78,6 @@ every fueling table (GM calibration tables are not public).
 
 ## Odometer (Phase 1.1)
 * Starting value set to 145,000 mi (estimated for a 2005 working shop truck). Accumulates from tire linear speed during dyno or rolling. Engine hours tracked and displayed. Logged 2026-11-09.
+
+## Front fascia (Phase 2.1)
+* Headlamp lens transmission and housing depth adjusted for visual fidelity against IMG_2852/2853. Geometry remains parametric from existing faceS/hood shut line. No new real-world numbers introduced.
