@@ -87,3 +87,6 @@ every fueling table (GM calibration tables are not public).
 
 ## PBR materials (Phase 2.3)
 * Paint, chrome and glass material parameters adjusted for stronger clearcoat and reflections. No new real-world numbers. Environment intensity raised to 0.7.
+
+## Performance (Phase 3.1)
+* High-quality SSAO sample count, resolution scale, pixel ratio and shadow map size reduced modestly to improve frame time while keeping the high preset visually superior to medium. No visual features removed.

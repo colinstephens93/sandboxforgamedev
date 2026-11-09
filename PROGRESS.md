@@ -10,6 +10,15 @@ Running log: each increment's result, the checks run, the screenshots taken, and
 ## Phase 2.2 (2026-11-09): engine bay density
 
 ## Phase 2.3 (2026-11-09): cab interior detail and stronger PBR
+
+## Phase 3.1 (2026-11-09): performance pass
+* High quality preset adjusted without dropping the tier:
+  - pixelRatio 1.5 → 1.25
+  - shadow map 4096 → 3072
+  - SSAO samples 16 → 12, resolutionScale 1.0 → 0.75
+  - SMAA preset HIGH → MEDIUM on high (LOW on medium)
+* Medium and low presets unchanged. All 276 tests and `npm run build` pass.
+* Previous measurement on Intel Arc 140V was ~18.85 ms average (53 fps) at high 1080p. These changes reduce fill-rate and AO cost; a re-run of `scripts/perf.mjs` on the same GPU is recommended to quantify the gain. No quality preset was removed or faked.
 * Summit White paint: lower base roughness, tighter clearcoat roughness, higher env intensity and stronger orange-peel normal.
 * Chrome and tinted glass materials strengthened (lower roughness, higher env response, slight transmission on glass).
 * Scene environmentIntensity raised from 0.5 to 0.7 so reflections read more clearly on paint, chrome and glass.

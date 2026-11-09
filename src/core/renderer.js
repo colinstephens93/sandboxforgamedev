@@ -39,9 +39,9 @@ export class Renderer {
       composer.addPass(normalPass);
       this.aoEffect = new SSAOEffect(camera, normalPass.texture, {
         blendFunction: BlendFunction.MULTIPLY, distanceScaling: true, depthAwareUpsampling: true,
-        samples: this.qualityName === 'high' ? 16 : 9, rings: 7, distanceThreshold: 0.35, distanceFalloff: 0.12,
+        samples: this.qualityName === 'high' ? 12 : 9, rings: 7, distanceThreshold: 0.35, distanceFalloff: 0.12,
         rangeThreshold: 0.0006, rangeFalloff: 0.0003, luminanceInfluence: 0.6, minRadiusScale: 0.33, radius: 0.07,
-        intensity: 1.6, bias: 0.03, fade: 0.01, resolutionScale: this.qualityName === 'high' ? 1 : 0.5,
+        intensity: 1.6, bias: 0.03, fade: 0.01, resolutionScale: this.qualityName === 'high' ? 0.75 : 0.5,
       });
       effects.push(this.aoEffect);
     }
@@ -52,7 +52,7 @@ export class Renderer {
     this.toneMap = new ToneMappingEffect({ mode: ToneMappingMode.ACES_FILMIC });
     effects.push(this.toneMap);
     composer.addPass(new EffectPass(camera, ...effects));
-    if (q.smaa) composer.addPass(new EffectPass(camera, new SMAAEffect({ preset: SMAAPreset.HIGH })));
+    if (q.smaa) composer.addPass(new EffectPass(camera, new SMAAEffect({ preset: this.qualityName === 'high' ? SMAAPreset.MEDIUM : SMAAPreset.LOW })));
     this.composer = composer;
   }
 
