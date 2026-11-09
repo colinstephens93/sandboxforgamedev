@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spec } from '../src/data/truckSpec.js';
 import { KEY } from '../src/sim/startSequence.js';
 import { Ignition } from '../src/sim/startSequence.js';
@@ -161,7 +162,7 @@ describe('warning lamps', () => {
 });
 
 describe('interior labels', () => {
-  const dir = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../src/truck/interior');
+  const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/truck/interior');
   const used = new Set();
   for (const f of fs.readdirSync(dir)) if (f.endsWith('.js') && f !== 'labels.js') for (const m of fs.readFileSync(path.join(dir, f), 'utf8').matchAll(/'(interior\.[A-Za-z0-9]+)'/g)) used.add(m[1]);
   it('every labelId used in the interior code has a label', () => {
