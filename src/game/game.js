@@ -77,6 +77,7 @@ export class Game {
       }
     } catch (e) { console.warn('battery ports', e); }
     this.R.onQuality = (q) => this.shop.lights.setFill(q.fillLights);
+    this.setupTruckCulling();
     p(0.78, 'Baking shop reflections');
     this.truck.group.visible = false;
     bakeEnvironment(this.R.renderer, this.scene, new THREE.Vector3(0, 1.4, 0), this.R.q.envSize);
@@ -140,6 +141,33 @@ export class Game {
     this._abort?.abort();
     this.R?.composer?.dispose?.();
     this.R?.renderer?.dispose?.();
+  }
+
+  // ---- hidden-detail culling: skip the engine bay, hood underside and underbody while nothing can see them ----
+  // Only meshes are toggled (never lights: changing the light count recompiles every material).
+  setupTruckCulling() {
+    const meshes = (root) => { const a = []; root.traverse((o) => { if (o.isMesh || o.isPoints || o.isLine) a.push(o); }); return a; };
+    const bay = this.truck.parts.engineBay && this.truck.parts.engineBay.group;
+    const hu = this.truck.parts.hoodUnder && this.truck.parts.hoodUnder.group;
+    this.truck.group.updateMatrixWorld(true);
+    this.cull = {
+      bay: bay ? meshes(bay) : [], hood: hu ? meshes(hu) : [], under: this.truck.underside ? meshes(this.truck.underside.group) : [],
+      box: bay ? new THREE.Box3().setFromObject(bay) : null, shown: { bay: true, under: true },
+    };
+  }
+
+  updateTruckCulling() {
+    const c = this.cull; if (!c || !c.box) return;
+    // draw everything for the first frames so every shader compiles during loading, not on first sight
+    const warm = this.frames < 4;
+    const cam = this.camera.position, hood = this.truckCtl && this.truckCtl.hood;
+    const hoodMoved = !hood || hood.target > 0.5 || hood.state > 0.001;
+    const lowCam = cam.y < 1.1; // looking under the grille, through wheel wells, along the side
+    const inFront = cam.z < c.box.min.z + 0.6; // in front of the grille: radiator and fan are visible through it
+    const showBay = warm || hoodMoved || lowCam || inFront;
+    const showUnder = warm || cam.y < 1.3;
+    if (showBay !== c.shown.bay) { for (const m of c.bay) m.visible = showBay; for (const m of c.hood) m.visible = showBay; c.shown.bay = showBay; }
+    if (showUnder !== c.shown.under) { for (const m of c.under) m.visible = showUnder; c.shown.under = showUnder; }
   }
 
   onDoorLights(on) { /* interior lights follow door state (interior module hooks this) */ this.state.doorOpen = on; }
@@ -250,6 +278,7 @@ export class Game {
     this.ui.setLabel(this.interactor.inspect && t && t.labelInfo ? t.labelInfo : null);
     this.ui.update(dt);
     this.visuals(dt);
+    this.updateTruckCulling();
     this.fps = this.fps * 0.92 + (1 / Math.max(dt, 1e-3)) * 0.08;
     if (this.frames % 20 === 0) this.ui.fps.textContent = `${this.fps.toFixed(0)} fps`;
     this.input.endFrame();
