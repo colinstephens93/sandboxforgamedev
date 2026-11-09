@@ -76,7 +76,7 @@ export class Game {
         this.rig.setBatteryPorts(w(A.batteryPass, -0.06), w(A.batteryDriver, 0.06));
       }
     } catch (e) { console.warn('battery ports', e); }
-    this.R.onQuality = (q) => this.shop.lights.setFill(q.fillLights);
+    this.R.onQuality = (q) => { this.shop.lights.setFill(q.fillLights); this.shop.lights.setShadowCasters(q.shadowCasters); };
     this.setupTruckCulling();
     this.pruneFarShadowCasters();
     p(0.78, 'Baking shop reflections');

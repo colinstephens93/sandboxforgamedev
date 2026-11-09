@@ -376,6 +376,11 @@ export function buildShop({ quality }) {
       if (lights.on) p.intensity = 16 * gain;
     });
   };
+  // how many of the ceiling spotlights cast shadows: the centre one (over the truck) last to go
+  lights.setShadowCasters = (n) => {
+    const order = [1, 0, 2];
+    order.forEach((idx, rank) => { if (lights.spots[idx]) lights.spots[idx].castShadow = rank < Math.max(1, n | 0); });
+  };
   const setLights = (on) => {
     lights.on = on;
     const all = [...lights.spots, ...lights.pointLights, lights.hemi];
@@ -384,5 +389,6 @@ export function buildShop({ quality }) {
   };
 
   lights.setFill(quality.fillLights ?? 6);
+  lights.setShadowCasters(quality.shadowCasters ?? 3);
   return { group, colliders, interactables, lights, doors, setDoor, updateDoors, setLights, office, materials: { concrete, panelMat, steelFrame, darkSteel, steelRed, insul, wainMat, exteriorMat } };
 }
