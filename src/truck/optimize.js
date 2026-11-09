@@ -6,7 +6,7 @@
 // parts keep their winding, originals are kept for picking, and merging stops at every part that can move.
 //
 // What may move: a node marked userData.dynamic, anything usable with E (userData.interact), every named anchor,
-// and the roots passed in `boundaries`. Meshes merge only with meshes under the same such node, and the merged mesh
+// and the roots passed in `boundaries`. A subtree marked userData.noMergeTree is skipped whole. Meshes merge only with meshes under the same such node, and the merged mesh
 // becomes a child of it, so it moves, hides and culls with it. A mesh that changes on its own (visibility,
 // vertices, material) must be marked userData.noMerge. tests/optimize.test.js drives every moving part of the truck
 // and fails if a merged part would have changed.
@@ -30,6 +30,7 @@ export function planMerge(root, { boundaries = [], anchors = null } = {}) {
   if (anchors) collectObjects(anchors, set);
   const buckets = new Map();
   const visit = (o, anchor, hidden) => {
+    if (o.userData.noMergeTree) return; // a subtree that manages itself (the detailed engine)
     if (o !== root && isBoundary(o, set)) { if (o.isMesh) return; anchor = o; hidden = false; } // a mesh that is itself a moving part stays as it is
     if (!o.visible) hidden = true; // hidden branches (hit shapes, parts switched on later) are left alone
     if (o.isMesh && !hidden && mergeable(o)) {

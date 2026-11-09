@@ -18,7 +18,7 @@ describe('truck draw-call merging (src/truck/optimize.js)', () => {
     let trisBefore = 0; truck.group.traverse((o) => { if (o.isMesh && !o.isInstancedMesh) trisBefore += tris(o); });
     const res = optimizeTruck(truck);
     console.log('drawn meshes', res.before, '->', res.after, `(${res.merged} merged meshes)`);
-    expect(res.after).toBeLessThan(res.before * 0.6);
+    expect(res.after).toBeLessThan(res.before * 0.75);
 
     // triangles are conserved, and the originals are still there for picking
     let trisDrawn = 0, pick = 0; const sources = [];

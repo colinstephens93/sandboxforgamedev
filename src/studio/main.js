@@ -24,7 +24,7 @@ function buildUi() {
   section('View');
   const views = el('div', { className: 'row' });
   VIEW_ORDER.forEach((k, i) => {
-    const b = el('button', { textContent: VIEWS[k].label, title: `Key ${i + 1}` }); b.addEventListener('click', () => studio.setView(k));
+    const b = el('button', { textContent: VIEWS[k].label, title: `Key ${(i + 1) % 10}` }); b.addEventListener('click', () => studio.setView(k));
     refresh.push(() => b.classList.toggle('on', studio.view === k)); views.append(b);
   });
   side.append(views);
@@ -40,6 +40,8 @@ function buildUi() {
   check('Hood open', () => studio.state.hood, (on) => studio.setHood(on));
   check('Doors open', () => studio.state.doors, (on) => studio.setDoors(on));
   check('Tailgate down', () => studio.state.tailgate, (on) => studio.setTailgate(on));
+  check('Engine cutaway', () => studio.core && studio.core.cutaway, (on) => studio.setCutaway(on));
+  check('Engine exploded', () => studio.core && studio.core.exploded, (on) => studio.setExploded(on));
   check('Engine running', () => studio.opts.running, (on) => { studio.opts.running = on; });
   const rpm = el('input', { type: 'range', min: 600, max: 3200, step: 20, value: studio.opts.rpm }), rpmOut = el('small', { textContent: `${studio.opts.rpm} rpm` });
   rpm.addEventListener('input', () => { studio.opts.rpm = +rpm.value; rpmOut.textContent = `${rpm.value} rpm`; });
@@ -67,7 +69,7 @@ function buildUi() {
   section('Measure');
   const run = el('button', { textContent: 'Run benchmark' }), png = el('button', { textContent: 'Save PNG' });
   side.append(el('div', { className: 'row' }, run, png));
-  side.append(el('p', { className: 'note', textContent: 'Drag to orbit, right-drag to pan, wheel to zoom. Keys 1 to 8: views. H: hide panels. P: save PNG.' }));
+  side.append(el('p', { className: 'note', textContent: 'Drag to orbit, right-drag to pan, wheel to zoom. Keys 1 to 9 and 0: views. H: hide panels. P: save PNG.' }));
   png.addEventListener('click', () => studio.savePNG());
   run.addEventListener('click', async () => {
     run.disabled = true;
@@ -92,8 +94,8 @@ function buildUi() {
 
   window.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT'].includes(e.target.tagName) && e.target.type !== 'checkbox') return;
-    const n = /^Digit([1-8])$/.exec(e.code);
-    if (n) studio.setView(VIEW_ORDER[+n[1] - 1]);
+    const n = /^Digit([0-9])$/.exec(e.code);
+    if (n) studio.setView(VIEW_ORDER[(+n[1] + 9) % 10]);
     else if (e.code === 'KeyH') document.body.classList.toggle('bare');
     else if (e.code === 'KeyP') studio.savePNG();
   });

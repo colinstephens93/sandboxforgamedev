@@ -11,21 +11,30 @@ const drawables = (root) => { const a = []; if (root) root.traverse((o) => { if 
 export function cullDecision({ camY, camZ, bayFrontZ, hoodMoved, warm = false }) {
   const lowCam = camY < 1.1; // looking under the grille, through wheel wells, along the side
   const inFront = camZ < bayFrontZ + 0.6; // in front of the grille: radiator and fan are visible through it
-  return { showBay: warm || hoodMoved || lowCam || inFront, showUnder: warm || camY < 1.3 };
+  // the engine itself sits behind the radiator and fan: through the grille it cannot be seen, only from below or with the hood up
+  return { showBay: warm || hoodMoved || lowCam || inFront, showEngine: warm || hoodMoved || lowCam, showUnder: warm || camY < 1.3 };
 }
 
 export function createTruckCulling(truck) {
   const bay = truck.parts.engineBay && truck.parts.engineBay.group;
   const hu = truck.parts.hoodUnder && truck.parts.hoodUnder.group;
   truck.group.updateMatrixWorld(true);
+  const core = truck.parts.engineBay && truck.parts.engineBay.core && truck.parts.engineBay.core.group; // the detailed engine
+  const engine = drawables(core), inEngine = new Set(engine);
   const c = {
-    bay: drawables(bay), hood: drawables(hu), under: drawables(truck.underside && truck.underside.group),
-    box: bay ? new THREE.Box3().setFromObject(bay) : null, shown: { bay: true, under: true },
+    bay: drawables(bay).filter((m) => !inEngine.has(m)), engine, hood: drawables(hu), under: drawables(truck.underside && truck.underside.group),
+    box: bay ? new THREE.Box3().setFromObject(bay) : null, shown: { bay: true, engine: true, under: true },
   };
-  const apply = (showBay, showUnder) => {
-    if (showBay !== c.shown.bay) { for (const m of c.bay) m.visible = showBay; for (const m of c.hood) m.visible = showBay; c.shown.bay = showBay; }
-    if (showUnder !== c.shown.under) { for (const m of c.under) m.visible = showUnder; c.shown.under = showUnder; }
+  // Hiding remembers which meshes were showing, and showing restores only those: a part that was already hidden for its
+  // own reasons (hit shapes, the engine's internals and effects) is not switched on by the culling.
+  const hidden = { bay: [], engine: [], under: [] };
+  const set = (key, lists, show) => {
+    if (show === c.shown[key]) return;
+    if (show) { for (const m of hidden[key]) m.visible = true; hidden[key] = []; }
+    else for (const list of lists) for (const m of list) if (m.visible) { m.visible = false; hidden[key].push(m); }
+    c.shown[key] = show;
   };
+  const apply = (showBay, showEngine, showUnder) => { set('bay', [c.bay, c.hood], showBay); set('engine', [c.engine], showEngine); set('under', [c.under], showUnder); };
   return {
     state: c,
     // camPos: camera position in world space; hood: the HingeDoor of the hood (or null)
@@ -33,8 +42,8 @@ export function createTruckCulling(truck) {
       if (!c.box) return;
       const hoodMoved = !hood || hood.target > 0.5 || hood.state > 0.001;
       const d = cullDecision({ camY: camPos.y, camZ: camPos.z, bayFrontZ: c.box.min.z, hoodMoved, warm });
-      apply(d.showBay, d.showUnder);
+      apply(d.showBay, d.showEngine, d.showUnder);
     },
-    showAll() { apply(true, true); },
+    showAll() { apply(true, true, true); },
   };
 }

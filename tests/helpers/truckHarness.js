@@ -35,6 +35,8 @@ export function exerciseTruck(truck, ctl, probe) {
   stage(() => { for (let i = 0; i < 20; i++) cab({ keyPos: 3, gear: 'R', transfer: '4LO' }); });
   stage(() => { for (const d of Object.values(ctl.doors)) d.toggle(ctx, true); ctl.hoodState.cabReleased = ctl.hoodState.secondaryReleased = true; ctl.hood.toggle(ctx, true); });
   stage(() => { P.tailgate.set(1); P.fuelDoor.set(1); P.wheels.spin(1.3); for (const w of P.wheels.all) w.setLoadFlat(0.4); P.lamps.set({ tail: 1, brake: 1, turn: 1, reverse: 1 }); });
+  const core = P.engineBay.core;
+  if (core) { stage(() => { core.setCutaway(true); for (let i = 0; i < 40; i++) truck.update(0.05, { rpm: 900, running: true }); }); stage(() => { core.setCutaway(false); core.setExploded(true); for (let i = 0; i < 60; i++) truck.update(0.05, { rpm: 900, running: true }); }); stage(() => { core.setExploded(false); for (let i = 0; i < 80; i++) truck.update(0.05, {}); }); }
   // every use-with-E action on the truck, twice (there and back), probing in between
   const acts = []; truck.group.traverse((o) => { if (o.userData.interact && o.userData.interact.run) acts.push(o); });
   for (let pass = 0; pass < 2; pass++) stage(() => { for (const o of acts) { try { o.userData.interact.run(ctx); } catch (e) { errors.push(`${o.name}: ${e.message}`); } run(1.5); } });

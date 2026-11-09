@@ -23,15 +23,18 @@ export const VIEWS = {
   rear:      { label: 'Rear',          pos: [3.6, 1.9, 9.2],    tgt: [0, 0.95, 4.6],  fov: 40, state: { tailgate: true } },
   wheel:     { label: 'Wheel',         pos: [1.95, 0.55, -0.35], tgt: [0.86, 0.45, 0], fov: 38 },
   bay:       { label: 'Engine bay',    pos: [0.1, 2.75, -1.45], tgt: [0, 0.95, 0.1],  fov: 56, state: { hood: true } },
-  engine:    { label: 'Engine only',   pos: [1.7, 1.75, -1.7],  tgt: [0, 0.85, 0.15], fov: 45, state: { only: ['bay'] } },
+  engine:    { label: 'Bay alone',     pos: [1.7, 1.75, -1.7],  tgt: [0, 0.85, 0.15], fov: 45, state: { only: ['engine', 'bay'] } },
+  bare:      { label: 'Engine alone',  pos: [1.25, 1.2, -1.35], tgt: [0, 0.62, 0.05], fov: 40, state: { only: ['engine'] } },
+  cutaway:   { label: 'Cutaway',       pos: [1.25, 1.2, -1.35], tgt: [0, 0.62, 0.05], fov: 40, state: { only: ['engine'], cutaway: true, running: true } },
+  exploded:  { label: 'Exploded',      pos: [2.1, 1.9, -2.3],   tgt: [0, 0.75, 0.05], fov: 45, state: { only: ['engine'], exploded: true } },
   interior:  { label: 'Interior',      eye: true, fov: 64 },
   underside: { label: 'Underside',     pos: [1.9, -1.5, 5.2],   tgt: [0, 0.45, 1.9],  fov: 60 },
 };
-export const VIEW_ORDER = ['hero', 'side', 'rear', 'wheel', 'bay', 'engine', 'interior', 'underside'];
+export const VIEW_ORDER = ['hero', 'side', 'rear', 'wheel', 'bay', 'bare', 'cutaway', 'exploded', 'interior', 'underside'];
 // the views the benchmark times: whole truck, engine bay open, engine alone, cab, underbody
-export const BENCH_VIEWS = ['hero', 'bay', 'engine', 'interior', 'underside'];
+export const BENCH_VIEWS = ['hero', 'bay', 'bare', 'interior', 'underside'];
 
-export const PARTS = [['exterior', 'Body, glass, lamps'], ['wheels', 'Wheels and tires'], ['interior', 'Interior'], ['bay', 'Engine bay'], ['hoodUnder', 'Hood underside'], ['underside', 'Underside']];
+export const PARTS = [['exterior', 'Body, glass, lamps'], ['wheels', 'Wheels and tires'], ['interior', 'Interior'], ['engine', 'Engine'], ['bay', 'Engine bay (rest)'], ['hoodUnder', 'Hood underside'], ['underside', 'Underside']];
 
 const pct = (arr, p) => { const s = [...arr].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.max(0, Math.round((p / 100) * (s.length - 1))))]; };
 
@@ -117,11 +120,11 @@ export class Studio {
   // ---- parts: named groups that can be shown, hidden and counted on their own ----
   groupParts() {
     const P = this.truck.parts, root = this.truck.group;
-    const bay = P.engineBay.group, hu = P.hoodUnder.group, under = this.truck.underside.group, inter = P.interior.group;
+    const bay = P.engineBay.group, engine = P.engineBay.parts.engine, hu = P.hoodUnder.group, under = this.truck.underside.group, inter = P.interior.group;
     const wheels = P.wheels.all.map((w) => w.group);
     const named = new Set([bay, hu, under, inter, ...wheels]);
     const exterior = root.children.filter((o) => !named.has(o)); // body, hood pivot, glass, front, rear, badges, fuel door
-    this.parts = { exterior: { roots: exterior, skip: named }, wheels: { roots: wheels }, interior: { roots: [inter] }, bay: { roots: [bay] }, hoodUnder: { roots: [hu] }, underside: { roots: [under] } };
+    this.parts = { exterior: { roots: exterior, skip: named }, wheels: { roots: wheels }, interior: { roots: [inter] }, engine: { roots: [engine] }, bay: { roots: [bay], skip: new Set([engine]) }, hoodUnder: { roots: [hu] }, underside: { roots: [under] } };
     for (const [k, part] of Object.entries(this.parts)) {
       part.visible = true; part.objects = [];
       const walk = (o) => { if (part.skip && part.skip.has(o)) return; part.objects.push(o); for (const ch of o.children) walk(ch); };
@@ -155,15 +158,21 @@ export class Studio {
   setHood(open) { const c = this.ctl; if (!c.hood) return; c.hoodState.cabReleased = c.hoodState.secondaryReleased = open; c.hood.toggle(this.ctx, open); }
   setDoor(key, open) { const d = this.ctl.doors[key]; if (d) d.toggle(this.ctx, open); }
   setDoors(open) { for (const k of Object.keys(this.ctl.doors)) this.setDoor(k, open); }
+  // detailed engine: fade the castings to show the moving internals, or pull the assemblies apart
+  get core() { return this.truck.parts.engineBay.core; }
+  setCutaway(on) { if (this.core) this.core.setCutaway(on); }
+  setExploded(on) { if (this.core) this.core.setExploded(on); }
   setTailgate(open) { const tg = this.truck.parts.tailgate; if (tg && tg.set) tg.set(open ? 1 : 0); this.tailgateOpen = open; this.R.renderer.shadowMap.needsUpdate = true; }
   get state() { return { hood: !!(this.ctl.hood && this.ctl.hood.open), doors: Object.values(this.ctl.doors).some((d) => d.open), tailgate: !!this.tailgateOpen }; }
   // finish every running hinge animation at once (scripts and the benchmark do not wait for doors to swing)
-  settle() { for (let i = 0; i < 200 && this.animations.length; i++) this.tick(0.05); this.R.renderer.shadowMap.needsUpdate = true; }
+  settle() { for (let i = 0; i < 200 && (this.animations.length || (this.core && this.core.busy)); i++) this.tick(0.05); this.R.renderer.shadowMap.needsUpdate = true; }
 
   setView(name, instant = false) {
     const v = VIEWS[name]; if (!v) return;
     const s = v.state || {};
     this.view = name;
+    if (this.core) this.core.standalone = !!(s.only && s.only.length === 1 && s.only[0] === 'engine');
+    this.setCutaway(!!s.cutaway); this.setExploded(!!s.exploded); if (s.running) this.opts.running = true;
     this.setHood(!!s.hood); this.setDoors(!!s.doors); this.setTailgate(!!s.tailgate); this.showOnly(s.only || null);
     this.floor.visible = this.opts.floor && !s.only;
     let pos = v.pos, tgt = v.tgt;
@@ -195,10 +204,11 @@ export class Studio {
     this.truck.interior.update(dt, { keyPos: o.running ? 2 : 0, rpm, mph: 0, coolantF: 190, transF: 150, oilPsi: o.running ? 42 : 0, volts: o.running ? 14.1 : 12.5, fuel: 0.7, lights: {}, dicMessage: '', odometerMi: 148230, engineHours: 4120 });
     if (o.spin) { this.wheelAngle = (this.wheelAngle || 0) - dt * 6; this.truck.parts.wheels.spin(this.wheelAngle); }
     // everything is drawn for the first few updates so all shaders compile while loading
-    if (o.autoCull) this.cull.update(this.camera.position, this.ctl.hood, (this.ticks = (this.ticks || 0) + 1) < 4); else this.cull.showAll();
+    // a view that isolates parts (the engine alone) shows them whatever the hood is doing
+    if (o.autoCull && !VIEWS[this.view]?.state?.only) this.cull.update(this.camera.position, this.ctl.hood, (this.ticks = (this.ticks || 0) + 1) < 4); else this.cull.showAll();
     this.floor.visible = this.opts.floor && !(VIEWS[this.view]?.state?.only) && this.camera.position.y > 0;
     // moving parts need fresh shadows every frame; a still truck keeps the Renderer's schedule
-    if (this.animations.length || o.spin) this.R.renderer.shadowMap.needsUpdate = true;
+    if (this.animations.length || o.spin || (this.core && this.core.busy)) this.R.renderer.shadowMap.needsUpdate = true;
   }
   draw(dt, forceShadows = false) { this.R.renderer.info.reset(); this.R.render(dt, forceShadows); }
 
