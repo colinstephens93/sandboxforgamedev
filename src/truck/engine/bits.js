@@ -237,6 +237,21 @@ export function buildBits({ mats, d, fast }) {
     b.flush(g, mats, { name: 'wr' });
     A.wiring = g;
   }
+
+  // ---------- extra density: additional loom and hose runs visible from the open-hood camera ----------
+  {
+    const g = part(root, 'extra_density', 'engine.wiring'); const b = new Batch(); const ridged = d >= 0.7;
+    // driver-side harness along the fender apron
+    loom(b, [[-22.0, 36.5, -18.0], [-21.2, 38.0, -8.0], [-19.5, 39.5, 2.0], [-17.0, 40.0, 10.0]], 0.48, { ridged });
+    // passenger-side sensor loom near the alternator
+    loom(b, [[14.0, 32.0, -12.0], [16.5, 34.5, -4.0], [15.0, 36.5, 4.0], [12.5, 37.5, 12.0]], 0.42, { ridged });
+    // small hose from surge tank area toward the radiator
+    b.add('rubber', tube([[-8.0, 42.0, -6.0], [-6.0, 40.5, -2.0], [-4.0, 38.0, 2.0], [-2.5, 36.5, 6.0]], 0.28, { radial: 6, segs: 24 }));
+    // intercooler-to-engine charge pipe segment detail
+    b.add('aluminum', tube([[8.0, 30.0, -14.0], [6.0, 32.5, -8.0], [3.0, 34.0, -2.0]], 0.9, { radial: 8, segs: 16 }));
+    b.flush(g, mats, { name: 'xd' });
+  }
+
   return { group: root, anchors: A };
 }
 

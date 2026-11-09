@@ -81,3 +81,6 @@ every fueling table (GM calibration tables are not public).
 
 ## Front fascia (Phase 2.1)
 * Headlamp lens transmission and housing depth adjusted for visual fidelity against IMG_2852/2853. Geometry remains parametric from existing faceS/hood shut line. No new real-world numbers introduced.
+
+## Engine bay density (Phase 2.2)
+* Additional loom and hose geometry added for visual density. Positions are approximate (estimated) to fill empty regions while remaining consistent with the labeled A–O layout. No new confirmed real-world numbers.

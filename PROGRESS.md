@@ -6,6 +6,11 @@ Running log: each increment's result, the checks run, the screenshots taken, and
 ## Phase 1.1–1.2 (2026-11-09): odometer fix and placeholder cleanup
 
 ## Phase 2.1 (2026-11-09): front fascia and headlamp refinement
+
+## Phase 2.2 (2026-11-09): engine bay density
+* Added extra visible loom runs (driver-side apron harness, passenger-side sensor loom) and additional hose/charge-pipe segments in `src/truck/engine/bits.js`.
+* Existing hood insulation pad (embossed, dusty normal map, clips) and spring-loaded hinge arms remain; the new plumbing reduces empty regions seen from the open-hood camera.
+* All 276 tests and `npm run build` pass. Further density (more clamps, specific intercooler pipe routing) can be added against the LLY reference photos if needed.
 * Headlamp lenses: switched to higher transmission (0.92) MeshPhysicalMaterial with lower roughness and higher env intensity so they no longer read as opaque white boxes.
 * Deepened main and turn housings slightly and made the clear lenses stand prouder of the housing.
 * Amber section transmission improved. All 276 tests and `npm run build` still pass.
