@@ -32,6 +32,14 @@ Playwright needs `npm run setup:browser` once. Headless Chromium on Windows can 
 get the GPU on a machine where headless has none (the frame-time numbers in `PROGRESS.md` were measured that
 way). Setting `HEADED=1` is also worth it for the screenshots.
 
+## Listening to the audio (the ear pass)
+
+The audio is procedural and was tuned from spectra only; `node scripts/audioCheck.mjs --save` renders the real
+`AudioEngine` through an `OfflineAudioContext` and writes listenable WAVs to `.dev/audio/` (idle cold and warm,
+inside the cab, WOT with and without the Turbo Sound vanes closed, the intake hiss, the two fan-only beds, the
+rollers, the start sequence and the door/one-shot set). Play them next to each other, loudness-matched, and
+compare with a real Duramax: that is the review `PROGRESS.md` still lists as owed.
+
 
 A GPU with WebGL2 is expected; the quality setting (Q, or F1 panel) is low / medium / high (high by default). Software rendering works
 but is slow.

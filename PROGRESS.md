@@ -230,7 +230,12 @@ quality reduction. No quality setting was lowered to make the number look better
 
 ## What is still owed or imperfect
 * **A human ear on the audio.** Levels were set from spectra (95/95 offline checks, 56 unit tests) and were
-  never listened to; this is the largest unverified area.
+  never listened to; this is the largest unverified area. To make that pass possible without a live session,
+  `node scripts/audioCheck.mjs --save` now has documented output: it renders the real `AudioEngine` through an
+  `OfflineAudioContext` and wrote 17 listenable WAVs to `.dev/audio/` (idle cold/warm, cab, WOT with and
+  without the vanes closed, intake hiss, fan-only beds, rollers, the start sequence, the one-shots). They are
+  git-ignored build output; regenerate them with the command above. 95/95 checks passed on the run that made
+  them.
 * **A human eye on the art.** The two reviews above were done by the model on the renders. The paint, the
   lighting and the overall feel have not been judged by a person.
 * The overall-length conflict between the photos and the published 237.3 in (`ACCURACY.md`): unresolved by
