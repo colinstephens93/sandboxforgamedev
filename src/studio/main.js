@@ -101,8 +101,8 @@ function buildUi() {
 
 function showResult(res) {
   const box = $('result'); box.replaceChildren(); box.style.display = 'block';
-  const tb = el('table'); tb.append(el('tr', {}, ...['View', 'avg ms', 'p95 ms', 'fps', 'draw calls', 'triangles'].map((t) => el('th', { textContent: t }))));
-  for (const r of res.rows) tb.append(el('tr', {}, ...[VIEWS[r.view].label, r.avgMs.toFixed(2), r.p95Ms.toFixed(2), r.fps.toFixed(0), fmt(r.calls), fmt(r.tris)].map((t) => el('td', { textContent: t }))));
+  const tb = el('table'); tb.append(el('tr', {}, ...['View', 'avg ms', 'p95 ms', 'fps', 'script ms', 'draw calls', 'triangles'].map((t) => el('th', { textContent: t }))));
+  for (const r of res.rows) tb.append(el('tr', {}, ...[VIEWS[r.view].label, r.avgMs.toFixed(2), r.p95Ms.toFixed(2), r.fps.toFixed(0), r.cpuMs.toFixed(2), fmt(r.calls), fmt(r.tris)].map((t) => el('td', { textContent: t }))));
   const copy = el('button', { textContent: 'Copy as JSON' }), close = el('button', { textContent: 'Close' });
   copy.addEventListener('click', () => navigator.clipboard?.writeText(JSON.stringify(res, null, 1)).then(() => { copy.textContent = 'Copied'; }));
   close.addEventListener('click', () => { box.style.display = 'none'; });

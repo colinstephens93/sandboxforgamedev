@@ -9,6 +9,7 @@ import { Renderer } from '../core/renderer.js';
 import { QUALITY } from '../core/quality.js';
 import { buildTruck } from '../truck/index.js';
 import { createTruckCulling } from '../truck/culling.js';
+import { optimizeTruck } from '../truck/optimize.js';
 import { setupTruckOpenings } from '../game/truckControl.js';
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
@@ -56,6 +57,8 @@ export class Studio {
     this.scene.add(this.truck.group);
     this.ctx = { animate: (fn) => this.animations.push(fn), say: () => {}, state: {} };
     this.ctl = setupTruckOpenings(this.truck, { say: () => {}, onLights: () => {} });
+    this.merged = url.get('merge') !== '0'; // ?merge=0: every part drawn on its own, to compare
+    if (this.merged) this.mergeStats = optimizeTruck(this.truck);
     this.cull = createTruckCulling(this.truck);
     this.groupParts();
     await nextFrame();
@@ -130,7 +133,7 @@ export class Studio {
   countPart(part) {
     let meshes = 0, tris = 0; const mats = new Set();
     for (const o of part.objects) {
-      if (!o.isMesh) continue;
+      if (!o.isMesh || o.userData.pickOnly) continue; // originals of merged meshes are not drawn
       meshes++; const g = o.geometry, n = (g.index ? g.index.count : g.attributes.position.count) / 3;
       tris += o.isInstancedMesh ? n * o.count : n;
       for (const m of Array.isArray(o.material) ? o.material : [o.material]) mats.add(m);
@@ -143,7 +146,7 @@ export class Studio {
     const part = this.parts[name]; if (!part) return;
     part.visible = on;
     // lights stay on their layer: taking one away changes the light count, which recompiles every material
-    for (const o of part.objects) { if (o.isLight) continue; if (on) o.layers.enable(0); else o.layers.disable(0); }
+    for (const o of part.objects) { if (o.isLight || o.userData.pickOnly) continue; if (on) o.layers.enable(0); else o.layers.disable(0); }
     this.R.renderer.shadowMap.needsUpdate = true;
   }
   showOnly(names) { for (const k of Object.keys(this.parts)) this.setPart(k, !names || names.includes(k)); }
@@ -241,8 +244,10 @@ export class Studio {
     // Reading one pixel back is what makes the browser wait for the GPU: gl.finish() alone returns early in Chrome,
     // where drawing happens in another process, and the queued work then shows up as one huge frame later.
     const px = new Uint8Array(4);
+    // cpu: the script's own share (update + issuing every draw call), which is what fewer draw calls reduce
+    let cpu = 0;
     const one = () => {
-      const t0 = performance.now(); this.tick(0.016); this.draw(0.016);
+      const t0 = performance.now(); this.tick(0.016); this.draw(0.016); cpu += performance.now() - t0;
       this.R.renderer.setRenderTarget(null); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
       return performance.now() - t0;
     };
@@ -252,17 +257,18 @@ export class Studio {
         this.setView(name, true);
         await nextFrame();
         for (let i = 0; i < 8; i++) one(); // warm up: shader compiles, texture uploads
-        const ms = []; for (let i = 0; i < frames; i++) ms.push(one());
+        cpu = 0; const ms = []; for (let i = 0; i < frames; i++) ms.push(one());
+        const cpuMs = cpu / frames;
         this.draw(0.016, true); // a frame with every pass, for the counts
         const info = this.R.renderer.info.render, avg = ms.reduce((a, b) => a + b, 0) / ms.length;
-        rows.push({ view: name, avgMs: avg, p50Ms: pct(ms, 50), p95Ms: pct(ms, 95), maxMs: Math.max(...ms), fps: 1000 / avg, calls: info.calls, tris: info.triangles });
+        rows.push({ view: name, cpuMs, avgMs: avg, p50Ms: pct(ms, 50), p95Ms: pct(ms, 95), maxMs: Math.max(...ms), fps: 1000 / avg, calls: info.calls, tris: info.triangles });
       }
     } finally {
       this.setView(keep.view, true); this.camera.position.copy(keep.pos); this.controls.target.copy(keep.tgt); this.camera.fov = keep.fov; this.camera.updateProjectionMatrix(); this.controls.update();
       this.busy = false; this.last = performance.now();
     }
     const size = this.R.renderer.getDrawingBufferSize(new THREE.Vector2());
-    return { quality: this.qname, overrides: this.R.qOverride || {}, resolution: [size.x, size.y], gpu: this.gpuName(), autoCull: this.opts.autoCull, frames, rows };
+    return { quality: this.qname, merged: this.merged, overrides: this.R.qOverride || {}, resolution: [size.x, size.y], gpu: this.gpuName(), autoCull: this.opts.autoCull, frames, rows };
   }
 
   // ---- script hooks (scripts/studio.mjs) ----

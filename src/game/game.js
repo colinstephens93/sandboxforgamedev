@@ -7,6 +7,7 @@ import { bakeEnvironment } from '../core/env.js';
 import { buildEquipment } from '../shop/equipment/index.js';
 import { buildTruck } from '../truck/index.js';
 import { createTruckCulling } from '../truck/culling.js';
+import { optimizeTruck } from '../truck/optimize.js';
 import { DYNO, SHOP } from '../shop/layout.js';
 import { Input } from './input.js';
 import { Player } from './player.js';
@@ -78,6 +79,9 @@ export class Game {
       }
     } catch (e) { console.warn('battery ports', e); }
     this.R.onQuality = (q) => { this.shop.lights.setFill(q.fillLights); this.shop.lights.setShadowCasters(q.shadowCasters); };
+    // door and hood hinges first (they re-parent panels), then merge what never moves into fewer draw calls (?merge=0 switches it off)
+    this.truckCtl = setupTruckOpenings(this.truck, { say: (t) => this.ui.say(t, 5), onLights: (on) => this.onDoorLights(on) });
+    if (new URLSearchParams(location.search).get('merge') !== '0') this.mergeStats = optimizeTruck(this.truck);
     this.setupTruckCulling();
     this.pruneFarShadowCasters();
     p(0.78, 'Baking shop reflections');
@@ -98,7 +102,6 @@ export class Game {
     this.interactor = new Interactor(this.camera, this.roots);
     this.ctx = { shop: this.shop, say: (t, s) => this.ui.say(t, s), animate: (fn) => this.interactor.animate(fn), state: this.state, game: this };
     this.state.dyno = this.dyno; this.state.ignition = this.ign; this.state.ailive = this.ai; this.state.plant = this.plant;
-    this.truckCtl = setupTruckOpenings(this.truck, { say: (t) => this.ui.say(t, 5), onLights: (on) => this.onDoorLights(on) });
     this.audio = new AudioEngine();
     this.ctx.sfx = (name, opts) => { try { this.audio.trigger(name, opts); } catch {} };
     this._abort = new AbortController();

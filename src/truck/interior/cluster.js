@@ -257,7 +257,7 @@ export function buildCluster({ quality, spec: specIn } = {}) {
   const hubRingMat = new THREE.MeshStandardMaterial({ color: 0x3a3b3d, roughness: 0.35, metalness: 0.8 });
   const needles = {};
   for (const key of Object.keys(PIV)) {
-    const p = PIV[key]; const grp = new THREE.Group(); grp.position.set(dx(p.x), dy(p.y), 0.16);
+    const p = PIV[key]; const grp = new THREE.Group(); grp.userData.dynamic = true; grp.position.set(dx(p.x), dy(p.y), 0.16);
     const big = key === 'speed' || key === 'tach';
     const shape = needleShape(p.needle * U, (big ? 6.4 : 4.6) * U, (big ? 18 : 10) * U);
     const m = new THREE.Mesh(new THREE.ShapeGeometry(shape), needleMat); m.position.z = 0; grp.add(m);

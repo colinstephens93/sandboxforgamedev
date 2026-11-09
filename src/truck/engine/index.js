@@ -32,7 +32,7 @@ export function buildEngineBay({ quality } = {}) {
 
   // the engine, free to move on its mounts: pivot at the crankshaft centerline
   const c = ENGINE.crank;
-  const mount = new THREE.Group(); mount.name = 'engine_mount'; mount.position.set(c.x, c.y, c.s); inch.add(mount);
+  const mount = new THREE.Group(); mount.name = 'engine_mount'; mount.userData.dynamic = true; mount.position.set(c.x, c.y, c.s); inch.add(mount);
   const body = new THREE.Group(); body.name = 'engine_body'; body.position.set(-c.x, -c.y, -c.s); mount.add(body);
   const efast = new Fasteners(mats);
   const pt = buildPowertrain({ mats, d, fast: efast }); body.add(pt.group);
