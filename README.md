@@ -43,6 +43,32 @@ Playwright needs `npm run setup:browser` once. Headless Chromium on Windows can 
 get the GPU on a machine where headless has none (the frame-time numbers in `PROGRESS.md` were measured that
 way). Setting `HEADED=1` is also worth it for the screenshots.
 
+## Truck studio (truck and engine only)
+
+`studio.html` loads the truck and its engine alone on a neutral backdrop: no shop, no dyno, no equipment, no simulation and no audio.
+It exists so the truck's rendering, materials and frame cost can be worked on without the scenery in the way. It uses the same
+renderer, quality presets, materials and hidden-part culling as the game, so what is tuned and measured there carries over.
+
+```bash
+npm run studio     # opens http://127.0.0.1:5173/studio.html (add ?quality=low|medium|high)
+```
+
+* **Views** (keys 1 to 8): hero, side, rear, wheel, engine bay with the hood up, the engine on its own, driver's seat, underside. Drag to orbit, right-drag to pan, wheel to zoom.
+* **Parts shown**: body, wheels, interior, engine bay, hood underside and underside can each be switched off; each lists its draw calls and triangles.
+* **Render**: shadows, ambient occlusion, bloom, anti-aliasing, render scale and shadow map size switch one at a time on top of the preset, so the cost of each can be read off. Two generated lighting setups (studio softboxes, daylight).
+* **Readout**: frame rate, CPU and GPU time per frame, draw calls, triangles, shader programs, textures.
+* **Run benchmark**: times whole frames (finished on the GPU, so the display's refresh rate does not cap the result) for five views and shows a table that can be copied as JSON.
+
+The same from the command line (`GPU=1` uses the real graphics card; `CHROME_PATH=...` uses an installed Chromium):
+
+```bash
+GPU=1 node scripts/studio.mjs perf                 # frame time per view at low / medium / high -> .dev/studio-perf.json
+GPU=1 node scripts/studio.mjs perf high 1280x720   # one preset, another resolution
+GPU=1 node scripts/studio.mjs shots high           # one PNG per view -> .dev/studio-<view>.png
+```
+
+Code: `src/studio/studio.js` (scene, views, benchmark), `src/studio/main.js` (panels), `src/truck/culling.js` (the culling rule shared with the game).
+
 ## Listening to the audio (the ear pass)
 
 The audio is procedural. A small mapping adjustment (turbo whistle base gain 0.42 → 0.48) was made in the

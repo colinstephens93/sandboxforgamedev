@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Truck Studio</title>
+<style>
+  html,body{margin:0;height:100%;background:#2c2f35;overflow:hidden;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:#e8e8e8;font-size:13px}
+  canvas#view{display:block;width:100vw;height:100vh;touch-action:none}
+  #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0b0c0e;z-index:50;transition:opacity .5s}
+  #loading h1{font-weight:600;letter-spacing:.18em;font-size:20px;margin:0 0 6px;text-transform:uppercase}
+  #loading p{margin:0 0 22px;color:#8a8f98}
+  #loading .bar{width:320px;height:3px;background:#22252b;overflow:hidden;border-radius:2px}
+  #loading .bar i{display:block;height:100%;width:0;background:#d9a441;transition:width .15s}
+  #loading small{margin-top:10px;color:#6c727c;font-size:12px;height:14px}
+  .st-panel{position:fixed;background:rgba(14,15,18,.9);border:1px solid #3a3d44;border-radius:6px;padding:10px 12px;z-index:10}
+  #side{left:10px;top:10px;width:248px;max-height:calc(100vh - 44px);overflow:auto}
+  #stats{right:10px;top:10px;width:216px;font-variant-numeric:tabular-nums}
+  #result{right:10px;bottom:10px;display:none;font-variant-numeric:tabular-nums;max-width:min(560px,calc(100vw - 300px))}
+  h3{margin:12px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#d9a441;font-weight:600}
+  h3:first-child{margin-top:0}
+  .row{display:flex;flex-wrap:wrap;gap:4px}
+  button,select{background:#23262c;color:#e6e6e6;border:1px solid #3d414a;border-radius:3px;padding:5px 8px;cursor:pointer;font:inherit}
+  button:hover{background:#2d3139} button.on{background:#7a5a1c;border-color:#d9a441} button:disabled{opacity:.45;cursor:default}
+  label{display:flex;align-items:center;gap:6px;padding:2px 0;cursor:pointer}
+  label small{margin-left:auto;color:#8a8f98;white-space:nowrap}
+  label.sel{justify-content:space-between} input[type=range]{flex:1;min-width:0}
+  table{border-collapse:collapse;width:100%} td,th{padding:2px 6px;text-align:right;white-space:nowrap} td:first-child,th:first-child{text-align:left;padding-left:0}
+  th{color:#8a8f98;font-weight:500} #stats td:first-child{color:#8a8f98}
+  .note{color:#8a8f98;font-size:12px;line-height:1.35;margin:6px 0 0}
+  a{color:#d9a441}
+  body.bare .st-panel{display:none}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="loading"><h1>Truck Studio</h1><p>Truck and engine only</p><div class="bar"><i id="loadbar"></i></div><small id="loadmsg">Starting</small></div>
+<div id="side" class="st-panel"></div>
+<div id="stats" class="st-panel"></div>
+<div id="result" class="st-panel"></div>
+<script type="module" src="/src/studio/main.js"></script>
+</body>
+</html>

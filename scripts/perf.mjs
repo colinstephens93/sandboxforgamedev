@@ -5,7 +5,7 @@
 //   GPU=1 node scripts/perf.mjs high 1280x720      # one quality, another resolution
 //
 // Method: the app is loaded at the requested quality and resolution, the intro is skipped and the camera is
-// put on the hero bookmark, then frames are timed one at a time with gl.finish() so the number is the real
+// put on the hero bookmark, then frames are timed one at a time and waited for on the GPU (a one-pixel read-back) so the number is the real
 // per-frame cost of update + render (CPU and GPU), not a submit-only figure. Unrealistic outliers (first
 // frames, shader compiles, texture uploads) are dropped by warming up first. The average and the 95th
 // percentile are printed and written to .dev/perf.json.
@@ -50,7 +50,9 @@ for (const quality of qualities) {
   const timings = await page.evaluate(() => {
     const g = window.__game;
     const gl = g.R.renderer.getContext();
-    const one = () => { const t0 = performance.now(); g.update(0.016); g.R.render(0.016); gl.finish(); return performance.now() - t0; };
+    // one pixel is read back to make the browser wait for the GPU: gl.finish() alone returns early in Chrome
+    const px = new Uint8Array(4);
+    const one = () => { const t0 = performance.now(); g.update(0.016); g.R.render(0.016); g.R.renderer.setRenderTarget(null); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return performance.now() - t0; };
     for (let i = 0; i < 8; i++) one();           // warm up: shader compiles, uploads, first-use caches
     const out = [];
     for (let i = 0; i < 45; i++) out.push(one());
@@ -78,6 +80,6 @@ for (const quality of qualities) {
 await app.close();
 fs.mkdirSync('.dev', { recursive: true });
 fs.writeFileSync('.dev/perf.json', JSON.stringify({ resolution: [W, H], measured: new Date().toISOString(), rows }, null, 1));
-console.log(`\nwrote .dev/perf.json (${W}x${H}). Per-frame cost includes update + render with gl.finish().`);
+console.log(`\nwrote .dev/perf.json (${W}x${H}). Per-frame cost includes update + render, waited for on the GPU.`);
 process.exit(rows.length && rows.every((r) => r.p95Ms < 33 && r.errors.length === 0) ? 0 : 1);
 
