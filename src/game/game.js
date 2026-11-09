@@ -76,6 +76,7 @@ export class Game {
         this.rig.setBatteryPorts(w(A.batteryPass, -0.06), w(A.batteryDriver, 0.06));
       }
     } catch (e) { console.warn('battery ports', e); }
+    this.R.onQuality = (q) => this.shop.lights.setFill(q.fillLights);
     p(0.78, 'Baking shop reflections');
     this.truck.group.visible = false;
     bakeEnvironment(this.R.renderer, this.scene, new THREE.Vector3(0, 1.4, 0), this.R.q.envSize);
@@ -177,7 +178,7 @@ export class Game {
   }
 
   savePNG() {
-    this.R.render(0.016);
+    this.R.render(0.016, true);
     this.canvas.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `duramax-dyno-shop-${Date.now()}.png`; a.click(); }, 'image/png');
     this.ui.say('Saved PNG', 1.5);
   }
@@ -332,7 +333,29 @@ export class Game {
     const dt = Math.min(0.05, (t - this.last) / 1000); this.last = t; this.frames++;
     this.update(dt);
     this.R.render(dt);
+    this.governQuality((t - this._prevT) / 1000 || dt); this._prevT = t;
     requestAnimationFrame((tt) => this.loop(tt));
+  }
+
+  // Automatic quality: if the game cannot hold about 40 fps, step the quality down one level (never up, so it cannot
+  // flip back and forth). Pressing Q or using the menu takes over and switches this off.
+  governQuality(rawDt) {
+    if (this.autoQuality === false || this.mode === 'boot') return;
+    this._autoSet ??= this.qname;
+    if (this._autoSet && this.qname !== this._autoSet) { this.autoQuality = false; return; } // the player chose a level
+    if (rawDt > 0.25 || document.hidden) { this._slow = 0; return; } // tab switch / stall, not sustained load
+    if (this.frames < 240) return; // let shaders compile and textures upload first
+    this._ft = (this._ft ?? rawDt) * 0.95 + rawDt * 0.05;
+    this._slow = this._ft > 1 / 40 ? (this._slow || 0) + rawDt : 0;
+    if (this._slow > 3) {
+      const order = ['low', 'medium', 'high']; const i = order.indexOf(this.qname);
+      this._slow = 0; this._ft = 1 / 60;
+      if (i > 0) {
+        this.qname = this._autoSet = order[i - 1];
+        this.R.setQuality(this.qname); this.ui.setQuality(this.qname);
+        this.ui.say(`Running slowly: quality set to ${this.qname} (press Q to change)`, 4);
+      } else this.autoQuality = false;
+    }
   }
 }
 
@@ -341,7 +364,7 @@ Game.prototype.cam = function (pos, tgt, fov = 60) {
   this.mode = this.mode === 'boot' ? 'boot' : 'fixed';
   this.camera.position.set(...pos); this.camera.fov = fov; this.camera.updateProjectionMatrix(); this.camera.lookAt(...tgt);
 };
-Game.prototype.shot = function () { this.R.render(0.016); return this.canvas.toDataURL('image/png'); };
+Game.prototype.shot = function () { this.R.render(0.016, true); return this.canvas.toDataURL('image/png'); };
 Game.prototype.ready = function () { return this.frames > 2; };
 // advance the simulation by `sec` seconds without rendering (deterministic checks)
 Game.prototype.advance = function (sec, dt = 1 / 30) { const n = Math.ceil(sec / dt); for (let i = 0; i < n; i++) this.update(dt); };

@@ -356,12 +356,26 @@ export function buildShop({ quality }) {
       s.shadow.bias = -0.0004; s.shadow.normalBias = 0.02; s.shadow.radius = 5; s.shadow.camera.near = 1; s.shadow.camera.far = 14;
       add(s); add(s.target); lights.spots.push(s);
     }
-    for (const [x, z] of lights.positions) {
-      if (Math.abs(x) < 1) continue;
+    // fill lights: only the ones nearest the truck (x = 0) are created; setFill(n) switches how many are lit, with the
+    // remaining ones strengthened to make up for the ones dropped (every light costs time on every lit pixel)
+    const fill = lights.positions.filter(([x]) => Math.abs(x) >= 1)
+      .sort((a, b) => (Math.abs(a[0]) - Math.abs(b[0])) || (Math.abs(a[1] - 0.2) - Math.abs(b[1] - 0.2)))
+      .slice(0, 6);
+    for (const [x, z] of fill) {
       const p = new THREE.PointLight(0xf1f5ff, 16, 14, 1.7); p.position.set(x, 5.2, z); add(p); lights.pointLights.push(p);
     }
     lights.baseIntensities = [...lights.spots.map((s) => s.intensity), ...lights.pointLights.map((p) => p.intensity), hemi.intensity];
   }
+  const nSpots = lights.spots.length;
+  lights.setFill = (n) => {
+    n = Math.max(1, Math.min(lights.pointLights.length, n | 0));
+    const gain = Math.min(2.5, (12 / n) * 0.6 + 0.4);
+    lights.pointLights.forEach((p, i) => {
+      p.visible = i < n;
+      lights.baseIntensities[nSpots + i] = 16 * gain;
+      if (lights.on) p.intensity = 16 * gain;
+    });
+  };
   const setLights = (on) => {
     lights.on = on;
     const all = [...lights.spots, ...lights.pointLights, lights.hemi];
@@ -369,5 +383,6 @@ export function buildShop({ quality }) {
     lights.lensMat.emissiveIntensity = on ? 5.0 : 0.0;
   };
 
+  lights.setFill(quality.fillLights ?? 6);
   return { group, colliders, interactables, lights, doors, setDoor, updateDoors, setLights, office, materials: { concrete, panelMat, steelFrame, darkSteel, steelRed, insul, wainMat, exteriorMat } };
 }

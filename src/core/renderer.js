@@ -8,6 +8,9 @@ export class Renderer {
     this.canvas = canvas;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: true, stencil: false, depth: true });
     this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.autoUpdate = false; // shadows are refreshed on a schedule (see render)
+    this.renderer.shadowMap.needsUpdate = true;
+    this.shadowFrame = 0;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.NoToneMapping; // tone mapping is done in the composer (ACES filmic)
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -22,8 +25,10 @@ export class Renderer {
     this.qualityName = QUALITY[name] ? name : 'high';
     try { localStorage.setItem('dds.quality', this.qualityName); } catch {}
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio));
+    this.renderer.shadowMap.needsUpdate = true;
     if (this.scene) this.build(this.scene, this.camera);
     this.resize();
+    if (this.onQuality) this.onQuality(this.q);
   }
 
   build(scene, camera) {
@@ -70,7 +75,8 @@ export class Renderer {
     if (this.composer) this.composer.setSize(w, h, false);
   }
 
-  render(dt) {
+  render(dt, forceShadows = false) {
+    if (forceShadows || this.shadowFrame++ % (this.q.shadowEvery || 1) === 0) this.renderer.shadowMap.needsUpdate = true;
     if (this.composer) this.composer.render(dt);
     else this.renderer.render(this.scene, this.camera);
   }
