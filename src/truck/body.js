@@ -28,16 +28,86 @@ export const win = {
 };
 
 // ---- fender: skin with a rounded shoulder that follows the hood edge ----
-const fenderTopY = (s) => hoodHeight(s, hoodHalfWidth(s) + GAP) - 0.55;
+const fenderTopY = (s) => hoodHeight(s, hoodHalfWidth(s) + GAP) - 0.3;
 function fenderW(s, y) {
   const yt = fenderTopY(s);
   const base = wMax(s) * (y < 22 ? 0.9 + 0.1 * smooth(clamp((y - 14) / 8, 0, 1)) : 1);
   const hh = hoodHalfWidth(s) + GAP;
-  const t = clamp((y - (yt - 9.5)) / 9.5, 0, 1);
-  // quarter-ellipse shoulder from the flare to the hood edge
-  const shoulder = 1 - Math.sqrt(1 - Math.pow(1 - t, 2));
-  const wTop = hh + 0.15;
+  const t = clamp((y - (yt - 5.5)) / 5.5, 0, 1);
+  // quarter-ellipse shoulder from the flare to the hood edge; the shorter blend (5.5 in, was 9.5) keeps a
+  // crisp fender-to-hood shut line instead of a soft roll
+  const wTop = hh + 0.05;
   return t <= 0 ? base : lerp(wTop, base, clamp(Math.sqrt(Math.max(0, 1 - t * t)), 0, 1));
+}
+
+// ---- glass outlines (shared with the glass panels in index.js) ----
+// The windshield and back glass are wider than the first pass (56/49 in at the base/top and 52 in at the
+// top of the rear glass): with the narrower glass the A-pillar had to be 10-12 in wide in plan, which read as
+// a flat white sail over the glass. GMT800 glass is about 62 in wide at the base and 60 at the top.
+export const WS = {
+  hw: (v) => lerp(31.4, 27.2, v),
+  y: (v) => lerp(55.0, 75.4, v),
+  s: (v, u) => lerp(21.8, 43.2, v) - 0.9 * (1 - u * u) * Math.sin(Math.PI * v) - 0.25 * Math.abs(u) * (1 - v),
+};
+export const RG = {
+  hw: (v) => lerp(30.6, 28.2, v),
+  y: (v) => lerp(58.2, 72.6, v),
+  s: (v) => lerp(ST.cabBack + 0.4, ST.cabBack - 1.0, v),
+};
+
+// A body-color ruled face between a glass edge and the body side. Without it the windshield and rear glass
+// stop about 10 in inboard of the body side and the skin leaves an open wedge into the cab; that missing face
+// is what made the A-pillar read as a thin tube.
+function cornerPanel(side, nV, inner, outer, bulge = 0.25) {
+  const N = 6; // columns: glass edge .. outer skin
+  const pos = [], uv = [], ind = [];
+  for (let j = 0; j <= nV; j++) {
+    const v = j / nV;
+    const a = inner(v), b = outer(v);
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const bow = bulge * Math.sin(Math.PI * t) * (0.4 + 0.6 * Math.sin(Math.PI * Math.min(1, Math.max(0, v))));
+      const x = lerp(a[2], b[2], t) + bow;
+      const y = lerp(a[1], b[1], t);
+      const s = lerp(a[0], b[0], t);
+      pos.push(side * x * IN, y * IN, s * IN);
+      uv.push(s * IN, y * IN);
+    }
+  }
+  for (let j = 0; j < nV; j++) for (let i = 0; i < N; i++) {
+    const k = j * (N + 1) + i, k2 = k + N + 1;
+    ind.push(k, k2, k + 1, k + 1, k2, k2 + 1);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(ind); g.computeVertexNormals();
+  return g;
+}
+
+export function buildPillarGeometry() {
+  const both = (fn) => ({ L: fn(-1), R: fn(1) });
+  const nV = 18;
+  // A-pillar: from just inboard of the windshield's outboard edge (so the glass edge covers the seam) up to
+  // the door frame's front edge, from the beltline to the roof.
+  const aPillar = both((side) => cornerPanel(side, nV, (v) => {
+    const y = WS.y(v);
+    return [WS.s(v, 1), y, WS.hw(v) - 0.15];
+  }, (v) => {
+    const y = WS.y(v);
+    const s = sA(y) + 3.0;
+    return [s, y, halfWidth(s, y)];
+  }, 0.45));
+  // C-pillar: from the rear glass's outboard edge to the cab's rear quarter.
+  const cPillar = both((side) => cornerPanel(side, 12, (v) => {
+    const y = RG.y(v);
+    return [RG.s(v), y, RG.hw(v) - 0.15];
+  }, (v) => {
+    const y = RG.y(v);
+    const s = ST.cabBack + 1.4;
+    return [s, y, halfWidth(s, y)];
+  }, 0.4));
+  return { aPillar, cPillar };
 }
 
 export function buildBodyGeometry() {
@@ -116,6 +186,9 @@ export function buildBodyGeometry() {
       return [s, lerp(a != null ? a : bedHem, bedTop(s), v)];
     },
   }));
+  // the outer faces of the A and C pillars (see buildPillarGeometry)
+  const P = buildPillarGeometry();
+  G.aPillar = P.aPillar; G.cPillar = P.cPillar;
   return G;
 }
 

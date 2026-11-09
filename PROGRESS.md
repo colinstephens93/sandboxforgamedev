@@ -66,3 +66,23 @@ Running log: each increment's result, the checks run, the screenshots taken, and
     so the roof-anchored vertical scale is sound.
 * Open: IMG_2851's roof-front crossing is not measurable (dark trees behind the truck); the rear bumper scan in
   IMG_2862 is partly occluded by the truck parked beside it (+-2 in).
+
+### Task B: proportion fixes in code (done)
+Acted only where Task A measured a real error or the screenshots showed a real defect.
+* **Nose / hood.** `hoodHeight` raised and flattened (leading edge 47.6 -> 50.8 in, cowl 54.4 unchanged, so the
+  rise is 3.6 in instead of 6.8) and the hood's edge roll cut from 2.7 to 0.85 in. The traced side silhouette
+  now tracks the photo within about 1 in at the nose (was 3.0-3.8 in low). The grille surround, upper grille and
+  headlamps moved up with it (grille top 45.6 -> 49.0, lamps taller), so the hood and the grille meet at the
+  shut line as in IMG_2853.
+* **Fender-to-hood seam.** The fender's shoulder blend shortened from 9.5 to 5.5 in and its top edge raised to
+  0.3 in below the hood skin, so the shut line reads as a line instead of a soft roll.
+* **A-pillar and C-pillar.** The body had no outer pillar faces at all: the windshield stopped about 10 in
+  inboard of the body side and the skin left an open wedge into the cab (the "thin tubes" and the see-through
+  roof edge). Added ruled pillar faces (`buildPillarGeometry` in body.js, `WS`/`RG` glass outlines shared with
+  the glass in index.js) between the glass edges and the body side, and widened the glass to 62.8/54.4 in
+  (windshield) and 61.2/56.4 in (back glass) so the pillars are 3.5-8 in wide, not 10-12.
+* Not changed: the axial positions of the nose / rear bumper (the overall-length conflict above; the spec
+  envelope wins) and the seats and cluster bezel (documented as simplified, no measurement to fix them
+  against).
+* Checks after the change: `npm test` **276/276**, `npm run build` ok, `GPU=1 node scripts/check.mjs`
+  **29/29**. The Blender overlay was re-run: the outline is still exactly 237.30 x 77.00 in.

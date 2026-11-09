@@ -5,7 +5,7 @@ import { spec } from '../data/truckSpec.js';
 import { mat } from '../core/materials.js';
 import * as K from './skin.js';
 import { hoodHalfWidth, hoodHeight, roofHalfWidth, roofHeight, ST, H, IN_TO_M, WB } from './skin.js';
-import { buildBodyGeometry, topPanel, topPerimeter, skirtStrip, GAP, DOOR, win, sA, ROOF_EDGE_Y } from './body.js';
+import { buildBodyGeometry, topPanel, topPerimeter, skirtStrip, GAP, DOOR, win, sA, ROOF_EDGE_Y, WS, RG } from './body.js';
 import { gridPanel, colPos, rowPos } from './panels.js';
 import { buildFront, buildMirror, buildHandle } from './front.js';
 import { buildRear } from './rear.js';
@@ -35,7 +35,7 @@ export function buildTruck({ quality }) {
   // ---------------- body panels ----------------
   const G = buildBodyGeometry();
   const body = new THREE.Group(); body.name = 'body'; root.add(body);
-  const bodyKeys = ['fender', 'rocker', 'cabCorner', 'bed'];
+  const bodyKeys = ['fender', 'rocker', 'cabCorner', 'bed', 'aPillar', 'cPillar'];
   for (const k of bodyKeys) for (const side of ['L', 'R']) add(body, G[k][side], paint, `${k}_${side}`);
   parts.doors = {};
   for (const key of ['f', 'r']) for (const side of ['L', 'R']) {
@@ -63,10 +63,7 @@ export function buildTruck({ quality }) {
     const nI = 20, nJ = 14, P = [], ind = [], uv = [];
     for (let j = 0; j <= nJ; j++) for (let i = 0; i <= nI; i++) {
       const v = j / nJ, u = (i / nI) * 2 - 1;
-      const hw = lerp(28.0, 24.4, v);
-      const s = lerp(21.8, 43.2, v) - 0.9 * (1 - u * u) * Math.sin(Math.PI * v) - 0.25 * Math.abs(u) * (1 - v);
-      const y = lerp(55.0, 75.4, v) + 0.35 * (1 - u * u) * Math.sin(Math.PI * v) * 0.0;
-      P.push(u * hw * IN, y * IN, s * IN); uv.push(u, v);
+      P.push(u * WS.hw(v) * IN, WS.y(v) * IN, WS.s(v, u) * IN); uv.push(u, v);
     }
     for (let j = 0; j < nJ; j++) for (let i = 0; i < nI; i++) { const a = j * (nI + 1) + i, b = a + 1, c = a + nI + 2, d = a + nI + 1; ind.push(a, d, b, b, d, c); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(ind); g.computeVertexNormals();
@@ -77,9 +74,8 @@ export function buildTruck({ quality }) {
     const nI = 16, nJ = 8, P = [], ind = [];
     for (let j = 0; j <= nJ; j++) for (let i = 0; i <= nI; i++) {
       const v = j / nJ, u = (i / nI) * 2 - 1;
-      const hw = lerp(27.8, 25.6, v); const y = lerp(58.2, 72.6, v);
-      const s = lerp(ST.cabBack + 0.4, ST.cabBack - 1.0, v) + 0.7 * (1 - u * u);
-      P.push(u * hw * IN, y * IN, s * IN);
+      const s = RG.s(v) + 0.7 * (1 - u * u);
+      P.push(u * RG.hw(v) * IN, RG.y(v) * IN, s * IN);
     }
     for (let j = 0; j < nJ; j++) for (let i = 0; i < nI; i++) { const a = j * (nI + 1) + i, b = a + 1, c = a + nI + 2, d = a + nI + 1; ind.push(a, b, d, b, c, d); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(ind); g.computeVertexNormals();

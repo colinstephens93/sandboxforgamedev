@@ -68,10 +68,12 @@ export function buildFront({ quality }) {
   const add = (g, m, name, cast = true) => { const mesh = new THREE.Mesh(g, m); mesh.name = name; mesh.castShadow = cast; mesh.receiveShadow = true; group.add(mesh); return mesh; };
 
   // ---------- body-color surround (frame around the grille openings) ----------
+  // The surround's top edge is the hood's shut line; it follows the hood table in skin.js (hood front
+  // 49.6 in at s = -30.5) so the hood and the grille meet without a gap, as in IMG_2853.
   const sur = [];
-  sur.push(facePatch(-25.2, 25.2, 45.6, 47.1, 0)); // top strip
-  sur.push(facePatch(-25.2, -22.0, 33.0, 45.6, 0)); // left post
-  sur.push(facePatch(22.0, 25.2, 33.0, 45.6, 0)); // right post
+  sur.push(facePatch(-25.2, 25.2, 49.0, 50.5, 0)); // top strip
+  sur.push(facePatch(-25.2, -22.0, 33.0, 49.0, 0)); // left post
+  sur.push(facePatch(22.0, 25.2, 33.0, 49.0, 0)); // right post
   sur.push(facePatch(-22.0, 22.0, 33.0, 34.2, 0, 14, 2)); // bottom strip
   sur.push(facePatch(-22.0, 22.0, 38.2, 38.8, 0, 14, 1)); // between-grille web (behind the chrome bar)
   add(mergeGeometries(sur, false), paint, 'grille_surround');
@@ -100,7 +102,7 @@ export function buildFront({ quality }) {
     for (const x of [-hw * 0.5, 0, hw * 0.5]) dv.push(facePatch(x - 0.18, x + 0.18, y0, y1, 0.1, 1, 1));
     add(mergeGeometries(dv, false), new THREE.MeshStandardMaterial({ color: 0x6a6d70, metalness: 0.8, roughness: 0.4 }), name + '_dividers', false);
   };
-  grille(22.0, 41.9, 45.6, 10, 'grille_upper');
+  grille(22.0, 44.4, 49.0, 10, 'grille_upper');
   grille(21.4, 34.4, 38.2, 8, 'grille_lower');
 
   // ---------- chrome bar with the gold bowtie ----------
@@ -129,11 +131,11 @@ export function buildFront({ quality }) {
       const b = new THREE.Mesh(new THREE.SphereGeometry(0.55 * IN, 12, 8), bulb); const sb = faceS(sx * cx, cy);
       b.position.set(sx * (cx - 0.5) * IN, cy * IN, (sb + 1.6) * IN); b.name = `${name}_bulb`; group.add(b);
     };
-    mk(30.0, 41.6, 12.6, 6.6, 3.0, `hl_main_${sx > 0 ? 'R' : 'L'}`);
+    mk(30.0, 42.8, 12.6, 8.6, 3.0, `hl_main_${sx > 0 ? 'R' : 'L'}`);
     // lower turn/parking lamp
-    mk(30.0, 35.6, 12.6, 5.0, 2.6, `hl_turn_${sx > 0 ? 'R' : 'L'}`);
+    mk(30.0, 36.4, 12.6, 5.6, 2.6, `hl_turn_${sx > 0 ? 'R' : 'L'}`);
     // amber outboard section on the lower lamp
-    const amb = bentExtrude(rrShape(2.6, 4.2, 0.9), 0.16, { bevel: 0.18, cx: sx * 35.0, cy: 35.6, off: 0.18 });
+    const amb = bentExtrude(rrShape(2.6, 4.4, 0.9), 0.16, { bevel: 0.18, cx: sx * 35.0, cy: 36.4, off: 0.18 });
     add(amb, amberLens, `hl_amber_${sx > 0 ? 'R' : 'L'}`, false);
   }
 
@@ -207,3 +209,5 @@ export function buildHandle({ side, key = 'f' }) {
   g.scale.x = side;
   return g;
 }
+
+

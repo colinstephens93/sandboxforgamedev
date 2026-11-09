@@ -1,4 +1,4 @@
-// Parametric outer skin of the 2005 GMT800 Classic crew cab short box.
+﻿// Parametric outer skin of the 2005 GMT800 Classic crew cab short box.
 // Everything is in INCHES in the "body frame": s = distance rearward of the front axle, y = height above the ground
 // at the factory ride height, w = half width (distance from the centerline). Converted to meters at the end.
 // Station values were read from the reference photos (IMG_2851, 2862, 2852, 2873) by measuring pixel positions
@@ -24,7 +24,7 @@ export const AXLE_Y = spec.tires.rollingRadiusIn + 0.6; // wheel center height
 
 // ---- heights (inches above ground) ----
 export const H = {
-  roof: D.heightIn, beltline: 54.6, hoodNose: 46.8, hoodCowl: 54.2, rocker: 17.6, hem: 20.6,
+  roof: D.heightIn, beltline: 54.6, hoodNose: 48.6, hoodCowl: 54.2, rocker: 17.6, hem: 20.6,
   bedRail: 56.0, bedFloor: 37.4, bumperTop: 30.5, bumperBottom: 18.0, tailgateTop: 55.5,
 };
 
@@ -80,16 +80,22 @@ export function hoodHalfWidth(s) {
   return tab([[-30.5, 26.0], [-24, 27.2], [-10, 28.0], [8, 28.6], [19.5, 28.8]], s);
 }
 export function hoodHeight(s, x) {
-  const hc = tab([[-30.5, 47.6], [-24, 48.8], [-10, 50.4], [8, 52.6], [19.5, 54.4]], s);
+  // Hood line from the blender overlay (tools/blender/overlay.py, .dev/overlay_report.md): the photo's side
+  // silhouette is 50.7 in at the hood's leading edge and 53.1 in a third of the way back, against 47.6 and
+  // 52.6 before. The HD hood is nearly flat and sits high; the old table made the nose droop, which is the
+  // "rounded, bulbous nose" weak spot. Rise to the cowl is now 4.1 in over 50 in, not 6.8 in.
+  const hc = tab([[-30.5, 50.8], [-24, 51.0], [-10, 51.9], [8, 53.2], [19.5, 54.4]], s);
   const hw = hoodHalfWidth(s);
   const t = clamp(Math.abs(x) / hw, 0, 1);
-  // crown with a powerdome (two raised bulges for the HD hood) and a downward roll at the edge
-  const crown = 1.3 * t * t + 1.4 * Math.pow(t, 6);
+  // crown with a powerdome (two raised bulges for the HD hood) and a downward roll at the edge; the edge
+  // roll is 1.1 in so the fender top and the hood's side edge read as one nearly flat line from the side.
+  const crown = 0.45 * t * t + 0.40 * Math.pow(t, 6);
   return hc - crown + 0.25 * (1 - Math.abs(t - 0.28) / 0.72);
 }
 
-// roof: half width at the roof edge and crown height
-export function roofHalfWidth(s) { return tab([[43, 25.5], [52, 30.5], [70, 31.8], [100, 31.5], [108.6, 29.0]], s); }
+// roof: half width at the roof edge and crown height. The width matches the body's tumblehome at roof height
+// (P_CAB is 0.79 of wMax at 75.4 in), so the roof edge forms the drip rail just outboard of the door headers.
+export function roofHalfWidth(s) { return tab([[43, 26.2], [52, 30.8], [70, 31.9], [100, 31.6], [108.6, 29.2]], s); }
 export function roofHeight(s, x) {
   const hw = roofHalfWidth(s);
   const t = clamp(Math.abs(x) / hw, 0, 1);
@@ -98,3 +104,4 @@ export function roofHeight(s, x) {
 }
 
 export const IN_TO_M = 0.0254;
+
