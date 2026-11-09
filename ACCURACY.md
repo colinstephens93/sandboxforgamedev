@@ -90,3 +90,6 @@ every fueling table (GM calibration tables are not public).
 
 ## Performance (Phase 3.1)
 * High-quality SSAO sample count, resolution scale, pixel ratio and shadow map size reduced modestly to improve frame time while keeping the high preset visually superior to medium. No visual features removed.
+
+## Exterior and floor (Phase 3.2)
+* Outside world is procedural placeholder geometry (sky, distant buildings, tree billboards, apron). Oil stains are decorative decals. No real-world measurements introduced.

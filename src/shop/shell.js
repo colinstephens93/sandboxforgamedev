@@ -117,31 +117,38 @@ export function buildShop({ quality }) {
 
   // ---------------- exterior world seen through the doors ----------------
   {
-    const apron = new THREE.Mesh(new THREE.PlaneGeometry(160, 130), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.36, 0.36, 0.35).multiplyScalar(1.25) }));
-    apron.rotation.x = -Math.PI / 2; apron.position.set(0, -0.03, -74); add(apron);
-    const sky = new THREE.Mesh(new THREE.SphereGeometry(120, 24, 16), new THREE.MeshBasicMaterial({ map: skyTexture(), side: THREE.BackSide, color: new THREE.Color(1.7, 1.7, 1.7) }));
-    sky.position.set(0, -6, 0); sky.name = 'sky'; add(sky);
-    // a distant building and a row of tree billboards (alpha canvas textures) so the doorway is not an empty void
-    const far = new THREE.Mesh(new THREE.BoxGeometry(90, 9, 3), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.6, 0.58, 0.54).multiplyScalar(1.5) }));
-    far.position.set(0, 4.3, -62); add(far);
+    // ground apron with slight color variation
+    const apronMat = new THREE.MeshStandardMaterial({ color: 0x4a4a46, roughness: 0.92, metalness: 0.02 });
+    const apron = new THREE.Mesh(new THREE.PlaneGeometry(180, 140), apronMat);
+    apron.rotation.x = -Math.PI / 2; apron.position.set(0, -0.03, -78); apron.receiveShadow = true; add(apron);
+    // distant skyline / industrial buildings
+    const bldgMat = new THREE.MeshStandardMaterial({ color: 0x6a675f, roughness: 0.85, metalness: 0.05 });
+    for (let i = 0; i < 5; i++) {
+      const w = 18 + rngf() * 22, h = 6 + rngf() * 14, d = 4 + rngf() * 6;
+      const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bldgMat);
+      b.position.set(-60 + i * 28 + rngf() * 8, h / 2, -70 - rngf() * 12); add(b);
+    }
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(140, 32, 20), new THREE.MeshBasicMaterial({ map: skyTexture(), side: THREE.BackSide, color: new THREE.Color(1.6, 1.65, 1.7) }));
+    sky.position.set(0, -4, 0); sky.name = 'sky'; add(sky);
+    // tree billboards with better spread
     const treeTex = (() => {
       const c = makeCanvas(256, 256), g = c.getContext('2d'); const r = rng(11);
       g.fillStyle = '#3b2b1d'; g.fillRect(122, 150, 12, 106);
-      for (let i = 0; i < 320; i++) {
-        const x = 128 + (r() - 0.5) * 170 * (1 - (i / 320) * 0.3), y = 100 + (r() - 0.5) * 120 + (i / 320) * 20, rad = 10 + r() * 22;
+      for (let i = 0; i < 380; i++) {
+        const x = 128 + (r() - 0.5) * 170 * (1 - (i / 380) * 0.3), y = 100 + (r() - 0.5) * 120 + (i / 380) * 20, rad = 10 + r() * 22;
         const l = 22 + r() * 22; g.fillStyle = `hsl(${88 + r() * 24}, ${34 + r() * 20}%, ${l}%)`;
         g.beginPath(); g.arc(x, y, rad, 0, 6.283); g.fill();
       }
       return tex(c, { wrap: false });
     })();
-    const treeMat = new THREE.MeshBasicMaterial({ map: treeTex, transparent: true, alphaTest: 0.3, color: new THREE.Color(1.3, 1.3, 1.25), side: THREE.DoubleSide });
-    for (let i = 0; i < 16; i++) {
-      const t = new THREE.Mesh(new THREE.PlaneGeometry(9 + rngf() * 5, 9 + rngf() * 5), treeMat);
-      t.position.set(-42 + i * 5.6 + rngf() * 2.5, 5.2, -50 - rngf() * 8); add(t);
+    const treeMat = new THREE.MeshBasicMaterial({ map: treeTex, transparent: true, alphaTest: 0.3, color: new THREE.Color(1.25, 1.25, 1.2), side: THREE.DoubleSide });
+    for (let i = 0; i < 22; i++) {
+      const t = new THREE.Mesh(new THREE.PlaneGeometry(8 + rngf() * 6, 8 + rngf() * 6), treeMat);
+      t.position.set(-55 + i * 5.2 + rngf() * 3, 4.8 + rngf() * 1.5, -48 - rngf() * 14); add(t);
     }
-    // lot markings and a curb so the apron reads as pavement
-    const lot = new THREE.Mesh(new THREE.PlaneGeometry(60, 0.2), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.5, 0.5) }));
-    lot.rotation.x = -Math.PI / 2; lot.position.set(0, -0.02, -22); add(lot);
+    // lot markings
+    const lot = new THREE.Mesh(new THREE.PlaneGeometry(70, 0.18), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.5, 1.4, 0.45) }));
+    lot.rotation.x = -Math.PI / 2; lot.position.set(0, -0.02, -24); add(lot);
   }
 
   // ---------------- walls ----------------
@@ -329,7 +336,7 @@ export function buildShop({ quality }) {
     g.putImageData(img, 0, 0);
     const t = tex(c, { wrap: false });
     const stainMat = new THREE.MeshPhysicalMaterial({ map: t, transparent: true, roughness: 0.18, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.08, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2, envMapIntensity: 1.2 });
-    const spots = [[0.6, -1.0, 1.1], [-0.4, 3.2, 1.8], [-8.2, 2.6, 1.4], [-5.0, 5.8, 0.8], [3.8, 1.2, 0.7], [-1.9, 7.2, 0.9], [-2.0, -5.5, 0.6], [6.0, -4.0, 0.8], [-8.1, 4.1, 0.9], [-10.4, -4.6, 0.7]];
+    const spots = [[0.6, -1.0, 1.1], [-0.4, 3.2, 1.8], [-8.2, 2.6, 1.4], [-5.0, 5.8, 0.8], [3.8, 1.2, 0.7], [-1.9, 7.2, 0.9], [-2.0, -5.5, 0.6], [6.0, -4.0, 0.8], [-8.1, 4.1, 0.9], [-10.4, -4.6, 0.7], [2.2, -3.5, 0.55], [-3.8, 1.1, 0.7], [4.5, 4.8, 0.65], [-6.5, -2.2, 0.5]];
     const pzC = DYNO.truckOrigin.z + 3.886;
     spots.push([0.0, pzC + 1.7, 0.9], [-1.5, pzC - 3.9, 0.8]);
     for (const [x, z, s] of spots) {

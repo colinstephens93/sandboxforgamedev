@@ -12,6 +12,11 @@ Running log: each increment's result, the checks run, the screenshots taken, and
 ## Phase 2.3 (2026-11-09): cab interior detail and stronger PBR
 
 ## Phase 3.1 (2026-11-09): performance pass
+
+## Phase 3.2 (2026-11-09): outside world and shop atmosphere
+* Exterior through the roll-up doors: ground apron switched to MeshStandardMaterial with slight roughness variation; added a simple distant industrial skyline (5 buildings); increased and better-spread tree billboards; sky sphere enlarged and tinted.
+* Floor wear: four additional oil-stain decals placed around the work areas.
+* All 276 tests and `npm run build` pass. Walk-to-corner collision checks remain valid (no new solid colliders added in the walkable interior).
 * High quality preset adjusted without dropping the tier:
   - pixelRatio 1.5 → 1.25
   - shadow map 4096 → 3072
