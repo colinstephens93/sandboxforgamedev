@@ -169,8 +169,6 @@ describe('bench: the shared sim loop', () => {
     const grilleZ = -spec.dims.frontOverhangIn * 0.0254;
     expect(last.l.z).toBeCloseTo(grilleZ - 1.5, 6); expect(last.l.x).toBe(0); expect(last.l.inCab).toBe(false);
     expect(last.st.hoodOpen).toBe(b.ctl.hood.open);
-    b.view = 'gauges'; b.tick(1 / 30);
-    expect(b.audio.calls.at(-1).l.inCab).toBe(true);
     b.view = 'engine'; b.ctl.hoodState.cabReleased = b.ctl.hoodState.secondaryReleased = true; b.ctl.hood.toggle(b.ctx, true); b.advance(3);
     expect(b.audio.calls.at(-1).st.hoodOpen).toBe(true);
     b.ctl.hood.toggle(b.ctx, false); b.advance(3);
@@ -203,11 +201,9 @@ describe('bench: quality preset, views and materials', () => {
     expect(QUALITY_ORDER).toEqual(['low', 'bench', 'medium', 'high']);
     for (const k of ['low', 'medium', 'high']) expect(QUALITY[k]).toBeTruthy();
   });
-  it('has the six views with the parts each one hides', () => {
-    expect(Object.keys(BENCH_VIEWS)).toEqual(['engine', 'engineAlone', 'cutaway', 'gauges', 'truck', 'rearWheels']);
+  it('has only the four requested views', () => {
+    expect(Object.keys(BENCH_VIEWS)).toEqual(['engine', 'engineAlone', 'cutaway', 'rearWheels']);
     expect(BENCH_VIEWS.engine.state.hood).toBe(true);
-    expect(BENCH_VIEWS.gauges.state.hide.sort()).toEqual(['bay', 'engine', 'hoodUnder', 'underside', 'wheels']);
-    expect(BENCH_VIEWS.gauges.eye).toBe(true);
     for (const k of ['engine', 'engineAlone', 'cutaway']) {
       const s = BENCH_VIEWS[k].state, shown = (p) => (s.only ? s.only.includes(p) : !(s.hide || []).includes(p));
       expect(shown('engine')).toBe(true); expect(shown('interior')).toBe(false); expect(shown('underside')).toBe(false);

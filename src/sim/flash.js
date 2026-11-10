@@ -17,7 +17,8 @@ export const FLASH = {
 };
 
 export class AILive {
-  constructor() {
+  constructor({ directTuning = false } = {}) {
+    this.directTuning = directTuning;
     this.cable = false; this.charger = false;
     this.stage = 'idle';             // idle | reading | readDone | backing | backupDone | writing | writeDone | failed
     this.progress = 0; this.timer = 0;
@@ -66,6 +67,9 @@ export class AILive {
   }
 
   canWrite(env) {
+    if (this.directTuning) return env.dynoRunning
+      ? { ok: false, why: 'Finish or abort the dyno run before changing tunes.' }
+      : { ok: true, why: '' };
     if (!this.linkOk(env)) return { ok: false, why: 'Plug in the cable and turn the key to RUN with the engine off.' };
     if (this.stage === 'writing' || this.stage === 'reading' || this.stage === 'backing') return { ok: false, why: 'Busy.' };
     if (!this.bricked && this.readTune == null) return { ok: false, why: 'Read the truck first.' };
@@ -76,6 +80,15 @@ export class AILive {
   write(env, tuneId = this.selected) {
     const c = this.canWrite(env);
     if (!c.ok) { this.say(c.why); return false; }
+    if (this.directTuning) {
+      this.pendingApply = { tune: tuneId, sound: { ...this.sound } };
+      this.soundByTune[tuneId] = { ...this.sound };
+      this.needsKeyCycle = true; // consumed automatically by the bench's apply hook
+      this.stage = 'writeDone'; this.progress = 1; this.bricked = false;
+      this.readTune = tuneId;
+      this.say(`Applying ${tuneId}.`);
+      return true;
+    }
     this.stage = 'writing'; this.writing = tuneId; this.progress = 0; this.timer = 0;
     this.volts = this.charger ? FLASH.chargerV : Math.min(this.volts, FLASH.batteryStartV);
     this.writeStartSound = { ...this.sound };
@@ -123,7 +136,9 @@ export class AILive {
   keyCycled() {
     if (this.needsKeyCycle && this.pendingApply) {
       this.installed = this.pendingApply.tune; this.needsKeyCycle = false;
-      const applied = this.pendingApply; this.pendingApply = null; return applied;
+      const applied = this.pendingApply; this.pendingApply = null;
+      if (this.directTuning) this.say(`Applied ${this.installed}.`);
+      return applied;
     }
     return null;
   }

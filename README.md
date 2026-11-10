@@ -52,12 +52,10 @@ the bottom of the window and in the three panels, which dock on the right so the
 
 | Control | What it does |
 |---|---|
-| **Key**: Off, Run, Start | The real diesel start: Run, wait for the WAIT lamp (glow plugs) to go out, then hold Start until the engine fires. Off stops it. The engine cranks only in P or N |
 | **Throttle** slider | The accelerator pedal. The dyno takes it over during a run |
-| **Gear**: P R N D | The shifter. In D the rear wheels turn |
-| **View** (keys 1 to 6) | Engine (hood up), Engine alone, Cutaway (castings faded, internals turning: this view starts the engine if it is off), Gauges (driver's eye point), Truck, Rear wheels. Drag to look around, wheel to zoom |
-| **Dyno** (T) | Strap the truck, fan on, Start Run; graph, peaks and run history |
-| **AI Live** (L) | Plug in the interface and the charger (buttons on the Connect page), key to Run with the engine off, read, save a backup, write a tune, cycle the key |
+| **View** (keys 1 to 4) | Engine (hood up), Engine alone, Cutaway (castings faded, internals turning: this view starts the engine if it is off), Rear wheels. Drag to look around, wheel to zoom |
+| **Dyno** (T) | Start Run; graph, peaks and run history. The bench is pre-strapped; hood and fan settings do not block a run |
+| **AI Live** (L) | Opens Quick Tunes. Choose Apply tune to load the calibration and staged turbo sound settings immediately, with the engine running or stopped. No connection, read, backup, or key cycle is needed. Finish or abort an active dyno run before changing tunes |
 | **Shop menu** (M) | Repairs, the LBZ fuel pressure regulator, shop temperature, reset |
 | **Quality** | low, bench (default), medium, high. If frames stay under about 40 a second it steps down on its own |
 | **Sound on / off**, **?** (F1) | Audio, help. Esc closes a panel |
@@ -69,11 +67,9 @@ show; and with the engine off and the camera still the page does not draw at all
 "idle"). Between runs the dyno's absorber holds the rollers whenever the shifter is in P or N or the engine is off, so the
 wheels stop after a pull instead of coasting for minutes.
 
-The sound is heard from a fixed spot 1.5 m in front of the grille (louder with the hood up), or from the driver's seat in
-the Gauges view. Measured frame times are in `PROGRESS.md`.
+The sound is heard from a fixed spot 1.5 m in front of the grille (louder with the hood up). Measured frame times are in `PROGRESS.md`.
 
-Checks for the bench: `node scripts/benchCheck.mjs` (drives the page through its own buttons and panels: start with the
-key, stock pull, AI Live write of the Street tune, key cycle, second pull, every view), `node scripts/benchPerf.mjs
+Checks for the bench: `node scripts/benchCheck.mjs` (drives the page through its own buttons and panels: the four views, direct tuning with the engine stopped and running, turbo sound settings, and reset), `node scripts/benchPerf.mjs
 [quality] [WxH]` (frame time of the bench next to the shop game at the same quality and size) and
 `node scripts/benchShots.mjs` (one PNG per view and per docked panel in `.dev/`).
 

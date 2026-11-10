@@ -15,8 +15,8 @@ const HELP = [
 const BENCH_HELP = [
   ['Engine', 'Select Cutaway to start the engine through its normal glow-plug and cranking sequence'],
   ['Throttle', 'The slider is the accelerator pedal. The dyno takes it over during a run'],
-  ['Views', '1 engine, 2 engine alone, 3 cutaway, 4 gauges, 5 truck, 6 rear wheels. Drag to look around, wheel to zoom'],
-  ['Dyno', 'T: fan on, Start Run. The bench truck is already secured'], ['AI Live', 'L: plug in, key to RUN with the engine off, read, back up, write, cycle the key'],
+  ['Views', '1 engine, 2 engine alone, 3 cutaway, 4 rear wheels. Drag to look around, wheel to zoom'],
+  ['Dyno', 'T: fan on, Start Run. The bench truck is already secured'], ['AI Live', 'L: choose a Quick Tune and Apply tune. No connection setup or key cycle is needed'],
   ['Shop menu', 'M: repairs, LBZ regulator, shop temperature'], ['Help', 'F1: this panel. Esc closes a panel'],
 ];
 

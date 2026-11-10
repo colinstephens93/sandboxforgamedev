@@ -23,11 +23,9 @@ export const BENCH_VIEWS = {
   engine:      { label: 'Engine',       pos: [0.95, 2.2, -2.1],  tgt: [0, 1.08, 0.2],    fov: 46, state: { hood: true, ...ENGINE_VIEW } },
   engineAlone: { label: 'Engine alone', pos: [1.25, 1.2, -1.35], tgt: [0, 0.62, 0.05],  fov: 40, state: { only: ['engine'] } },
   cutaway:     { label: 'Cutaway',      pos: [1.25, 1.2, -1.35], tgt: [0, 0.62, 0.05],  fov: 40, state: { only: ['engine'], cutaway: true, engineRunning: true } },
-  gauges:      { label: 'Gauges',       eye: true, fov: 46, state: { hide: ['engine', 'bay', 'hoodUnder', 'underside', 'wheels'] } },
-  truck:       { label: 'Truck',        pos: [3.7, 1.25, -4.3],  tgt: [0, 0.95, 1.4],   fov: 40 },
   rearWheels:  { label: 'Rear wheels',  pos: [2.75, 0.8, 6.3],   tgt: [0.75, 0.45, 3.75], fov: 40, state: { hide: ['engine', 'bay', 'hoodUnder'] } },
 };
-export const BENCH_VIEW_ORDER = ['engine', 'engineAlone', 'cutaway', 'gauges', 'truck', 'rearWheels'];
+export const BENCH_VIEW_ORDER = ['engine', 'engineAlone', 'cutaway', 'rearWheels'];
 
 // every field of the host that the panels in src/ui read (tests/bench.test.js checks the list against their source)
 export const PANEL_FIELDS = ['ign', 'dyno', 'plant', 'ai', 'ui', 'state', 'hooks', 'time', 'R', 'qname', 'shopTempF', 'setShopTemp', 'openPanel', 'closePanels', 'registerPanel', 'uiPanels'];
@@ -56,6 +54,7 @@ export class Bench extends Studio {
     initSim(this); // plant, dyno, ign, ai, simAcc, shopTempF
     // The bench has no strap setup controls; its truck is already secured.
     this.dyno.strapAll(true);
+    this.ai.directTuning = true;
     Object.assign(this.simState, { dyno: this.dyno, ignition: this.ign, ailive: this.ai, plant: this.plant });
     this.ui = opts.ui || null;
     this.audio = opts.audio || new AudioEngine();
@@ -204,7 +203,7 @@ export class Bench extends Studio {
     window.addEventListener('pointerdown', start); window.addEventListener('keydown', start);
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return; // the panels handle their own form controls
-      const n = /^Digit([1-6])$/.exec(e.code);
+      const n = /^Digit([1-4])$/.exec(e.code);
       if (n) { this.setView(BENCH_VIEW_ORDER[+n[1] - 1]); return; }
       switch (e.code) {
         case 'Escape': this.closePanels(); break;
@@ -217,11 +216,11 @@ export class Bench extends Studio {
     });
   }
 
-  // where the sound is heard from: a fixed point in front of the grille, or the driver's seat in the gauges view
+  // Sound is heard from a fixed point in front of the grille.
   listener() {
     const z = GRILLE_Z - LISTEN_AHEAD_M;
     const doorOpen = Object.values(this.ctl.doors).some((d) => d.state > 0.05);
-    return { x: 0, y: LISTEN_EAR_M, z, inCab: this.view === 'gauges', doorOpen, distanceToTruck: Math.abs(z - TRUCK_SOUND_Z), distanceToDyno: Math.abs(z - DYNO_SOUND_Z), pan: 0 };
+    return { x: 0, y: LISTEN_EAR_M, z, inCab: false, doorOpen, distanceToTruck: Math.abs(z - TRUCK_SOUND_Z), distanceToDyno: Math.abs(z - DYNO_SOUND_Z), pan: 0 };
   }
 
   // ---- per frame ----

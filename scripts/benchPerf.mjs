@@ -7,7 +7,7 @@
 // Rows:
 //   bench  engine view, engine running   the bench as it is used: hood up, engine idling, motion shadows capped at 30 Hz
 //   bench  engine view, engine off       what one frame costs when it has to be drawn; left alone the page draws none (idle skip)
-//   bench  truck view, engine running    the whole truck
+//   bench  rear wheels view, engine running    the whole truck
 //   shop   hero bookmark                 exactly what scripts/perf.mjs measures (scripts/lib/shopPerf.mjs)
 //   shop   engine bay, engine running    the same camera on the same engine inside the shop, for a like-for-like figure
 // Every frame is update + all passes, waited for on the GPU with a one-pixel read-back. Without GPU=1 the browser
@@ -41,7 +41,7 @@ const app = await startApp();
   // engine off first (the page has just loaded), then start it through the normal start sequence
   await measure('engine view, engine off', () => { const b = window.__bench; b.paused = true; b.setView('engine', true); b.advance(1); });
   await measure('engine view, engine running', () => { const b = window.__bench; b.autoStart(); b.advance(14); });
-  await measure('truck view, engine running', () => { const b = window.__bench; b.setView('truck', true); b.advance(1); });
+  await measure('rear wheels view, engine running', () => { const b = window.__bench; b.setView('rearWheels', true); b.advance(1); });
   const e = realErrors(logs); if (e.length) console.log('bench ERRORS:\n' + e.join('\n'));
   await browser.close();
 }

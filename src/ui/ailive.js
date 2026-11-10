@@ -172,8 +172,10 @@ export const LOGO_SVG = `<svg viewBox="0 0 64 64" width="100%" height="100%" ari
 
 export function createAILivePanel(game) {
   const ai = game.ai, plant = game.plant, dyno = game.dyno;
-  const envNow = () => ({ keyPos: game.ign.key, engineRunning: game.ign.engineRunning });
-  const ctl = { page: 'connect', preview: false, applied: { close: 0, hold: 0 }, open: false, acc: 0, pages: {}, logRunId: null, cmpRunId: null, cursor: null, logChecked: new Set(LOG_CHANNELS.filter((c) => c.on).map((c) => c.key)), csvUrl: null, csvRun: null };
+  const direct = ai.directTuning;
+  const pages = direct ? PAGES.filter(([id]) => !['connect', 'truck'].includes(id)) : PAGES;
+  const envNow = () => ({ keyPos: game.ign.key, engineRunning: game.ign.engineRunning, dynoRunning: ['spinup', 'pull', 'coast'].includes(dyno.phase) });
+  const ctl = { page: direct ? 'tunes' : 'connect', preview: false, applied: { close: 0, hold: 0 }, open: false, acc: 0, pages: {}, logRunId: null, cmpRunId: null, cursor: null, logChecked: new Set(LOG_CHANNELS.filter((c) => c.on).map((c) => c.key)), csvUrl: null, csvRun: null };
 
   const el = h('div', 'panel al');
   el.innerHTML = `
@@ -190,16 +192,18 @@ export function createAILivePanel(game) {
 
   const mkChip = (label) => { const c = h('span', 'al-chip', `<i></i><b>${label}</b><em></em>`); chips.appendChild(c); return { c, em: c.querySelector('em') }; };
   const chCable = mkChip('INTERFACE'), chKey = mkChip('KEY'), chEng = mkChip('ENGINE'), chBat = mkChip('BATTERY'), chChg = mkChip('CHARGER');
+  if (direct) for (const ch of [chCable, chKey, chBat, chChg]) ch.c.remove();
   const setChip = (ch, text, tone) => { txt(ch.em, text); ch.c.dataset.tone = tone; };
 
   const navBtns = {};
-  for (const [id, label] of PAGES) { const b = h('button', 'al-navbtn', `<span>${label}</span>`); b.addEventListener('click', () => go(id)); nav.appendChild(b); navBtns[id] = b; }
+  for (const [id, label] of pages) { const b = h('button', 'al-navbtn', `<span>${label}</span>`); b.addEventListener('click', () => go(id)); nav.appendChild(b); navBtns[id] = b; }
   nav.appendChild(h('div', 'al-navnote', 'Original shop software for this game. Not affiliated with any real tuning product.'));
 
   const pageEl = {};
   function go(id) {
+    if (!pages.some(([page]) => page === id)) return;
     ctl.page = id; game.state.ailivePage = id;
-    for (const [pid] of PAGES) { toggleClass(navBtns[pid], 'on', pid === id); if (pageEl[pid]) show(pageEl[pid].root, pid === id, 'flex'); }
+    for (const [pid] of pages) { toggleClass(navBtns[pid], 'on', pid === id); if (pageEl[pid]) show(pageEl[pid].root, pid === id, 'flex'); }
     if (!pageEl[id]) { pageEl[id] = BUILD[id](); stage.appendChild(pageEl[id].root); show(pageEl[id].root, true, 'flex'); }
     pageEl[id].refresh && pageEl[id].refresh(true);
   }
@@ -322,7 +326,7 @@ export function createAILivePanel(game) {
         <div class="gain"><b>${c.gainText}</b><small>${esc(c.gainSub)}</small></div>
         <ul class="risks">${c.risks.map(([k, t]) => `<li><em>${esc(k)}</em>${esc(t)}</li>`).join('')}</ul>
         <div class="regnote"></div>
-        <div class="tb"><button class="sel">Select</button><button class="primary wr">WRITE THIS TUNE</button></div>`;
+        <div class="tb"><button class="sel">Select</button><button class="primary wr">${direct ? 'APPLY TUNE' : 'WRITE THIS TUNE'}</button></div>`;
       d.querySelector('.sel').addEventListener('click', () => { ai.select(id); ctl.refreshNow(); });
       d.querySelector('.wr').addEventListener('click', () => { ai.select(id); ai.write(envNow(), id); if (ai.stage === 'writing') go('truck'); else ctl.refreshNow(); });
       wrap.appendChild(d); cards[id] = d;
@@ -338,13 +342,13 @@ export function createAILivePanel(game) {
           const d = cards[id]; const c = tuneCard(id, reg);
           const badges = [];
           if (ai.installed === id) badges.push('<i class="bd inst">INSTALLED</i>');
-          if (pending === id) badges.push('<i class="bd pend">LOADS ON KEY CYCLE</i>');
+          if (pending === id) badges.push(`<i class="bd pend">${direct ? 'APPLYING' : 'LOADS ON KEY CYCLE'}</i>`);
           if (ai.stage === 'writing' && ai.writing === id) badges.push('<i class="bd pend">WRITING</i>');
           const bsig = badges.join(''); const bx = d.querySelector('.badges'); if (bx.dataset.s !== bsig) { bx.dataset.s = bsig; bx.innerHTML = bsig; }
           toggleClass(d, 'selected', ai.selected === id); toggleClass(d, 'installed', ai.installed === id);
           const rn = d.querySelector('.regnote'); const rs = c.regNote ? c.regNote.level + c.regNote.text : '';
           if (rn.dataset.s !== rs) { rn.dataset.s = rs; rn.className = `regnote ${c.regNote ? c.regNote.level : ''}`; rn.innerHTML = c.regNote ? `<b>${esc(c.regNote.text)}</b>${c.regNote.detail ? `<span>${esc(c.regNote.detail)}</span>` : ''}` : ''; }
-          const wr = d.querySelector('.wr'); const cw = ai.canWrite(e); wr.disabled = !cw.ok; wr.title = cw.ok ? 'Write this tune to the truck' : cw.why;
+          const wr = d.querySelector('.wr'); const cw = ai.canWrite(e); wr.disabled = !cw.ok; wr.title = cw.ok ? (direct ? 'Apply this tune now' : 'Write this tune to the truck') : cw.why;
           d.querySelector('.sel').textContent = ai.selected === id ? 'Selected' : 'Select';
         }
       },
@@ -357,7 +361,7 @@ export function createAILivePanel(game) {
     const lim = spec.turbo.overspeedRpm;
     root.innerHTML = `
       <div class="al-col main">
-        <div class="al-ph"><div><h2>Turbo sound</h2><p class="al-sub">Vane position at idle and light load. ${esc(spec.turbo.model)} variable-geometry turbine. Applies on top of the selected tune.</p></div><span class="al-pill warn" data-r="dirty" style="display:none">UNWRITTEN CHANGES</span></div>
+        <div class="al-ph"><div><h2>Turbo sound</h2><p class="al-sub">Vane position at idle and light load. ${esc(spec.turbo.model)} variable-geometry turbine. Applies on top of the selected tune.</p></div><span class="al-pill warn" data-r="dirty" style="display:none">${direct ? 'UNAPPLIED CHANGES' : 'UNWRITTEN CHANGES'}</span></div>
         <div class="al-card sl"><div class="lab"><b>Idle / light-load vane closing</b><output data-r="closeV">0 %</output></div>
           <input type="range" min="0" max="100" step="1" value="0" data-r="close"><div class="ends"><span>tune's own vane setting</span><span>closed limit (${Math.round(spec.turbo.vaneMaxClosed * 100)} %)</span></div>
           <p class="al-note">0 % leaves the vanes where the tune puts them. 100 % closes them all the way to the limit of the usable travel at idle and light load. More closed means a faster turbine at the same exhaust flow: higher shaft speed, more whistle.</p></div>
@@ -365,7 +369,7 @@ export function createAILivePanel(game) {
           <input type="range" min="0" max="100" step="1" value="0" data-r="hold"><div class="ends"><span>opens as soon as you get on it</span><span>stays closed at full throttle</span></div>
           <p class="al-note">Shapes the spool-up hiss. Holding the vanes closed under load adds back pressure and exhaust temperature, and can push the turbo past its ${thousands(lim)} rpm limit.</p></div>
         <div class="al-card"><div class="al-btnrow"><button class="reset">Reset to the tune's values</button><label class="al-chk"><input type="checkbox" class="prev"><span>Preview (live) on the running truck</span></label></div>
-          <p class="al-note">Changes are staged here and apply when the tune is written (then the key is cycled). <b>Preview</b> puts the staged values on the engine right now so you can hear and measure them in the shop. It is for testing: the truck keeps the written values after a key cycle.</p></div>
+          <p class="al-note">${direct ? 'Adjust the sliders, then use Apply tune in Quick Tunes to save them. Preview lets you hear the staged settings immediately.' : 'Changes are staged here and apply when the tune is written (then the key is cycled). <b>Preview</b> puts the staged values on the engine right now so you can hear and measure them in the shop. It is for testing: the truck keeps the written values after a key cycle.'}</p></div>
         <div class="al-card warnbox"><h3>What it costs</h3><p>Closing the vanes raises exhaust back pressure and exhaust gas temperature and costs a little efficiency. Light settings that only add whistle at idle and cruise are safe. Too much at high load overspeeds the turbo (limit ${thousands(lim)} rpm; more than ${spec.turbo.overspeedHoldS} s above it damages the wheel) or overheats it, and the turbo can fail.</p></div>
       </div>
       <div class="al-col side">
@@ -505,12 +509,12 @@ export function createAILivePanel(game) {
     setChip(chCable, ai.cable ? 'PLUGGED' : 'OFF', ai.cable ? 'ok' : 'bad');
     const kn = ['LOCK', 'ACC', 'RUN', 'START'][e.keyPos] || '?';
     setChip(chKey, kn, e.keyPos === 2 && !e.engineRunning ? 'ok' : e.keyPos >= 2 ? 'warn' : 'bad');
-    setChip(chEng, e.engineRunning ? 'RUNNING' : 'OFF', e.engineRunning ? 'warn' : 'ok');
+    setChip(chEng, e.engineRunning ? 'RUNNING' : 'OFF', e.engineRunning && !direct ? 'warn' : 'ok');
     setChip(chBat, `${ai.volts.toFixed(1)} V`, ai.volts < FLASH.batteryFailV + 0.1 ? 'bad' : ai.volts < 12.3 ? 'warn' : 'ok');
     setChip(chChg, ai.charger ? 'ON' : 'OFF', ai.charger ? 'ok' : 'warn');
     txt(msg, ai.message || 'Ready.');
     const t = TEMPLATES[ai.installed];
-    txt(inst, `Installed: ${t ? t.name : ai.installed}${ai.pendingApply ? ' · new tune loads on key cycle' : ''}  ·  Regulator: ${plant.pp.regulator}`);
+    txt(inst, `Installed: ${t ? t.name : ai.installed}${ai.pendingApply ? (direct ? ' · applying tune' : ' · new tune loads on key cycle') : ''}  ·  Regulator: ${plant.pp.regulator}`);
     el.dataset.bricked = ai.bricked ? '1' : '';
   }
 

@@ -30,8 +30,8 @@ export function registerUi(game) {
   // every frame, before the simulation step (Game.update calls hooks first)
   game.hooks.push((dt) => {
     const ai = game.ai, ign = game.ign;
-    // a successful write loads when the key is cycled (off, then back on): the GAME applies the new calibration and vane settings
-    if (ign.key < 2 && ai.needsKeyCycle) {
+    // Bench tunes apply immediately; shop flashes wait for a key cycle. Both load the same calibration and vane settings.
+    if ((ai.directTuning || ign.key < 2) && ai.needsKeyCycle) {
       const a = ai.keyCycled();
       if (a) { game.plant.setCalibration(loadCal(a.tune)); game.plant.pp.sound = a.sound; panels.ailive.setApplied(a.sound); }
     }

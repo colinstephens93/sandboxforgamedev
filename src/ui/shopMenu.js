@@ -48,7 +48,7 @@ export function resetTruck(game) {
   Object.assign(p.dl, { transF: airF, slipEnergyKj: 0, health: 1, wr: 0, wt: 0, range: 'N', cpSlip: 0 });
   game.ign.setKey(KEY.LOCK); game.ign.cooldown = 0; game.ign.blocked = null;
   const d = game.dyno; d.runs.length = 0; d.last = null; d.current = null; d.phase = 'idle'; d.message = '';
-  Object.assign(game.ai, new AILive());
+  Object.assign(game.ai, new AILive({ directTuning: game.ai.directTuning }));
   if (game.uiPanels && game.uiPanels.ailive) game.uiPanels.ailive.setApplied({ close: 0, hold: 0 });
   game.ui.say('Truck reset: stock tune, LLY regulator, repaired and cold.', 4);
 }

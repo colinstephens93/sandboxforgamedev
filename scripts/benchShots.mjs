@@ -23,8 +23,8 @@ for (const p of ['dyno', 'ailive', 'shop']) {
   await page.evaluate((p) => { const b = window.__bench; b.openPanel(p); b.advance(0.5); }, p);
   await snap(`.dev/bench-panel-${p}.png`);
 }
-await page.evaluate(() => { const b = window.__bench; b.closePanels(); b.setView('gauges', true); b.advance(3); });
-await snap('.dev/bench-gauges-running.png');
+await page.evaluate(() => { const b = window.__bench; b.closePanels(); b.setView('rearWheels', true); b.advance(3); });
+await snap('.dev/bench-rear-wheels-running.png');
 const errs = logs.filter((l) => /error/i.test(l) && !/WebGLShadowMap|GPU stall|ReadPixels|Failed to load resource/.test(l));
 if (errs.length) console.log('ERRORS:\n' + errs.join('\n'));
 await browser.close(); await app.close();

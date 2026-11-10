@@ -55,3 +55,28 @@ describe('AI Live procedure', () => {
     expect(ai.keyCycled().sound).toEqual({ close: 0.6, hold: 0.2 }); ai.setSound(1, 1); ai.resetSound('street'); expect(ai.sound).toEqual({ close: 0.6, hold: 0.2 });
   });
 });
+
+describe('AI Live direct bench tuning', () => {
+  it.each([{ keyPos: 0, engineRunning: false }, { keyPos: 2, engineRunning: true }])(
+    'applies without connection or flashing setup: %j', (env) => {
+      const ai = new AILive({ directTuning: true });
+      ai.volts = 10; ai.setSound(.3, .1);
+      expect(ai.canWrite(env).ok).toBe(true);
+      expect(ai.write(env, 'street')).toBe(true);
+      ai.update(1, env);
+      expect(ai.bricked).toBe(false);
+      expect(ai.keyCycled()).toEqual({ tune: 'street', sound: { close: .3, hold: .1 } });
+      expect(ai.installed).toBe('street');
+      expect(ai.needsKeyCycle).toBe(false);
+      expect(ai.cable).toBe(false); expect(ai.charger).toBe(false); expect(ai.backup).toBe(false);
+      expect(ai.write(env, 'stock')).toBe(true);
+      expect(ai.keyCycled().tune).toBe('stock');
+    },
+  );
+  it('keeps the calibration fixed during a dyno run', () => {
+    const ai = new AILive({ directTuning: true });
+    expect(ai.write({ ...RUN, dynoRunning: true }, 'street')).toBe(false);
+    expect(ai.pendingApply).toBeNull();
+    expect(ai.installed).toBe('stock');
+  });
+});
