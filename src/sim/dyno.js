@@ -58,7 +58,6 @@ export class Dyno {
   canStart() {
     const p = this.plant;
     if (!this.straps.every(Boolean)) return { ok: false, reason: 'Tie-down straps are not attached at all four corners. Strap the truck down before a pull.' };
-    if (p.hoodClosed && !this.fan) return { ok: false, reason: 'The hood is closed and the cooling fan is off. Turn the dyno fan on or open the hood before a pull.' };
     if (!p.running) return { ok: false, reason: 'The engine is not running. Start the truck first.' };
     if (p.fail.state.transmission) return { ok: false, reason: 'The transmission failed (clutches burned) and cannot hold the load. Repair it from the shop menu.' };
     if (this.phase === 'spinup' || this.phase === 'pull' || this.phase === 'coast') return { ok: false, reason: 'A run is already in progress.' };

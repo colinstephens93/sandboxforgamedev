@@ -94,17 +94,23 @@ describe('dyno pull', () => {
     const row = run.log[10];
     for (const k of ['rpm', 'qty', 'railPsi', 'boostPsi', 'airLbMin', 'soiDeg', 'egtF', 'coolantF', 'transF', 'slipRpm']) expect(row).toHaveProperty(k);
   });
-  it('is refused without straps and when the hood is closed with the fan off', () => {
+  it('is refused without straps', () => {
     const cal = loadCal('stock'); const plant = new Plant({ cal }); plant.setCalibration(cal); plant.startEngine();
     const dyno = new Dyno(plant);
     expect(dyno.startRun().ok).toBe(false);
     expect(dyno.message).toMatch(/straps/i);
-    dyno.strapAll(true); plant.hoodClosed = true; dyno.setFan(false);
-    expect(dyno.startRun().ok).toBe(false);
-    expect(dyno.message).toMatch(/hood/i);
-    dyno.setFan(true);
-    expect(dyno.startRun().ok).toBe(true);
   });
+  it.each([[false, false], [false, true], [true, false], [true, true]])(
+    'allows a run with hoodClosed=%s and fan=%s', (hoodClosed, fan) => {
+      const cal = loadCal('stock'); const plant = new Plant({ cal }); plant.setCalibration(cal); plant.startEngine();
+      const dyno = new Dyno(plant);
+      dyno.strapAll(true); plant.hoodClosed = hoodClosed; dyno.setFan(fan);
+      expect(dyno.startRun().ok).toBe(true);
+      expect(dyno.phase).toBe('spinup');
+      expect(plant.hoodClosed).toBe(hoodClosed);
+      expect(plant.shopFan).toBe(fan);
+    },
+  );
 });
 
 describe('AI Live quick tunes land at the owner gains (LBZ regulator)', () => {
