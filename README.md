@@ -1,5 +1,9 @@
 # Duramax Dyno Shop
 
+**The default page is now the bench** (`index.html`): the truck alone on a plain backdrop with fixed views, the engine you can
+start and watch run, the chassis dyno and the AI Live tuning app. It is built for a laptop browser and draws nothing while
+nothing moves. The original walk-around shop game is still here, at `shop.html`. See "The bench" below.
+
 A browser game (Three.js, WebGL, Web Audio) of a stock **2005 Chevrolet Silverado 2500HD LT Crew Cab, 6.6 L Duramax LLY, Allison 1000**,
 strapped to a chassis dynamometer in a diesel performance shop. Walk the shop, open every door, the tailgate and the hood, inspect the
 engine bay, climb into the cab, start the engine with the real diesel glow-plug procedure, measure horsepower and torque on the
@@ -34,12 +38,53 @@ All 276 unit tests of that pass continued to pass and `npm run build` succeeded.
 
 ```bash
 npm install
-npm run dev        # http://127.0.0.1:5173
+npm run dev        # http://127.0.0.1:5173            the bench (default page)
+                   # http://127.0.0.1:5173/shop.html   the walk-around shop game
+                   # http://127.0.0.1:5173/studio.html the truck studio (rendering work, no simulation)
 ```
 
+`npm run build` writes all three pages to `dist/` with relative paths (GitHub Pages serves `index.html`, the bench).
+
+## The bench (default page)
+
+The truck stands alone on a plain floor. There is no shop, no walking and no pointing at things: everything is on the bar at
+the bottom of the window and in the three panels, which dock on the right so the truck stays in view.
+
+| Control | What it does |
+|---|---|
+| **Key**: Off, Run, Start | The real diesel start: Run, wait for the WAIT lamp (glow plugs) to go out, then hold Start until the engine fires. Off stops it. The engine cranks only in P or N |
+| **Throttle** slider | The accelerator pedal. The dyno takes it over during a run |
+| **Gear**: P R N D | The shifter. In D the rear wheels turn |
+| **View** (keys 1 to 6) | Engine (hood up), Engine alone, Cutaway (castings faded, internals turning: this view starts the engine if it is off), Gauges (driver's eye point), Truck, Rear wheels. Drag to look around, wheel to zoom |
+| **Dyno** (T) | Strap the truck, fan on, Start Run; graph, peaks and run history |
+| **AI Live** (L) | Plug in the interface and the charger (buttons on the Connect page), key to Run with the engine off, read, save a backup, write a tune, cycle the key |
+| **Shop menu** (M) | Repairs, the LBZ fuel pressure regulator, shop temperature, reset |
+| **Quality** | low, bench (default), medium, high. If frames stay under about 40 a second it steps down on its own |
+| **Sound on / off**, **?** (F1) | Audio, help. Esc closes a panel |
+
+What makes it light: none of the shop is loaded or drawn (walls, equipment, dyno hardware, the shop lights, the
+reflection bake); the `bench` quality preset has one shadow light, no ambient occlusion and no bloom; shadow maps are
+redrawn only while something moves (a hinge, the wheels, the running engine); each view switches off the parts it cannot
+show; and with the engine off and the camera still the page does not draw at all (the readout at the top left says
+"idle"). Between runs the dyno's absorber holds the rollers whenever the shifter is in P or N or the engine is off, so the
+wheels stop after a pull instead of coasting for minutes.
+
+The sound is heard from a fixed spot 1.5 m in front of the grille (louder with the hood up), or from the driver's seat in
+the Gauges view. Measured frame times are in `PROGRESS.md`.
+
+Checks for the bench: `node scripts/benchCheck.mjs` (drives the page through its own buttons and panels: start with the
+key, stock pull, AI Live write of the Street tune, key cycle, second pull, every view), `node scripts/benchPerf.mjs
+[quality] [WxH]` (frame time of the bench next to the shop game at the same quality and size) and
+`node scripts/benchShots.mjs` (one PNG per view and per docked panel in `.dev/`).
+
+Code: `src/bench/bench.js` (class `Bench extends Studio`), `src/bench/controls.js` (the bar), `src/bench/bench.css`,
+`src/game/simLoop.js` (the simulation wiring shared with the shop game).
+
+## The shop game (`shop.html`)
+
 Other commands: `npm test` (unit tests: engine, dyno, tuning, failures, start sequence, flash procedure, UI),
-`npm run build`, `npm run shots` (Playwright: saves the 12 showcase screenshots to `screenshots/` at 1920 x 1080;
-`SHOTS_QUALITY=low|medium|high`), `node scripts/check.mjs` (46 scripted verification checks: intro, every
+`npm run build`, `npm run shots` (Playwright, the shop game: saves the 12 showcase screenshots to `screenshots/` at 1920 x 1080;
+`SHOTS_QUALITY=low|medium|high`), `node scripts/check.mjs` (46 scripted verification checks of the shop game: intro, every
 opening, the start sequence, the dyno refusals and pull, the whole AI Live procedure, all five quick tunes, the
 Turbo Sound vanes and the turbo overspeed failure, the race tune burning the transmission, walk collision and
 reachability, the cable/door rule, the rear lamps and the driver eye point), `node scripts/perf.mjs` (frame
@@ -109,7 +154,7 @@ vanes closed, the intake hiss, the two fan-only beds, the rollers, the start seq
 Play them next to each other, loudness-matched, and compare with a real Duramax.
 
 
-A GPU with WebGL2 is expected; the quality setting (Q, or F1 panel) is low / medium / high (high by default). Software rendering works
+A GPU with WebGL2 is expected; in the shop game the quality setting (Q, or F1 panel) is low / medium / high (high by default). Software rendering works
 but is slow.
 
 ## Optional: Blender build tools
@@ -118,7 +163,7 @@ Blender is used only through scripts in `tools/blender/` (headless `bpy`): refer
 lighting for the shop. Nothing is hand-modeled or downloaded, and the game runs without any of their outputs. See `docs/DECISIONS.md`
 and `tools/blender/README.md`.
 
-## Controls
+## Controls of the shop game (`shop.html`)
 
 | Key | Action |
 |---|---|
@@ -133,7 +178,7 @@ and `tools/blender/README.md`.
 | O | orbit and photo mode (H hides all UI, P saves a PNG) |
 | F1 | help panel; Q cycles quality; any key skips the intro |
 
-## How the game works
+## How the truck works (both pages; the shop game adds the walking)
 
 * **Hood**: pull the release handle in the cab (lower left of the steering wheel), then the secondary release at the grille, then lift. GMT800 hoods have no prop rod: spring-loaded hinge arms hold it.
 * **Start**: shifter in PARK or NEUTRAL, key to RUN, wait for the Wait to Start light to go off, key to START. Over 15 s of cranking requires a one-minute starter cool-down.
@@ -154,11 +199,14 @@ src/core/                  renderer + post-processing, procedural textures, mate
 src/shop/                  shell, layout, equipment, dyno hardware, AI Live rig
 src/truck/                 parametric skin and panels, body, front end, wheels, bed and tailgate, interior, engine bay, underside
 src/audio/                 procedural Web Audio: diesel, turbo from modeled shaft speed, starter, fan, rollers, doors, reverb
-src/game/                  input, walk controller and collision, interaction, openings, cameras, the Game loop
+src/game/                  input, walk controller and collision, interaction, openings, cameras, the Game loop;
+                           simLoop.js (simulation wiring shared with the bench), hinge.js (door and hood hinges)
+src/bench/                 the bench page: Bench (extends the studio), control bar, stylesheet
+src/studio/                the truck studio (truck-only stage, views, part show/hide, benchmark)
 src/ui/                    overlay, dyno panel and graph, AI Live app, shop menu
 tests/                     vitest unit tests
-scripts/                   fit.mjs (calibration fit), check.mjs (46 checks), perf.mjs (frame time), shots.mjs,
-                           shot.mjs and probe.mjs helpers
+scripts/                   fit.mjs (calibration fit), benchCheck.mjs, benchPerf.mjs and benchShots.mjs (the bench),
+                           check.mjs (46 checks), perf.mjs (frame time) and shots.mjs (the shop game), shot.mjs and probe.mjs helpers
 tools/blender/             optional scripted Blender tools: exportProfile.mjs + overlay.py (the reference
                            overlay and the measurement report)
 ```
