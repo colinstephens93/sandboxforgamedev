@@ -3,6 +3,7 @@
 // plus what the shop game wires to the truck (src/game/simLoop.js: start sequence, plant, dyno, AI Live, cab gauges,
 // audio) and the same three panels (src/ui). Nothing of the shop is loaded: no walls, equipment, dyno hardware,
 // player or environment bake. It draws a frame only when something on screen can have changed.
+import * as THREE from 'three';
 import { Studio } from '../studio/studio.js';
 import { QUALITY, QUALITY_ORDER } from '../core/quality.js';
 import { UI } from '../ui/ui.js';
@@ -84,6 +85,23 @@ export class Bench extends Studio {
     this.layoutDock();
     this.onChange = () => { this.dirty = true; if (this.controlsUi) this.controlsUi.sync(); };
     this.onChange();
+  }
+
+  // Lights the bench has no use for are switched off once, before anything is drawn: the five underbody fill spots (they
+  // light the frame for the shop's pit), the two dome lamps (no door opens here) and the spare bay light. Every lit pixel
+  // evaluates every light in the scene, so this takes the truck from ten lights to three (key, sky, cab fill). It has to
+  // happen before the first frame: changing the number of lights later recompiles every material.
+  groupParts() {
+    super.groupParts();
+    this.lightsOff = 0;
+    this.truck.group.traverse((o) => { if (o.isLight && o.visible && (o.name === 'underFill' || o.name === 'bay_light' || o.userData.maxI != null)) { o.visible = false; this.lightsOff++; } });
+  }
+
+  // the plain floor is matte: a diffuse-only material (no reflection of the surroundings to compute for a third of the screen)
+  buildStage() {
+    super.buildStage();
+    const old = this.floor.material;
+    this.floor.material = new THREE.MeshLambertMaterial({ color: old.color.clone() }); old.dispose();
   }
 
   // ---- what the panels call ----
