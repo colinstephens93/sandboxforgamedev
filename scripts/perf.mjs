@@ -47,7 +47,7 @@ for (const quality of qualities) {
     const d = gl.getExtension('WEBGL_debug_renderer_info');
     return d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : 'unknown';
   });
-  const timings = await page.evaluate(() => {
+  const timings = await page.evaluate((n) => { // FRAMES=<n> shortens the run (software rendering is slow)
     const g = window.__game;
     const gl = g.R.renderer.getContext();
     // one pixel is read back to make the browser wait for the GPU: gl.finish() alone returns early in Chrome
@@ -55,9 +55,9 @@ for (const quality of qualities) {
     const one = () => { const t0 = performance.now(); g.update(0.016); g.R.render(0.016); g.R.renderer.setRenderTarget(null); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return performance.now() - t0; };
     for (let i = 0; i < 8; i++) one();           // warm up: shader compiles, uploads, first-use caches
     const out = [];
-    for (let i = 0; i < 45; i++) out.push(one());
+    for (let i = 0; i < n; i++) out.push(one());
     return out;
-  });
+  }, +(process.env.FRAMES || 45));
   const errs = logs.filter((l) => /error/i.test(l) && !/WebGLShadowMap|GPU stall|ReadPixels|Failed to load resource/.test(l));
   const avg = timings.reduce((a, b) => a + b, 0) / timings.length;
   const row = {

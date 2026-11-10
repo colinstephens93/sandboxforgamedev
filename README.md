@@ -21,6 +21,15 @@ A review-driven improvement pass was completed on this branch. See `PROGRESS.md`
 
 All 276 unit tests continue to pass and `npm run build` succeeds.
 
+## Truck-only pass (November 2026)
+
+- **Truck studio**, **draw-call merging** and the **detailed engine** from the duramaxsimulator repository: see the sections below.
+- **About three times faster** in the same software-rendered test (8.6 s to 3.0 s per frame for the whole game): the glass and lamp lenses no longer force a second drawing of the whole scene, small parts no longer cast shadows, and the engine is skipped behind a closed hood.
+- **Cab and glass**: the interior trim now sits inside the body instead of showing around the windows, the rear glass is privacy glass, and the chrome front bumper is smooth.
+- **X** in the game shows the engine cutaway with the hood up.
+
+293 unit tests pass and `npm run build` succeeds. Details in `PROGRESS.md`.
+
 ## Run it
 
 ```bash
@@ -116,6 +125,7 @@ and `tools/blender/README.md`.
 | W A S D, Shift, Ctrl | walk, run, crouch (look under the truck). Click the view to capture the mouse; Esc releases it |
 | E | use: open doors, hood, tailgate, fuel door, drawers, roll-up doors; sit in the truck; turn the key (hold for START) |
 | I | inspection mode: point at any part for its name and a one-line description |
+| X | engine cutaway (hood up): the castings fade and the crank, pistons, cam and valvetrain are shown working |
 | T | dyno panel (gear, straps, fan, start a run, graph, history) |
 | L | AI Live laptop app (read, backup, write, quick tunes, Turbo Sound, datalog, compare) |
 | M | shop menu (repairs after a failure, LBZ fuel pressure regulator, shop temperature) |

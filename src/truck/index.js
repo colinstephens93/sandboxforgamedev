@@ -15,6 +15,7 @@ import { buildHoodUnder } from './hoodUnder.js';
 import { buildUnderside } from './underside.js';
 import { buildWheel } from './wheels.js';
 import { buildInterior } from './interior/index.js';
+import { fitInteriorToBody } from './interior/fit.js';
 
 const IN = IN_TO_M;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -25,6 +26,15 @@ export function buildTruck({ quality }) {
   const paint = mat.paint();
   paint.side = THREE.DoubleSide;
   const glass = mat.glassTinted();
+  // privacy glass has an outside and an inside face (src/core/materials.js); which triangle side is "outside" depends on how
+  // each pane was wound, so it is read from the pane's own normal against the direction that points out of the cab
+  const privacy = { out: mat.glassPrivacy(false), in: mat.glassPrivacy(true) };
+  const flipped = (m) => { const c = m.clone(); c.side = m.side === THREE.FrontSide ? THREE.BackSide : THREE.FrontSide; return c; };
+  privacy.outFlip = flipped(privacy.out); privacy.inFlip = flipped(privacy.in);
+  const addPrivacy = (parent, g, name, ox, oz) => {
+    const n = g.attributes.normal, mid = Math.floor(n.count / 2), faces = n.getX(mid) * ox + n.getZ(mid) * oz >= 0;
+    add(parent, g, faces ? privacy.out : privacy.outFlip, name, false); add(parent, g, faces ? privacy.in : privacy.inFlip, `${name}_inner`, false);
+  };
   const trimBlack = mat.blackPlastic(0.5);
   const darkTub = new THREE.MeshStandardMaterial({ color: 0x08090a, roughness: 0.9, metalness: 0 });
 
@@ -79,13 +89,14 @@ export function buildTruck({ quality }) {
     }
     for (let j = 0; j < nJ; j++) for (let i = 0; i < nI; i++) { const a = j * (nI + 1) + i, b = a + 1, c = a + nI + 2, d = a + nI + 1; ind.push(a, b, d, b, c, d); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setIndex(ind); g.computeVertexNormals();
-    add(glassGroup, g, glass, 'rear_glass', false);
+    addPrivacy(glassGroup, g, 'rear_glass', 0, 1);
   }
   // door glass (belongs to the door groups so it opens with them)
   for (const key of ['f', 'r']) for (const side of ['L', 'R']) {
     const w = win[key];
     const g = gridPanel({ nI: 14, nJ: 10, side: side === 'R' ? 1 : -1, offset: -0.55, flange: false, pos: rowPos(w.yb, w.yt, w.sf, w.sr) });
-    add(parts.doors[`${key}${side}`], g, glass, `door_glass_${key}${side}`, false);
+    if (key === 'r') addPrivacy(parts.doors[`${key}${side}`], g, `door_glass_${key}${side}`, side === 'R' ? 1 : -1, 0);
+    else add(parts.doors[`${key}${side}`], g, glass, `door_glass_${key}${side}`, false);
   }
 
   // ---------------- front end, mirrors, handles ----------------
@@ -101,6 +112,7 @@ export function buildTruck({ quality }) {
   const tub = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w * IN, h * IN, d * IN), darkTub); m.position.set(x * IN, y * IN, z * IN); root.add(m); return m; };
   // the cab volume is the interior (src/truck/interior): door cards, floor, pillars and headliner are the dark backing
   const interior = buildInterior({ quality, parts }); root.add(interior.group); parts.interior = interior;
+  fitInteriorToBody(interior.group, root); // the trim follows the body's inward lean above the beltline
   tub(68, 10, 80, 0, 33, 152);         // bed volume under the floor
 
   // ---------------- wheels and tires (wheels.js): front/rear, left/right; spin hooks live in parts.wheels ----------------

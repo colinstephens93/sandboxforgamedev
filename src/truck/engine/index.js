@@ -19,7 +19,7 @@ export { hoodPose, buildHoodUnder } from '../hoodUnder.js';
 
 // The parts of the simple engine that the detailed long block replaces (it has its own block, heads, covers, manifolds,
 // front drive with alternator and water pump, turbo, up-pipes, fuel system and harness).
-const SUPERSEDED = ['block', 'bank_driver', 'bank_passenger', 'intake_manifold', 'cp3', 'belt', 'pulleys', 'water_pump', 'tensioner', 'alternator', 'turbo', 'crossovers', 'vgt_actuator', 'engine_wiring', 'fasteners_engine'];
+const SUPERSEDED = ['block', 'bank_driver', 'bank_passenger', 'intake_manifold', 'cp3', 'belt', 'pulleys', 'water_pump', 'tensioner', 'alternator', 'turbo', 'downpipe', 'crossovers', 'vgt_actuator', 'engine_wiring', 'fasteners_engine'];
 // mid-length of the detailed engine along the truck, in bay inches (the heads then sit where the simple engine's banks were)
 const CORE_S = 2.4;
 
@@ -43,7 +43,7 @@ export function buildEngineBay({ quality, detailed = true } = {}) {
   const mount = new THREE.Group(); mount.name = 'engine_mount'; mount.userData.dynamic = true; mount.position.set(c.x, c.y, c.s); inch.add(mount);
   const body = new THREE.Group(); body.name = 'engine_body'; body.position.set(-c.x, -c.y, -c.s); mount.add(body);
   const efast = new Fasteners(mats);
-  const pt = buildPowertrain({ mats, d, fast: efast }); body.add(pt.group);
+  const pt = buildPowertrain({ mats, d, fast: efast, coverDepth: detailed ? 2.6 : 6.4 }); body.add(pt.group);
   const turbo = buildTurbo({ mats, d, fast: efast }, pt.group);
   buildEngineWiring({ mats, d, fast: efast }, pt.group);
   { const fg = new THREE.Group(); fg.name = 'fasteners_engine'; fg.userData.labelId = 'engine.fasteners'; pt.group.add(fg); efast.flush(fg); }

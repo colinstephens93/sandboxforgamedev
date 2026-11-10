@@ -394,3 +394,52 @@ after the proportion work, each judged twice (art director and Duramax technicia
   no quality setting was lowered to hide it.
 * **Measure in headless mode.** Headless Chromium has no GPU here (SwiftShader), so the frame times and the
   screenshots were produced with `HEADED=1`; the scripted checks run headless in software rendering.
+
+## Truck-only pass (November 2026): studio, draw calls, detailed engine, cab and glass
+
+Work on the truck and engine alone, without the shop scenery. Everything below was measured on a software renderer
+(SwiftShader, no GPU in the session), so the times compare with each other and say nothing about a real graphics card.
+
+### What changed
+* **Truck studio** (`studio.html`, `npm run studio`): the truck alone, ten views (including engine alone, cutaway and
+  exploded), per-part show/hide with counts, single-effect render switches, a frame-time readout and a benchmark.
+* **Draw-call merging** (`src/truck/optimize.js`): static parts that share a material are drawn as one; the originals stay
+  on a raycast-only layer so labels and use-with-E still find each part.
+* **Detailed engine**: the long block from the `duramaxsimulator` repository, fitted into the bay (see ACCURACY.md).
+  X in the game fades the castings to show the internals working (hood up).
+* **No transmissive materials.** The window glass and lamp lenses used `transmission`, which makes three.js draw every
+  opaque object in the scene a second time each frame. They now use plain transparency. This was the largest single cost.
+* **Small parts no longer cast shadows** (under 3.5 cm radius), and only the engine's large castings do.
+* **Cab trim fitted inside the body** (`src/truck/interior/fit.js`): above the beltline the trim stood up to 3.6 in outside
+  the door frames and roof and showed from outside as a tan cage around the glass.
+* **Rear privacy glass**, a **thin engine cover**, and **smooth normals on the chrome front bumper** (its flat facets
+  showed as bands).
+* **Culling** skips the engine behind a closed hood and restores only what it hid.
+* The intro now ends the moment a key is pressed (it used to wait for the next frame), and the pages declare an empty
+  icon, which removes the 404 console message.
+
+### Measurements (software renderer, medium quality, 1280 x 720)
+| | Before | After |
+| --- | --- | --- |
+| Whole game, hero bookmark, per frame | 8,627 ms | 3,006 ms |
+| Studio hero view: draw calls / triangles | 2,025 / 1.35 M | 623 / 0.71 M |
+| Studio engine bay view: draw calls / triangles | 1,513 / 1.19 M | 893 / 0.99 M |
+
+### A correction to earlier frame times
+`scripts/perf.mjs` timed frames with `gl.finish()`, which returns before Chrome's GPU process has drawn. It now reads one
+pixel back, which does wait. The frame times recorded earlier in this file (Intel Arc 140V: 9.07 / 13.73 / 18.85 ms) were
+taken the old way and are too low; they need to be measured again.
+
+### Checks
+* `npm test`: 293 passing (18 files). New: merging keeps every moving part moving (`tests/optimize.test.js`), engine
+  placement, labels and visibility (`tests/detailedEngine.test.js`), culling, and no transmissive truck material.
+* `npm run build` succeeds. `node scripts/check.mjs`: 46/46 passed (the two checks that failed before in software rendering now pass).
+* All 12 showcase screenshots retaken (software renderer, high quality, 1920 x 1080).
+
+### Still owed
+* Frame times on a real GPU.
+* The proportion work against the reference photos (nose and fender shape, fender-to-hood seam, A-pillars).
+* The audio ear pass.
+* The engine model's 184 mm rod length (to be corrected in its own repository).
+* Cutaway is in the game; the exploded view is studio-only, because in the truck the parts would pass through the body.
+

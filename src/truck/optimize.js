@@ -55,11 +55,27 @@ function mergeable(o) {
   return true;
 }
 
+// Small parts stop casting shadows: the shadow pass redraws every caster, and a clip, bolt or switch a few centimetres across
+// leaves no shadow anyone could pick out. Sizes are world sizes (metres).
+export const SHADOW_MIN_RADIUS = 0.035;
+export function trimShadowCasters(root, minRadius = SHADOW_MIN_RADIUS) {
+  const s = new THREE.Vector3(); let trimmed = 0;
+  root.updateMatrixWorld(true);
+  root.traverse((o) => {
+    if (!o.isMesh || !o.castShadow || o.isInstancedMesh || !o.geometry.attributes.position) return;
+    if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+    s.setFromMatrixScale(o.matrixWorld);
+    if (o.geometry.boundingSphere.radius * Math.max(s.x, s.y, s.z) < minRadius) { o.castShadow = false; trimmed++; }
+  });
+  return trimmed;
+}
+
 // Merge. Returns { before, after, merged } mesh counts (drawn meshes).
 export function optimizeTruck(truck, { extraBoundaries = [] } = {}) {
   const root = truck.group, P = truck.parts;
   const boundaries = [P.engineBay && P.engineBay.group, P.hoodUnder && P.hoodUnder.group, truck.underside && truck.underside.group, P.interior && P.interior.group, ...extraBoundaries].filter(Boolean);
   root.updateMatrixWorld(true);
+  trimShadowCasters(root); // before merging, so small parts group with the other non-casters
   let before = 0; root.traverse((o) => { if (o.isMesh && o.layers.mask === 1) before++; });
   const plan = planMerge(root, { boundaries, anchors: truck.anchors });
   const inv = new THREE.Matrix4(), rel = new THREE.Matrix4();
