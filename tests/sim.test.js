@@ -231,3 +231,29 @@ describe('remediation regressions', () => {
     expect(plant.out.qty ?? 0).toBeLessThanOrEqual(45.0 + 1e-9);
   });
 });
+
+describe('dyno RPM bin compatibility', () => {
+  it('preserves inclusive midpoints and near-boundary samples', () => {
+    const plant = new Plant({ cal: loadCal('stock') }); plant.startEngine();
+    const dyno = new Dyno(plant); dyno.strapAll(true); dyno.startRun();
+    const rpms = [1400, 1412.5, 1425, 1437.5, 1475, 1412.500001];
+    dyno.rec = { t: [], rpm: [], wr: [], log: [] };
+    for (let i = 0; i < 180; i++) {
+      dyno.rec.t.push(i * .01); dyno.rec.rpm.push(rpms[i % rpms.length]);
+      dyno.rec.wr.push(10 + i * .2 + i * i * .001);
+    }
+    // Reference values from the original full-scan algorithm, including encoder noise.
+    const expected = [
+      [1400, 600.1936324464539, 2251.5835411491257],
+      [1425, 620.4872515560814, 2286.876522928098],
+      [1450, 622.5145531127083, 2254.790643412375],
+      [1475, 631.7754661587834, 2249.548981875207],
+    ];
+    const points = dyno.analyze().points;
+    expect(points.map(p => p.rpm)).toEqual(expected.map(p => p[0]));
+    points.forEach((p, i) => {
+      expect(p.hp).toBeCloseTo(expected[i][1], 10);
+      expect(p.tq).toBeCloseTo(expected[i][2], 10);
+    });
+  });
+});

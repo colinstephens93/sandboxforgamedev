@@ -254,8 +254,10 @@ export class Bench extends Studio {
     const animating = this.animations.length > 0 || !!(this.core && this.core.busy);
     const flicker = !!ig.clusterFault && ig.key >= KEY.RUN; // failed write: the cluster flickers
     this.moving = engineTurning || wheelsTurning || animating || flicker;
-    // shadows are redrawn only while a shadow caster moves: hinges, cutaway, wheels, the engine shaking on its mounts
-    if (this.R && (animating || wheelsTurning || (engineTurning && engineShown))) this.R.renderer.shadowMap.needsUpdate = true;
+    // Hinges and cutaway refresh immediately. Routine engine/wheel motion is capped
+    // at 30 shadow updates per second in draw(), independently of the simulation rate.
+    if (this.R && animating) this.R.renderer.shadowMap.needsUpdate = true;
+    if (wheelsTurning || (engineTurning && engineShown)) this.shadowMotionPending = true;
     // Things that change the picture in one step (key, lamps, gauges, shifter, warnings) keep drawing for a moment so
     // needles and lamps settle; the fan coasts down for a few seconds after the engine stops.
     const sig = `${ig.key}|${ig.wtsOn}|${ig.gaugesOn}|${ig.dicPowered}|${this.simState.range}|${ig.dicNote}|${p.reducedPower}|${this.simState.doorOpen}|${this.ai.charger}`;
@@ -283,7 +285,14 @@ export class Bench extends Studio {
     const cam = this.cameraMoved();
     return this.frames < 8 || this.dirty || cam || this.moving || this.time < this.wakeUntil;
   }
-  draw(dt, forceShadows = false) { super.draw(dt, forceShadows); this.dirty = false; this.rendered++; }
+  draw(dt, forceShadows = false) {
+    const shadows = this.R.renderer.shadowMap;
+    if (this.shadowMotionPending && (this.time - (this.lastShadowTime ?? -Infinity) >= 1 / 30 - 1e-9 || !this.moving)) shadows.needsUpdate = true;
+    const refreshed = forceShadows || shadows.needsUpdate;
+    super.draw(dt, forceShadows);
+    if (refreshed) { this.lastShadowTime = this.time; this.shadowMotionPending = false; }
+    this.dirty = false; this.rendered++;
+  }
 
   loop(t) {
     const raw = (t - this.last) / 1000; this.last = t;

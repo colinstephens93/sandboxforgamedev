@@ -239,3 +239,39 @@ describe('bench: quality preset, views and materials', () => {
     expect(bad).toEqual([]);
   });
 });
+
+describe('bench: shadow update scheduling', () => {
+  function shadowBench() {
+    const b = makeBench(), refreshes = [];
+    const shadowMap = { needsUpdate: false };
+    b.R = {
+      renderer: { shadowMap, info: { reset() {} } },
+      render(dt, force) {
+        if (force || shadowMap.needsUpdate) refreshes.push(b.time);
+        shadowMap.needsUpdate = false;
+      },
+    };
+    return { b, shadowMap, refreshes };
+  }
+  it.each([30, 60, 120])('keeps motion shadows at 30 Hz when drawing at %s fps', (fps) => {
+    const { b, refreshes } = shadowBench();
+    b.moving = true;
+    for (let i = 0; i < fps; i++) {
+      b.time = i / fps; b.shadowMotionPending = true; b.draw(1 / fps);
+    }
+    expect(refreshes).toHaveLength(30);
+    expect(b.rendered).toBe(fps);
+  });
+  it('honors explicit refreshes and flushes the last motion when movement stops', () => {
+    const { b, shadowMap, refreshes } = shadowBench();
+    b.moving = true; b.shadowMotionPending = true; b.draw(.001);
+    b.time += .001; b.shadowMotionPending = true; b.draw(.001);
+    expect(refreshes).toHaveLength(1);
+    shadowMap.needsUpdate = true; b.draw(.001);
+    expect(refreshes).toHaveLength(2);
+    b.draw(.001, true); expect(refreshes).toHaveLength(3);
+    b.time += .001; b.shadowMotionPending = true; b.moving = false; b.draw(.001);
+    expect(refreshes).toHaveLength(4);
+    expect(b.shadowMotionPending).toBe(false);
+  });
+});

@@ -139,14 +139,15 @@ export function createDynoPanel(game) {
   }
 
   function graph(force = false) {
+    if (st.collapsed) return;
     const bodyW = q('.dx-body').clientWidth; // padding 12 px each side
     const width = Math.max(320, bodyW ? bodyW - 24 : 536);
     const running = ['spinup', 'pull', 'coast'].includes(dyno.phase);
-    const live = running ? dyno.liveAnalysis() : null;
     const base = st.compare ? findBaseline(dyno.runs) : null;
-    const sig = [width, dyno.runs.length, [...st.selected].join(','), st.compare, live ? live.points.length : 0, running, base ? base.id : 0, dyno.phase === 'refused'].join('|');
+    const sig = [width, dyno.runs.length, [...st.selected].join(','), st.compare, running ? dyno.rec?.t.length || 0 : 0, dyno.runCounter, running, base ? base.id : 0, dyno.phase === 'refused', plant.air.tempC, plant.air.pressureKpa, plant.air.humidityPct, window.devicePixelRatio].join('|');
     if (!force && sig === st.lastSig) return;
     st.lastSig = sig;
+    const live = running ? dyno.liveAnalysis() : null;
     const ctx = fitCanvas(canvas, width, GRAPH_H);
     drawDynoGraph(ctx, width, GRAPH_H, { runs: dyno.runs, baseline: base, current: live, selectedIds: st.selected, showTorque: true, weather: plant.air });
   }

@@ -171,12 +171,23 @@ export class Dyno {
     const lo = Math.ceil(rmin / bin) * bin, hi = Math.floor(rmax / bin) * bin;
     const air = this.current ? this.current.air : this.air0;
     const cf = correctionFactor(air, { turbo: true, qc: 33 });
+    // Accumulate each sample once instead of rescanning the recording for every bin.
+    // An exact midpoint belongs to both adjacent bins, matching the original inclusive window.
+    const bins = new Map();
+    for (const row of rows) {
+      const lower = Math.floor(row.rpm / bin) * bin;
+      for (const rpm of [lower, lower + bin]) {
+        if (rpm < lo || rpm > hi || Math.abs(row.rpm - rpm) > bin / 2) continue;
+        let bucket = bins.get(rpm);
+        if (!bucket) { bucket = { sum: 0, count: 0 }; bins.set(rpm, bucket); }
+        bucket.sum += row.p; bucket.count++;
+      }
+    }
     const pts = [];
     for (let rpm = lo; rpm <= hi; rpm += bin) {
-      let s = 0, c = 0;
-      for (const row of rows) if (Math.abs(row.rpm - rpm) <= bin / 2) { s += row.p; c++; }
-      if (!c) continue;
-      const pw = s / c; // W
+      const bucket = bins.get(rpm);
+      if (!bucket) continue;
+      const pw = bucket.sum / bucket.count; // W
       const hp = pw / HP;
       pts.push({ rpm, hp: hp * cf, tq: (hp * cf * HP_CONST) / rpm, hpRaw: hp });
     }

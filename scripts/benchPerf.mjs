@@ -5,7 +5,7 @@
 //   FRAMES=20 shortens the run (software rendering is slow); SHOP=0 skips the shop rows.
 //
 // Rows:
-//   bench  engine view, engine running   the bench as it is used: hood up, engine idling, shadows refreshed every frame
+//   bench  engine view, engine running   the bench as it is used: hood up, engine idling, motion shadows capped at 30 Hz
 //   bench  engine view, engine off       what one frame costs when it has to be drawn; left alone the page draws none (idle skip)
 //   bench  truck view, engine running    the whole truck
 //   shop   hero bookmark                 exactly what scripts/perf.mjs measures (scripts/lib/shopPerf.mjs)
