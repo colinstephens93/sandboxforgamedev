@@ -121,8 +121,8 @@ describe('bench: the shared sim loop', () => {
     const b = makeBench();
     expect(startWithKey(b)).toBe(true); expect(b.plant.running).toBe(true);
     b.plant.warm(198, 188);
-    expect(b.dyno.startRun().ok).toBe(false); // no straps
-    b.dyno.strapAll(true); b.dyno.setFan(true);
+    expect(b.dyno.straps.every(Boolean)).toBe(true); // bench setup is ready without strap controls
+    b.dyno.setFan(true);
     b.setPedal(0.4);
     expect(b.dyno.startRun().ok).toBe(true);
     let n = 0; while (b.dynoRunning && n++ < 4000) b.advance(0.25, 0.01);

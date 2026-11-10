@@ -6,18 +6,17 @@ const HELP = [
   ['Use', 'E: open doors, hood, tailgate; use equipment; sit in the truck'], ['Inspect', 'I: toggle part names and descriptions while pointing'],
   ['Hood', 'Pull the release handle inside the cab (lower left of the wheel), then the secondary release at the grille, then lift. X: engine cutaway'],
   ['Truck', 'Sit in the driver seat (E at an open door). Key: E on the ignition. Hold E for START. Shifter: 1 P, 2 R, 3 N, 4 D'],
-  ['Dyno', 'T: dyno panel. Gear 1-5, strap the truck, fan on, then Start Run. C: dyno camera while running'],
+  ['Dyno', 'T: dyno panel. Strap the truck, fan on, then Start Run. C: dyno camera while running'],
   ['AI Live', 'L: open the laptop when standing at the cart'], ['Shop menu', 'M: repairs, shop temperature, LBZ regulator'],
   ['Cameras', 'V: driver / walk, O: orbit and photo mode, H hide UI, P save PNG'], ['Help', 'F1: this panel, quality: Q cycles low / medium / high'],
 ];
 
 // the bench page (src/bench): no walking, so no crosshair, use prompt or part label; its own help text
 const BENCH_HELP = [
-  ['Key', 'Off, Run, then hold Start until the engine fires (wait for the Wait to Start light to go out first)'],
+  ['Engine', 'Select Cutaway to start the engine through its normal glow-plug and cranking sequence'],
   ['Throttle', 'The slider is the accelerator pedal. The dyno takes it over during a run'],
-  ['Gear', 'P R N D. The engine cranks only in P or N'],
   ['Views', '1 engine, 2 engine alone, 3 cutaway, 4 gauges, 5 truck, 6 rear wheels. Drag to look around, wheel to zoom'],
-  ['Dyno', 'T: strap the truck, fan on, Start Run'], ['AI Live', 'L: plug in, key to RUN with the engine off, read, back up, write, cycle the key'],
+  ['Dyno', 'T: fan on, Start Run. The bench truck is already secured'], ['AI Live', 'L: plug in, key to RUN with the engine off, read, back up, write, cycle the key'],
   ['Shop menu', 'M: repairs, LBZ regulator, shop temperature'], ['Help', 'F1: this panel. Esc closes a panel'],
 ];
 

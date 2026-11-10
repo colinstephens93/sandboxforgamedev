@@ -3,15 +3,16 @@
 import { spec } from '../data/truckSpec.js';
 import { TIRE_R } from '../sim/driveline.js';
 import { drawDynoGraph, fitCanvas, findBaseline, runColor, thousands, signed, THEME } from './dynoGraph.js';
-import { h, txt, show, toggleClass, esc, fmtInt, kToF, MPH_PER_MS, level } from './uiKit.js';
+import { h, txt, show, esc, fmtInt, kToF, MPH_PER_MS, level } from './uiKit.js';
 
-const GEAR_NAMES = ['1st', '2nd', '3rd', '4th', '5th'];
 const GRAPH_H = 292;
 
 // what the status line says before and between runs (pure, tested)
 export function dynoStatus(dyno) {
   const running = ['spinup', 'pull', 'coast'].includes(dyno.phase);
   if (running) return { kind: 'run', text: dyno.message || 'Run in progress' };
+  // Strap setup is handled outside this panel; do not show its removed warning.
+  if (!dyno.straps.every(Boolean)) return { kind: 'hidden', text: '' };
   const c = dyno.canStart();
   if (dyno.phase === 'refused' && !c.ok) return { kind: 'refused', text: dyno.message || c.reason };
   if (!c.ok) return { kind: 'hint', text: c.reason };
@@ -35,8 +36,6 @@ export function createDynoPanel(game) {
       <canvas class="dx-graph"></canvas>
       <div class="dx-readouts"></div>
       <div class="dx-ctl">
-        <div class="dx-row"><span class="dx-lab">GEAR</span><div class="dx-gears"></div></div>
-        <div class="dx-row"><span class="dx-lab">STRAPS</span><div class="dx-straps"></div><button class="dx-strapall">Strap all</button></div>
         <div class="dx-row"><span class="dx-lab">FAN</span><label class="dx-chk"><input type="checkbox" class="dx-fan"><span>High-velocity cooling fan</span></label>
           <span class="dx-spacer"></span><button class="primary dx-start">START RUN</button><button class="dx-abort">Abort</button></div>
       </div>
@@ -48,23 +47,8 @@ export function createDynoPanel(game) {
   const q = (s) => el.querySelector(s);
   const canvas = q('.dx-graph');
   const status = q('.dx-status'), banners = q('.dx-banners'), readouts = q('.dx-readouts'), wx = q('.dx-wx'), peaks = q('.dx-peaks'), hist = q('.dx-hist');
-  const gearsEl = q('.dx-gears'), strapsEl = q('.dx-straps'), fanEl = q('.dx-fan'), startBtn = q('.dx-start'), abortBtn = q('.dx-abort'), compareEl = q('.dx-compare');
+  const fanEl = q('.dx-fan'), startBtn = q('.dx-start'), abortBtn = q('.dx-abort'), compareEl = q('.dx-compare');
 
-  // gears
-  const gearBtns = spec.drivetrain.trans.gears.map((ratio, i) => {
-    const b = h('button', 'dx-gear', `<b>${GEAR_NAMES[i]}</b><small>${ratio.toFixed(2)}:1</small>`);
-    b.title = `${GEAR_NAMES[i]} gear, ${ratio.toFixed(2)}:1${i === 3 ? ' (the standard pull gear, direct drive)' : ''}`;
-    b.addEventListener('click', () => { dyno.gear = i + 1; sync(true); });
-    gearsEl.appendChild(b); return b;
-  });
-  // straps
-  const strapNames = ['Front left', 'Front right', 'Rear left', 'Rear right'];
-  const strapChecks = strapNames.map((n, i) => {
-    const l = h('label', 'dx-chk', `<input type="checkbox"><span>${n}</span>`);
-    const inp = l.querySelector('input'); inp.addEventListener('change', () => { dyno.straps[i] = inp.checked; sync(true); });
-    strapsEl.appendChild(l); return inp;
-  });
-  q('.dx-strapall').addEventListener('click', () => { const all = dyno.straps.every(Boolean); dyno.strapAll(!all); sync(true); });
   fanEl.addEventListener('change', () => { dyno.setFan(fanEl.checked); sync(true); });
   startBtn.addEventListener('click', () => { const r = dyno.startRun(); if (r.ok) { st.liveSeen = true; } sync(true); });
   abortBtn.addEventListener('click', () => { dyno.abort('Run aborted by the operator'); sync(true); });
@@ -124,9 +108,6 @@ export function createDynoPanel(game) {
       st.knownRuns = dyno.runs.length; force = true;
     }
     const running = ['spinup', 'pull', 'coast'].includes(dyno.phase);
-    gearBtns.forEach((b, i) => toggleClass(b, 'on', dyno.gear === i + 1));
-    gearBtns.forEach((b) => { b.disabled = running; });
-    strapChecks.forEach((c, i) => { if (c.checked !== dyno.straps[i]) c.checked = dyno.straps[i]; c.disabled = running; });
     if (fanEl.checked !== dyno.fan) fanEl.checked = dyno.fan;
     startBtn.disabled = running; abortBtn.disabled = !running;
     const base = findBaseline(dyno.runs);
@@ -134,7 +115,7 @@ export function createDynoPanel(game) {
     compareEl.parentElement.title = base ? `Overlay on the stock baseline (run ${base.id})` : 'Make a pull with the stock tune first: it becomes the baseline';
     el.classList.toggle('collapsed', st.collapsed);
     q('.dx-collapse').innerHTML = st.collapsed ? '&#9652;' : '&#9662;';
-    const s = dynoStatus(dyno); status.className = `dx-status ${s.kind}`; txt(status, s.text);
+    const s = dynoStatus(dyno); status.className = `dx-status ${s.kind}`; txt(status, s.text); show(status, !!s.text);
     if (force) { history(); peakBlock(); }
     banners.innerHTML = '';
     if (plant.reducedPower) banners.appendChild(banner('bad', '<b>REDUCED ENGINE POWER</b> The engine computer is limiting power to protect the engine. Let it cool.'));

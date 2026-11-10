@@ -54,6 +54,8 @@ export class Bench extends Studio {
     this.hooks = []; this.simState = { range: 'P' };
     this.pedal = 0; this.brakeIn = 0; this.wheelAngle = 0;
     initSim(this); // plant, dyno, ign, ai, simAcc, shopTempF
+    // The bench has no strap setup controls; its truck is already secured.
+    this.dyno.strapAll(true);
     Object.assign(this.simState, { dyno: this.dyno, ignition: this.ign, ailive: this.ai, plant: this.plant });
     this.ui = opts.ui || null;
     this.audio = opts.audio || new AudioEngine();

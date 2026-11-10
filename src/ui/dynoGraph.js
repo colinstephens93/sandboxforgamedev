@@ -286,7 +286,7 @@ export function drawDynoGraph(ctx, W, H, opts = {}) {
   if (!hasData) {
     ctx.fillStyle = T.dim; ctx.textAlign = 'center'; setFont(ctx, fs(12.5), 700);
     ctx.fillText(status && /refus|not|strap/i.test(status) ? 'RUN NOT STARTED' : 'NO RUN YET', pl + pw / 2, pt + ph / 2 - fs(4));
-    setFont(ctx, fs(10.5), 500); ctx.fillText('Strap the truck down, start the engine, then press START RUN', pl + pw / 2, pt + ph / 2 + fs(14));
+    setFont(ctx, fs(10.5), 500); ctx.fillText('Start the engine, then press START RUN', pl + pw / 2, pt + ph / 2 + fs(14));
   }
 
   // ---- footer: SAE correction and weather ----

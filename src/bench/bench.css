@@ -27,11 +27,8 @@ canvas#view{position:fixed;left:0;top:0;display:block;width:calc(100vw - var(--d
 .bc-lab{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#d9a441;font-weight:600;margin-right:3px}
 #controls button,#controls select{background:#23262c;color:#e6e6e6;border:1px solid #3d414a;border-radius:3px;padding:5px 9px;cursor:pointer;font:inherit}
 #controls button:hover:not(:disabled){background:#2d3139} #controls button.on{background:#7a5a1c;border-color:#d9a441} #controls button:disabled{opacity:.45;cursor:default}
-#controls .bc-start{user-select:none;touch-action:none}
 #controls input[type=range]{width:120px;accent-color:#d9a441} #controls input[type=range]:disabled{opacity:.4}
 #controls output{min-width:38px;font-variant-numeric:tabular-nums;color:#c9cdd3}
-.bc-lamp{font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 6px;border-radius:3px;border:1px solid #3d414a;color:#5c616b}
-.bc-lamp.lit{color:#1a1200;background:#f5b83d;border-color:#f5b83d;box-shadow:0 0 10px rgba(245,184,61,.6)}
 .bc-rpm{min-width:40px;text-align:right;font:600 14px ui-monospace,Menlo,Consolas,monospace;color:#fff} .bc-group small{color:#8a8f98}
 
 /* panels: base look (as on the shop page), then docked on the right at full height */

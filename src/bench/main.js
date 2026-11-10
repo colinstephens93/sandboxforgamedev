@@ -6,5 +6,5 @@ const bench = new Bench($('view'), (f, m) => { $('loadbar').style.width = `${Mat
 if (import.meta.env?.DEV || new URLSearchParams(window.location.search).has('debug')) window.__bench = bench;
 bench.init().then(() => {
   $('loading').style.opacity = '0'; setTimeout(() => $('loading').remove(), 600);
-  bench.ui.say('Key to Run, wait for the WAIT lamp to go out, then hold Start. T: dyno, L: AI Live, M: shop menu, F1: help.', 9);
+  bench.ui.say('Select Cutaway to start the engine. T: dyno, L: AI Live, M: shop menu, F1: help.', 9);
 }).catch((e) => { console.error(e); $('loadmsg').textContent = 'Error: ' + e.message; });

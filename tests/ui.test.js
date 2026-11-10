@@ -174,10 +174,10 @@ describe('AI Live: datalog CSV and comparison table', () => {
 describe('dyno panel logic', () => {
   it('explains refusals and readiness in plain language', () => {
     const p = new Plant({ cal: loadCal('stock') }); const d = new Dyno(p);
-    expect(dynoStatus(d).text).toMatch(/straps/i);
+    expect(dynoStatus(d)).toEqual({ kind: 'hidden', text: '' });
     d.strapAll(true); d.setFan(true); expect(dynoStatus(d).text).toMatch(/not running/i);
     p.startEngine(); expect(dynoStatus(d).kind).toBe('ready');
-    d.straps[2] = false; d.startRun(); expect(dynoStatus(d)).toEqual({ kind: 'refused', text: expect.stringMatching(/Tie-down straps are not attached/) });
+    d.straps[2] = false; d.startRun(); expect(dynoStatus(d)).toEqual({ kind: 'hidden', text: '' });
     d.strapAll(true); expect(dynoStatus(d).kind).toBe('ready');
     d.startRun(); expect(dynoStatus(d).kind).toBe('run');
   });
