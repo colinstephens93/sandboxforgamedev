@@ -97,3 +97,15 @@ every fueling table (GM calibration tables are not public).
 
 ## Audio (Phase 4.1)
 * Turbo whistle base gain raised from 0.42 to 0.48 (estimated adjustment for better Turbo Sound presence). Full human listening pass against real LLY recordings is still outstanding.
+
+## Detailed engine and cab fit (November 2026)
+* **Engine model.** The block, heads, internals, front drive, turbo, intake, EGR and fuel system are the model from the `duramaxsimulator` repository (commit f1ff396), copied unchanged. Its own research sheets are the authority for its values; it is an illustrative model, not CAD. It keeps a **184 mm connecting-rod length** although its research sheet gives 163 mm (the block and deck are built around 184 mm, so it cannot be changed in this repository alone). Valve timing, lift and the appearance of the internals are illustrative.
+* **Placement (estimated).** The engine sits with its crankshaft on the existing mount axis and its mid-length at s = 2.4 in, chosen so the heads land where the earlier simple engine's banks were. Clearances to the firewall, fan and hood pad are checked by `tests/detailedEngine.test.js`; no real-world mounting dimension was used.
+* **Sump.** The copied model's sump is a test-stand shape and hung below the front axle and crossmember, so in the truck the underside module's own sump is shown instead.
+* **Engine cover.** Thinned to a lid 2.6 in deep (estimated from reference photo 02; the real cover is a thin tread-pattern lid, not a box).
+* **Exhaust.** The bay's earlier downpipe was removed: the copied model has its own, and the underside module carries the pipe on from the engine. Where the two meet is not modelled as a joint.
+* **Rear glass.** Rear door glass and the back window are drawn as deep-tint privacy glass, nearly opaque from outside. The tint level is estimated from the reference photos, not measured.
+* **Lamp lenses and glass no longer refract.** They use plain transparency (see PROGRESS.md); the headlamp lenses look slightly flatter than before.
+* **Cab ambient light.** Surrounding (image-based) light on the non-metal cab trim is scaled to 0.45, because that lighting has no shadows and lit the cab as if it had no roof. The factor is estimated by eye.
+* **Cab trim.** Interior trim above the beltline is pulled in to follow the body's inward lean (`src/truck/interior/fit.js`). This corrects trim that stood outside the door frames and roof; pillar trim is slightly narrower toward the roof as a result.
+

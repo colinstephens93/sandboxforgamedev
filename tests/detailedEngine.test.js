@@ -10,8 +10,8 @@ describe('detailed engine in the bay', () => {
     const { LABELS } = await import('../src/data/labels/index.js');
     const bay = buildEngineBay({ quality: QUALITY.medium });
     expect(bay.core).toBeTruthy();
-    for (const gone of ['block', 'bank_driver', 'intake_manifold', 'turbo', 'belt']) expect(bay.group.getObjectByName(gone), gone).toBeUndefined();
-    for (const kept of ['engine_cover', 'fan', 'ac_compressor', 'ps_pump', 'downpipe']) expect(bay.group.getObjectByName(kept), kept).toBeTruthy();
+    for (const gone of ['block', 'bank_driver', 'intake_manifold', 'turbo', 'belt', 'downpipe']) expect(bay.group.getObjectByName(gone), gone).toBeUndefined();
+    for (const kept of ['engine_cover', 'fan', 'ac_compressor', 'ps_pump']) expect(bay.group.getObjectByName(kept), kept).toBeTruthy();
     const ids = new Set(); bay.core.group.traverse((o) => { if (o.userData.labelId) ids.add(o.userData.labelId); });
     expect(ids.size).toBeGreaterThan(40);
     for (const id of ids) { expect(LABELS[id], id).toBeTruthy(); expect(LABELS[id].name.length).toBeGreaterThan(3); expect(LABELS[id].desc.length).toBeGreaterThan(20); }

@@ -176,7 +176,7 @@ export class Game {
     this.input.on((type, e) => {
       if (type === 'mousedown' && !this.input.locked && ['walk', 'orbit', 'driver'].includes(this.mode) && !this.panelOpen) this.input.lock();
       if (type !== 'keydown') return;
-      if (this.mode === 'intro' && e.code !== 'F1') { this.introT = 999; return; }
+      if (this.mode === 'intro' && e.code !== 'F1') { this.endIntro(); return; } // at once, not on the next frame
       switch (e.code) {
         case 'Escape': this.closePanels(); break;
         case 'KeyT': this.openPanel('dyno'); break;
@@ -188,6 +188,7 @@ export class Game {
         case 'KeyH': this.uiHidden = !this.uiHidden; this.ui.hideAll(this.uiHidden); break;
         case 'KeyP': this.savePNG(); break;
         case 'KeyQ': { const order = ['low', 'medium', 'high']; this.qname = order[(order.indexOf(this.qname) + 1) % 3]; this.R.setQuality(this.qname); this.ui.setQuality(this.qname); this.ui.say(`Quality: ${this.qname}`, 1.5); break; }
+        case 'KeyX': this.toggleCutaway(); break;
         case 'KeyV': this.toggleDriver(); break;
         case 'KeyC': if (['spinup', 'pull', 'coast'].includes(this.dyno.phase)) this.setMode(this.mode === 'dynocam' ? 'walk' : 'dynocam'); else if (this.mode === 'dynocam') this.setMode('walk'); break;
         case 'KeyO': this.setMode(this.mode === 'orbit' ? 'walk' : 'orbit'); if (this.mode === 'orbit') { this.orbit = { pos: this.camera.position.clone(), yaw: this.player.yaw, pitch: this.player.pitch }; } else this.player.applyCamera(); break;
@@ -217,6 +218,24 @@ export class Game {
     return { pos: [0, 1, 2].map((k) => L(a[1][k], b[1][k])), tgt: [0, 1, 2].map((k) => L(a[2][k], b[2][k])), fov: L(a[3], b[3]) };
   }
 
+  // X: fade the engine castings to show the crank, pistons, cam and valvetrain working (the hood has to be up to see it)
+  toggleCutaway() {
+    const core = this.truck.parts.engineBay.core, hood = this.truckCtl.hood; if (!core) return;
+    if (!core.cutaway && !(hood && hood.open)) { this.ui.say('Open the hood first, then press X for the engine cutaway.', 3); return; }
+    core.setCutaway(!core.cutaway);
+    this.ui.say(core.cutaway ? 'Engine cutaway: castings faded, internals shown (X to close)' : 'Engine cutaway off', 2.5);
+  }
+
+  // The fly-through is over (it ran out, or a key skipped it): hand the camera to the player where the fly-through ends.
+  endIntro() {
+    if (this.mode !== 'intro') return;
+    this.introT = 999;
+    const p = this.introPose(18);
+    this.camera.position.set(...p.pos); this.camera.lookAt(...p.tgt); this.camera.fov = 60; this.camera.updateProjectionMatrix();
+    const dx = -1.0 - this.camera.position.x, dz = -2.0 - this.camera.position.z;
+    this.player.setPose(this.camera.position.x, this.camera.position.z, Math.atan2(-dx, -dz), -0.1); this.setMode('walk'); this.ui.say('Walk mode: WASD to move, E to use, F1 for help', 5);
+  }
+
   toggleDriver() {
     if (this.mode === 'driver') { this.player.setPose(-1.7, TRUCK_Z + 1.2, Math.PI / 2, -0.1); this.setMode('walk'); this.pedal = 0; this.brakeIn = 0; this.ui.say('Left the truck', 1.5); return; }
     if (this.mode !== 'walk') return;
@@ -239,11 +258,7 @@ export class Game {
       this.introT += dt;
       const p = this.introPose(Math.min(this.introT, 18));
       this.camera.position.set(...p.pos); this.camera.lookAt(...p.tgt); this.camera.fov = p.fov; this.camera.updateProjectionMatrix();
-      if (this.introT >= 18) {
-        this.camera.fov = 60; this.camera.updateProjectionMatrix();
-        const dx = -1.0 - this.camera.position.x, dz = -2.0 - this.camera.position.z;
-        this.player.setPose(this.camera.position.x, this.camera.position.z, Math.atan2(-dx, -dz), -0.1); this.setMode('walk'); this.ui.say('Walk mode: WASD to move, E to use, F1 for help', 5);
-      }
+      if (this.introT >= 18) this.endIntro();
     } else if (this.mode === 'walk') {
       if (this.input.locked) this.player.look(this.input.mouseDX, this.input.mouseDY);
       this.player.update(dt, this.input);

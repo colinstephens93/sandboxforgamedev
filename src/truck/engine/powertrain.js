@@ -17,7 +17,7 @@ function bankBox(sgn, u, w, s, du, dw, ds, r = 0.0, seg = 2) {
   return T(g, [p.x, p.y, p.z], [0, 0, -sgn * Math.PI / 4]);
 }
 
-export function buildPowertrain({ mats, d, fast }) {
+export function buildPowertrain({ mats, d, fast, coverDepth = 6.4 }) {
   const root = new THREE.Group(); root.name = 'engine'; root.userData.labelId = 'engine.block';
   const A = {}; // anchors
   const S0 = ENGINE.bankS0, S1 = ENGINE.bankS1, SC = (S0 + S1) / 2, SL = S1 - S0;
@@ -120,9 +120,10 @@ export function buildPowertrain({ mats, d, fast }) {
     const pts = [[-2.8, 4.0], [3.4, 4.0], [7.4, 3.0], [8.4, -1.5], [8.4, -7.0], [5.0, -10.5], [-5.6, -10.5], [-8.4, -7.2], [-8.4, -1.0], [-8.0, 2.6]].map(([x, y]) => [x * K, y]); // (x, -s) outline
     const s0 = -4.0, s1 = 10.5, slope = (45.2 - 41.0) / (s1 - s0);
     const shape = new THREE.Shape(pts.map((p) => new THREE.Vector2(p[0], p[1])));
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: 6.4, bevelEnabled: true, bevelThickness: 0.55, bevelSize: 0.5, bevelSegments: 4, curveSegments: 6 });
+    // coverDepth: how far the shell reaches down from its top (the real cover is a thin lid; the simple engine used a deep one)
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: coverDepth, bevelEnabled: true, bevelThickness: 0.55, bevelSize: 0.5, bevelSegments: 4, curveSegments: 6 });
     geo.rotateX(-Math.PI / 2); // shape y -> -z (outline holds -s), extrusion z -> +y
-    geo.translate(0, 34.05, 0);
+    geo.translate(0, 34.05 + 6.4 - coverDepth, 0);
     const pos = geo.attributes.position;
     // sloped top: shear the upper part upward with s so the cover rises toward the firewall
     for (let i = 0; i < pos.count; i++) {

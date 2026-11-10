@@ -4,7 +4,7 @@ const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) 
 const HELP = [
   ['Move', 'W A S D, Shift run, Ctrl crouch'], ['Look', 'Mouse (click the view to capture it, Esc releases it)'],
   ['Use', 'E: open doors, hood, tailgate; use equipment; sit in the truck'], ['Inspect', 'I: toggle part names and descriptions while pointing'],
-  ['Hood', 'Pull the release handle inside the cab (lower left of the wheel), then the secondary release at the grille, then lift'],
+  ['Hood', 'Pull the release handle inside the cab (lower left of the wheel), then the secondary release at the grille, then lift. X: engine cutaway'],
   ['Truck', 'Sit in the driver seat (E at an open door). Key: E on the ignition. Hold E for START. Shifter: 1 P, 2 R, 3 N, 4 D'],
   ['Dyno', 'T: dyno panel. Gear 1-5, strap the truck, fan on, then Start Run. C: dyno camera while running'],
   ['AI Live', 'L: open the laptop when standing at the cart'], ['Shop menu', 'M: repairs, shop temperature, LBZ regulator'],

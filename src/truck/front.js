@@ -2,7 +2,7 @@
 // cat-eye headlamps with the lower turn/park units, black bumper cap over a chrome strip, valance with fog lamps and tow-hook slots.
 // Layout measured from reference/IMG_2853, 2860, 2873 (front views). Inches in the truck frame, converted at the end.
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mergeGeometries, toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mat } from '../core/materials.js';
 import { IN_TO_M as IN, S_FRONT } from './skin.js';
 import { gridPanel } from './panels.js';
@@ -61,8 +61,9 @@ export function buildFront({ quality }) {
   const black = mat.blackPlastic(0.55);
   const blackGloss = new THREE.MeshPhysicalMaterial({ color: 0x0d0e10, roughness: 0.32, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.2 });
   const bumperBlack = new THREE.MeshStandardMaterial({ color: 0x1c1d1f, roughness: 0.62, metalness: 0.05 });
-  const lens = new THREE.MeshPhysicalMaterial({ color: 0xf5f8f7, roughness: 0.02, metalness: 0, transmission: 0.92, transparent: true, opacity: 0.85, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2.0, ior: 1.5, thickness: 0.02 });
-  const amberLens = new THREE.MeshPhysicalMaterial({ color: 0xff9a22, roughness: 0.08, metalness: 0, transmission: 0.75, transparent: true, opacity: 0.9, clearcoat: 1, envMapIntensity: 1.4, ior: 1.5 });
+  // clear lenses by plain transparency (see the note on transmission in src/core/materials.js)
+  const lens = new THREE.MeshPhysicalMaterial({ color: 0xdfe6e6, roughness: 0.02, metalness: 0, transparent: true, opacity: 0.22, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2.0, ior: 1.5, depthWrite: false });
+  const amberLens = new THREE.MeshPhysicalMaterial({ color: 0xff9a22, roughness: 0.08, metalness: 0, transparent: true, opacity: 0.72, clearcoat: 1, envMapIntensity: 1.4, ior: 1.5 });
   const reflector = new THREE.MeshStandardMaterial({ color: 0xe8ecef, metalness: 0.95, roughness: 0.08, envMapIntensity: 2.2 });
   const bulb = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.15, roughness: 0.3 });
   const add = (g, m, name, cast = true) => { const mesh = new THREE.Mesh(g, m); mesh.name = name; mesh.castShadow = cast; mesh.receiveShadow = true; group.add(mesh); return mesh; };
@@ -159,7 +160,8 @@ export function buildFront({ quality }) {
       g.scale(IN, IN, IN);
       g.rotateX(-Math.PI / 2); // shape y -> -z (so y_shape = -s gives z = s), extrusion z -> +y
       g.translate(0, y0 * IN, 0);
-      g.computeVertexNormals(); return g;
+      // smooth across the many short segments of the curved face (flat facets showed as bands in the chrome), creased at real edges
+      return toCreasedNormals(g, 40 * Math.PI / 180);
     };
     add(make(25.6, 32.0, 0.5), bumperBlack, 'bumper_cap');
     // two slots in the upper cap (as in the photos): dark recesses

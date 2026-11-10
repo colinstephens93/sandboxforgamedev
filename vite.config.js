@@ -10,6 +10,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (/node_modules[\\/](three|postprocessing|three-mesh-bvh)[\\/]/.test(id)) return 'vendor-three';
+          if (/src[\\/]truck[\\/]engine[\\/]detailed[\\/]/.test(id)) return 'engine-detailed'; // the copied engine model, in its own file
           if (/src[\\/]truck[\\/]/.test(id)) return 'truck-mesh';
           return undefined;
         },

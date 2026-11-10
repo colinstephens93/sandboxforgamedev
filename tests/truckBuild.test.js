@@ -30,6 +30,9 @@ describe('whole-truck build (stub canvas)', () => {
       let meshes = 0; truck.group.traverse((o) => { if (o.isMesh) meshes++; });
       expect(meshes).toBeGreaterThan(500);
       expect(truck.parts.engineBay).toBeTruthy();
+      // a transmissive material makes three.js draw every opaque object a second time each frame (src/core/materials.js)
+      const transmissive = new Set(); truck.group.traverse((o) => { for (const m of [].concat(o.material || [])) if (m.transmission > 0) transmissive.add(o.name || m.type); });
+      expect([...transmissive]).toEqual([]);
     }, 60000);
   }
 });
