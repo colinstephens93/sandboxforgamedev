@@ -1,5 +1,7 @@
 // Model coefficients for the physical simulation. These are modelling choices (not data about the real truck);
 // the real-world inputs are in src/data/truckSpec.js. Every value here is `estimated` (see ACCURACY.md, "model coefficients").
+import { spec } from '../data/truckSpec.js';
+
 export const P = {
   // ---- combustion ----
   eta0: 0.485, // peak indicated efficiency of a modern turbo diesel at optimum timing and lean mixture
@@ -8,16 +10,19 @@ export const P = {
   lambdaFull: 1.3, // above this lambda there is no rich penalty
   richK: 0.42, richExp: 1.5, // rich-side efficiency loss
   heatLossFrac: 0.085, // fuel energy lost to coolant/oil beyond the indicated efficiency, goes to exhaust otherwise
-  lhvJPerKg: 42.8e6,
-  stoichAfr: 14.5,
-  fuelDensityGPerMm3: 0.000832,
+  // fuel properties: real-world inputs, taken from the spec so there is one copy of each
+  lhvJPerKg: spec.engine.heatingValueMjKg * 1e6,
+  stoichAfr: spec.engine.stoichAfr,
+  fuelDensityGPerMm3: spec.engine.dieselDensityGPerL * 1e-6,
   // friction and pumping
   fmepBase: 0.95, fmepPerRpm: 0.00022, fmepPerRpm2: 6e-8, // bar
   accessoryNm: 9, // alternator, power steering, A/C compressor, fan clutch on average
   pumpK: 0.9, // fraction of (drive pressure - intake pressure) work charged against the engine
   // ---- air path ----
   volEffBase: 0.96, volEffPerRpm: 0.000028,
-  icEffectiveness: 0.72, icDropFrac: 0.03, icDropFlow: 0.04, // intercooler
+  icEffectiveness: 0.72, // intercooler
+  // charge-air pressure drop as a fraction of compressor outlet pressure: fixed part + flow part * (mAir / ref)^2
+  icDropFrac: 0.03, icDropFlow: 0.0356, icDropRefFlow: 0.4, // kg/s; about 6.6 percent at rated air flow
   // ---- turbo (Garrett GT3788VA class, lumped) ----
   turboInertia: 6.0e-5, // kg m^2
   compEta: 0.72, psiEta: 0.52, // psi * eta_c, so that PR = (1 + psiEta*u^2/(cp*T1))^3.5

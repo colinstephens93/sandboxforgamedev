@@ -61,7 +61,9 @@ export class Driveline {
   parasiticAtWheel(ww) {
     const F = DL.crr * DL.rearLoadKg * 9.81;
     const tire = ww > 0.5 ? F * TIRE_R : 0;
-    const drag = DL.windageNmPerRadS * (ww * TIRE_R / ROLLER_R) * (ROLLER_R / TIRE_R);
+    // drag torque at the roller (proportional to roller speed) acts on the wheel through the contact force, so it is
+    // multiplied by Rw/Rr on the way to the wheel, the same direction the roller inertia is referred in step()
+    const drag = DL.windageNmPerRadS * (ww * TIRE_R / ROLLER_R) * (TIRE_R / ROLLER_R);
     return tire + drag;
   }
 
@@ -87,7 +89,7 @@ export class Driveline {
       // neutral/park: engine free, rollers coast under parasitic losses and brake
       const dwe = tEng / Ie_;
       weN = Math.max(0, we + dwe * dt);
-      const ww2 = Math.max(0, ww - ((par + 0) / IwTot) * dt);
+      const ww2 = Math.max(0, ww - (par / IwTot) * dt);
       wrN = ww2 * TIRE_R / ROLLER_R;
       this.wt = 0; this.tccLocked = false; this.tccApply = 0; this.cpSlip = 0;
     } else {

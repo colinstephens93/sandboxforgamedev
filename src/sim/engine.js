@@ -1,7 +1,7 @@
 // Powerplant: LLY Duramax combustion + air path + VGT turbo. Torque is COMPUTED from the calibration (fuel quantity,
 // timing, rail pressure, boost/vane targets, smoke and torque limiters) and limited by the air the turbo delivers.
 // It is never read from a fixed torque curve (PROMPT.md section 5).
-import { spec, LBFT } from '../data/truckSpec.js';
+import { spec, LBFT, PSI, HP_CONST } from '../data/truckSpec.js';
 import { P } from './params.js';
 import { clamp, interp, lag, smoothstep } from './util.js';
 import * as TB from './turbo.js';
@@ -9,7 +9,8 @@ import * as TB from './turbo.js';
 const E = spec.engine;
 const VD = E.displacementL / 1000; // m3
 const FOUR_PI = 4 * Math.PI;
-const PSI_KPA = 6.894757;
+const PSI_KPA = PSI / 1000;
+const R_AIR = 287.05; // J/(kg K), dry air
 
 // Fuel pressure regulator on the CP3: rail pressure the pump can hold = p0 - r * injected volume flow (cc/s).
 // LBZ regulator flows more than the LLY one (square vs triangular slot). Values are estimates (ACCURACY.md).
@@ -39,13 +40,16 @@ export class Powerplant {
     const PR = TB.prFromOmega(this.omega, T1) * (1 - 0.5 * this.damage.boostLoss);
     const Tc2 = TB.compressorOutletK(PR, T1);
     const Tim = T1 + (Tc2 - T1) * (1 - P.icEffectiveness) + this.icSoakK;
-    const mAirGuess = 0.4;
-    const dp = P.icDropFrac + P.icDropFlow * Math.pow(mAirGuess / 0.3, 2) * 0.5;
-    const Pim = air.pressureKpa * PR * (1 - dp); // kPa abs
-    const rhoIm = (Pim * 1000) / (287.05 * Tim);
     const volEff = P.volEffBase - P.volEffPerRpm * rpm;
-    const airG = rhoIm * volEff * VD * 1000; // g per cycle, all cylinders
-    const mAir = (airG / 1000) * (rpm / 120); // kg/s
+    // Charge-air pressure drop grows with the square of the air flow, and the flow depends on the manifold pressure the
+    // drop leaves, so the pair is solved together (the loop converges in two or three passes; the drop is a few percent).
+    let Pim = 0, airG = 0, mAir = 0;
+    for (let i = 0, dp = P.icDropFrac; i < 3; i++) {
+      Pim = air.pressureKpa * PR * (1 - dp); // kPa abs
+      airG = ((Pim * 1000) / (R_AIR * Tim)) * volEff * VD * 1000; // g per cycle, all cylinders
+      mAir = (airG / 1000) * (rpm / 120); // kg/s
+      dp = P.icDropFrac + P.icDropFlow * Math.pow(mAir / P.icDropRefFlow, 2);
+    }
 
     // ---- fuel command ----
     const qtyFull = interp(cal.fuel, rpm);
@@ -114,13 +118,13 @@ export class Powerplant {
     const p3b = TB.drivePressureKpa(mExh, T3, p4b, vane);
     const pt = TB.turbinePowerW(mExh, T3, p3b, p4b, vane) * P.mechEta;
     const pc = TB.compressorPowerW(mAir, PR, T1);
-    const t4 = T3 * (1 - TB.turbineEta(vane) * (1 - Math.pow(p4b / p3b, 0.2424)));
+    const t4 = T3 * (1 - TB.turbineEta(vane) * (1 - Math.pow(p4b / p3b, TB.TURBO_CONST.G_EXH)));
 
     // cylinder pressure: compression (polytropic) + combustion rise
     const pComp = (Pim / 100) * Math.pow(E.compressionRatio, P.polyN); // bar
     const burnedMm3 = b.mf / (P.fuelDensityGPerMm3 * E.cylinders);
     const pFire = pComp + P.firePerMm3 * burnedMm3 * Math.max(0.3, 1 + P.fireTimingK * (soi - 10)) * 0.5 * (1 / Math.max(0.8, Pim / 180));
-    const pulseUs = qDel / (P.injFlowK * Math.sqrt(Math.max(this.railAct, 500) * 0.00689476));
+    const pulseUs = qDel / (P.injFlowK * Math.sqrt(Math.max(this.railAct, 500) * PSI * 1e-6));
     const boostPsi = (Pim - air.pressureKpa) / PSI_KPA;
     const smoke = clamp((1.5 - b.lambda) / 0.4, 0, 1);
 
@@ -130,10 +134,10 @@ export class Powerplant {
       lambda: b.lambda, smoke, etaI: b.etaI, tInd: b.tInd, tFric, tPump, torqueNm: tNet, torqueLbFt: tNet / LBFT,
       powerKw: (tNet * rpm * Math.PI) / 30 / 1000,
       egtPreK: T3, egtPostK: t4, mExh, driveKpa: p3b, backKpa: p4b, turboPowerW: pt, compPowerW: pc,
-      turboRpm: (this.omega * 60) / (2 * Math.PI), pCylPsi: pFire * 14.5038,
+      turboRpm: (this.omega * 60) / (2 * Math.PI), pCylPsi: (pFire * 1e5) / PSI,
       fuelGPerS: (b.mf * rpm) / 120,
     };
-    out.hp = (tNet / LBFT) * rpm / 5252;
+    out.hp = (tNet / LBFT) * rpm / HP_CONST;
     this.out = out;
     return out;
   }

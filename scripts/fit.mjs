@@ -1,9 +1,10 @@
-// Fits calibration tables against the physics. Run: node scripts/fit.mjs  -> writes src/data/calFit.json
+// Fits calibration tables against the physics. Run: node scripts/fit.mjs  -> writes src/data/calFit.js
 import fs from 'node:fs';
 import { Powerplant } from '../src/sim/engine.js';
 import { makeAir } from '../src/sim/atmos.js';
 import { TEMPLATES, RPM_NODES, STOCK_TORQUE_TARGET } from '../src/sim/calTemplates.js';
 import { LBFT } from '../src/data/truckSpec.js';
+import { P } from '../src/sim/params.js';
 
 const air = makeAir();
 const tbl = (ys) => ({ x: RPM_NODES, y: ys.slice() });
@@ -37,7 +38,7 @@ export function fitNodes(t, TARGET, reg = 'LLY') {
     pp.omega = 6000; pp.vaneTrim = 0;
     for (let it = 0; it < 28; it++) {
       o = settle(pp, rpm, 1, 6, 0.01);
-      const kF = (tgt + o.tFric + o.tPump + 9) / Math.max(o.tInd, 1);
+      const kF = (tgt + o.tFric + o.tPump + P.accessoryNm) / Math.max(o.tInd, 1);
       cal.fuel.y[i] = Math.min(rpm < 1200 ? 95 : 260, cal.fuel.y[i] * (1 + 0.8 * (kF - 1)));
       const eB = Math.max(-3, Math.min(3, boostT - o.boostPsi));
       cal.vane.full[i] = Math.min(0.9, Math.max(0, cal.vane.full[i] + pp.vaneTrim - eB * 0.012));

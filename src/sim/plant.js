@@ -23,7 +23,7 @@ export class Plant {
     this.fanOn = false; this.fanDuty = 0;
     this.idleI = 0; this.idleTargetRpm = E.idleRpm;
     this.starter = false;
-    this.fuelLevel = 0.62; // fraction of 26 gal
+    this.fuelLevel = 0.62; // fraction of the tank (spec.engine.fuelTankGal); not consumed by running
     this.volts = 12.6; this.charger = false; this.battery = 1.0;
     this.shopFan = true; // dyno cooling fan in front of the grille
     this.hoodClosed = false;
@@ -114,14 +114,13 @@ export class Plant {
   _thermal(dt, o) {
     const rpm = this.rpm;
     // heat rejected to coolant: about 30 percent of fuel energy beyond the work and exhaust share
-    const fuelPowerKw = (o.fuelGPerS * 1e-3 * 42.8e6) / 1000;
+    const fuelPowerKw = (o.fuelGPerS * 1e-3 * P.lhvJPerKg) / 1000;
     const qCoolant = this.running ? (0.17 + 0.10 * clamp(rpm / 3000, 0, 1)) * fuelPowerKw + 4 : 0;
     const cEng = 200; // kJ/K, coolant (24 qt) plus engine mass (estimated)
     const tAirC = this.air.tempC;
-    // thermostat opens from 187 F
+    // thermostat starts to open at spec.engine.thermostatOpenF and is fully open 12 F above it
     const tF = degCtoF(this.coolantC);
     const thermo = clamp((tF - spec.engine.thermostatOpenF) / 12, 0.04, 1);
-    const hoodOpenNoFan = !this.hoodClosed && !this.shopFan;
     const fanOn = this.running && (tF > 215 || this.fanOn);
     const airflow = 0.35 + (this.shopFan ? 0.9 : 0) + (fanOn ? 0.55 : 0) + 0.00025 * rpm;
     const uaKwK = 0.8 * airflow * thermo * (this.fail.state.headGasket ? 0.7 : 1);
@@ -129,8 +128,8 @@ export class Plant {
     this.coolantC += ((qCoolant - qRad) / cEng) * dt;
     this.fanDuty = lag(this.fanDuty, fanOn ? 1 : 0, 0.8, dt);
     this.oilC = lag(this.oilC, this.coolantC + 4 + 8 * (o.load || 0), 25, dt);
-    // intercooler heat soak follows the charge air temperature slowly
-    const soakTarget = clamp((o.imTempK - this.air.T) * 0.0, 0, 30) + (this.pp.out ? clamp((this.pp.out.boostPsi - 10) * 0.35, 0, 12) : 0);
+    // intercooler heat soak builds slowly with boost (up to 12 K above about 44 psi; estimated)
+    const soakTarget = clamp((o.boostPsi - 10) * 0.35, 0, 12);
     this.pp.icSoakK = lag(this.pp.icSoakK, this.running ? soakTarget : 0, 40, dt);
     // reduced engine power protection
     const trip = this.coolantF > spec.limits.coolantOverheatF || this.dl.transF > spec.drivetrain.trans.hotWarningF;

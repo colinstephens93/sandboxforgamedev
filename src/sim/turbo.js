@@ -33,4 +33,4 @@ export const drivePressureKpa = (mExh, T3, p4, v) => {
 export const turbinePowerW = (mExh, T3, p3, p4, v) =>
   turbineEta(v) * mExh * CP_EXH * T3 * (1 - Math.pow(p4 / p3, G_EXH)) * (1 + P.pulseGain * Math.exp(-mExh / P.pulseFlow));
 
-export const TURBO_CONST = { CP_AIR, CP_EXH };
+export const TURBO_CONST = { CP_AIR, CP_EXH, G_AIR, G_EXH };

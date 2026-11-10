@@ -24,6 +24,8 @@ export class Ignition {
     this.elevatedEnabled = false; this.elevatedTimer = 0; this.elevatedRamp = 0; this.dicNote = ''; this.dicNoteT = 0;
     this.idleTargetRpm = E.idleRpm; this.brakeAccelSeen = false;
     this.cluster = { tachRpm: 0 };
+    this.pendingStop = false; // the key left RUN with the engine running: reported once by update()
+    this.blocked = ''; // reason the engine may not crank (set by the AI Live hook after a failed write)
   }
 
   say(text, t = 4) { this.message = text; this.messageT = t; }
@@ -35,7 +37,7 @@ export class Ignition {
     if (k === KEY.LOCK || k === KEY.ACC) {
       if (this.engineRunning) this.pendingStop = true;
       this.engineRunning = false; this.cranking = false; this.wtsOn = false; this.wtsRemaining = 0; this.wtsDone = false;
-      this.gaugesOn = k === KEY.ACC ? false : false; this.dicPowered = false;
+      this.gaugesOn = false; this.dicPowered = false;
       this.crankTotal = 0; this.elevatedRamp = 0; this.elevatedTimer = 0;
       return;
     }

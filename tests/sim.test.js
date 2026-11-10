@@ -7,6 +7,8 @@ import { crankCurve, steadyPoint } from '../src/sim/curves.js';
 import { Plant } from '../src/sim/plant.js';
 import { Dyno } from '../src/sim/dyno.js';
 import { FailureModel } from '../src/sim/failures.js';
+import { Driveline, DL, TIRE_R, ROLLER_R } from '../src/sim/driveline.js';
+import { P } from '../src/sim/params.js';
 
 function pull(tune, regulator = 'LBZ', { runs = 1, warm = true } = {}) {
   const cal = loadCal(tune);
@@ -242,12 +244,13 @@ describe('dyno RPM bin compatibility', () => {
       dyno.rec.t.push(i * .01); dyno.rec.rpm.push(rpms[i % rpms.length]);
       dyno.rec.wr.push(10 + i * .2 + i * i * .001);
     }
-    // Reference values from the original full-scan algorithm, including encoder noise.
+    // Reference values from the original full-scan algorithm, including encoder noise. Regenerated when the roller
+    // drag referral in Driveline.parasiticAtWheel was corrected (it changes the coast-down loss table by about 0.003 percent).
     const expected = [
-      [1400, 600.1936324464539, 2251.5835411491257],
-      [1425, 620.4872515560814, 2286.876522928098],
-      [1450, 622.5145531127083, 2254.790643412375],
-      [1475, 631.7754661587834, 2249.548981875207],
+      [1400, 600.2090594743271, 2251.6414145422614],
+      [1425, 620.5071424809603, 2286.9498332000026],
+      [1450, 622.535237680426, 2254.8655643431707],
+      [1475, 631.7982084455501, 2249.6299598345963],
     ];
     const points = dyno.analyze().points;
     expect(points.map(p => p.rpm)).toEqual(expected.map(p => p[0]));
@@ -255,5 +258,30 @@ describe('dyno RPM bin compatibility', () => {
       expect(p.hp).toBeCloseTo(expected[i][1], 10);
       expect(p.tq).toBeCloseTo(expected[i][2], 10);
     });
+  });
+});
+
+describe('model consistency', () => {
+  it('fuel properties in the model coefficients are the spec values, not copies', () => {
+    expect(P.lhvJPerKg).toBe(spec.engine.heatingValueMjKg * 1e6);
+    expect(P.stoichAfr).toBe(spec.engine.stoichAfr);
+    expect(P.fuelDensityGPerMm3).toBeCloseTo(spec.engine.dieselDensityGPerL * 1e-6, 12);
+  });
+  it('charge-air pressure drop follows the air flow: a smaller fraction is lost at idle than at rated power', () => {
+    const cal = loadCal('stock');
+    const idle = steadyPoint(cal, 700, 0.05), rated = steadyPoint(cal, 3000, 1);
+    const lost = (o) => 1 - o.imKpa / (101.0 * o.pr);
+    expect(rated.mAir).toBeGreaterThan(5 * idle.mAir);
+    expect(lost(idle)).toBeGreaterThan(P.icDropFrac - 1e-9);
+    expect(lost(idle)).toBeLessThan(P.icDropFrac + 0.003);
+    expect(lost(rated)).toBeGreaterThan(lost(idle) + 0.015);
+    expect(lost(rated)).toBeCloseTo(P.icDropFrac + P.icDropFlow * Math.pow(rated.mAir / P.icDropRefFlow, 2), 3);
+  });
+  it('roller drag reaches the wheel multiplied by Rw/Rr (same contact force on tire and drum)', () => {
+    const dl = new Driveline();
+    const ww = 40, wr = ww * TIRE_R / ROLLER_R;
+    const rolling = DL.crr * DL.rearLoadKg * 9.81 * TIRE_R;
+    const dragAtRoller = DL.windageNmPerRadS * wr;
+    expect(dl.parasiticAtWheel(ww) - rolling).toBeCloseTo(dragAtRoller * TIRE_R / ROLLER_R, 9);
   });
 });

@@ -1,4 +1,4 @@
-﻿// The cab shell: carpet and transmission tunnel with rubber mats, door sills, B/C pillar trim, headliner and rails, overhead console
+// The cab shell: carpet and transmission tunnel with rubber mats, door sills, B/C pillar trim, headliner and rails, overhead console
 // with map lamps, sun visors, rear view mirror, grab handles, rear wall and window trim, and the tire/loading placard.
 // Reference: 07-overhead-console-headliner, 07b-crew-cab-rear-interior, IMG_2858 (placard), IMG_2868 (jamb), IMG_2869 to IMG_2871 (floor, mats).
 import * as THREE from 'three';

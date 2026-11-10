@@ -2,7 +2,7 @@
 // front drive, manifolds, turbo, intake, EGR and fuel system, with cutaway and exploded views.
 //
 // The model itself is the engine from the duramaxsimulator repo (github.com/colinstephens93/duramaxsimulator, commit
-// f1ff396), copied unchanged into ./detailed/. This file fits it into the truck: that model is in millimetres with the
+// f1ff396), copied into ./detailed/ (its README lists the one data correction made here). This file fits it into the truck: that model is in millimetres with the
 // crankshaft on the origin and its front toward +Z; the engine bay is in inches with the front toward -Z.
 import * as THREE from 'three';
 import { createMaterials } from './detailed/utils.js';

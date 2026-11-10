@@ -1,4 +1,4 @@
-﻿// Shared physically based materials. All textures are generated in code.
+// Shared physically based materials. All textures are generated in code.
 import * as THREE from 'three';
 import { makeCanvas, noiseField, canvasFromField, heightToNormal, tex, rng } from './proc.js';
 

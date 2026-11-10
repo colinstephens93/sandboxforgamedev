@@ -1,7 +1,7 @@
 // Calibration templates: the SHAPE of each tune (boost target, rail, timing, smoke limiter, torque limiter,
 // Allison behaviour). The fuel quantity and vane feed-forward tables are SOLVED by scripts/fit.mjs against the
 // physics (so that the stock calibration reproduces the published 310 hp / 605 lb-ft and each tune lands at the owner's
-// measured wheel-horsepower gain) and stored in src/data/calFit.json.
+// measured wheel-horsepower gain) and stored in src/data/calFit.js.
 // GM's calibration tables are not public: every number here is `estimated` (ACCURACY.md, "calibration").
 export const RPM_NODES = [600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400];
 const tbl = (ys) => ({ x: RPM_NODES, y: ys });
