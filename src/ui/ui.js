@@ -11,14 +11,25 @@ const HELP = [
   ['Cameras', 'V: driver / walk, O: orbit and photo mode, H hide UI, P save PNG'], ['Help', 'F1: this panel, quality: Q cycles low / medium / high'],
 ];
 
+// the bench page (src/bench): no walking, so no crosshair, use prompt or part label; its own help text
+const BENCH_HELP = [
+  ['Key', 'Off, Run, then hold Start until the engine fires (wait for the Wait to Start light to go out first)'],
+  ['Throttle', 'The slider is the accelerator pedal. The dyno takes it over during a run'],
+  ['Gear', 'P R N D. The engine cranks only in P or N'],
+  ['Views', '1 engine, 2 engine alone, 3 cutaway, 4 gauges, 5 truck, 6 rear wheels. Drag to look around, wheel to zoom'],
+  ['Dyno', 'T: strap the truck, fan on, Start Run'], ['AI Live', 'L: plug in, key to RUN with the engine off, read, back up, write, cycle the key'],
+  ['Shop menu', 'M: repairs, LBZ regulator, shop temperature'], ['Help', 'F1: this panel. Esc closes a panel'],
+];
+
 export class UI {
-  constructor(root) {
-    this.root = root;
+  // opts.bench: the bench page's overlay (message line, frame rate and help only)
+  constructor(root, opts = {}) {
+    this.root = root; this.bench = !!opts.bench;
     this.cross = h('div', 'ui-cross'); this.prompt = h('div', 'ui-prompt'); this.label = h('div', 'ui-label'); this.msg = h('div', 'ui-msg'); this.fps = h('div', 'ui-fps');
     this.help = h('div', 'ui-help'); this.hudWrap = h('div', 'ui-hud');
-    this.help.innerHTML = `<h2>Duramax Dyno Shop</h2><p class="sub">2005 Silverado 2500HD, 6.6L Duramax LLY, Allison 1000</p><table>${HELP.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table><div class="q">Quality: <b id="qlabel"></b> (Q)</div><p class="hint">F1 closes this panel</p>`;
+    this.help.innerHTML = `<h2>Duramax Dyno Shop</h2><p class="sub">2005 Silverado 2500HD, 6.6L Duramax LLY, Allison 1000</p><table>${(this.bench ? BENCH_HELP : HELP).map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table><div class="q">Quality: <b id="qlabel"></b>${this.bench ? '' : ' (Q)'}</div><p class="hint">F1 closes this panel</p>`;
     this.help.style.display = 'none';
-    [this.cross, this.prompt, this.label, this.msg, this.fps, this.help].forEach((e) => this.hudWrap.appendChild(e));
+    (this.bench ? [this.msg, this.fps, this.help] : [this.cross, this.prompt, this.label, this.msg, this.fps, this.help]).forEach((e) => this.hudWrap.appendChild(e));
     root.appendChild(this.hudWrap);
     this.msgT = 0; this.hidden = false; this.panels = {};
   }

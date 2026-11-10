@@ -6,7 +6,8 @@ export default defineConfig({
     target: 'es2022',
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      input: { main: 'index.html', studio: 'studio.html' }, // studio.html: the truck alone (src/studio)
+      // index.html: the bench (src/bench, the default page); shop.html: the walk-around shop game; studio.html: the truck alone
+      input: { main: 'index.html', shop: 'shop.html', studio: 'studio.html' },
       output: {
         manualChunks(id) {
           if (/node_modules[\\/](three|postprocessing|three-mesh-bvh)[\\/]/.test(id)) return 'vendor-three';

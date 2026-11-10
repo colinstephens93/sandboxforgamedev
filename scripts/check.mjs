@@ -4,7 +4,7 @@ import { startApp, openPage } from './lib/browser.mjs';
 const full = process.argv.includes('--full');
 const app = await startApp(5197);
 const logs = [];
-const { browser, page } = await openPage({ url: app.url, quality: 'low', logs });
+const { browser, page } = await openPage({ url: app.url, path: 'shop.html', quality: 'low', logs });
 const results = []; const ok = (name, cond, extra = '') => { results.push({ name, ok: !!cond, extra }); console.log((cond ? 'PASS ' : 'FAIL ') + name + (extra ? ' :: ' + extra : '')); };
 await page.waitForFunction(() => window.__game && window.__game.frames > 2, null, { timeout: 180000 });
 const ev = (fn, arg) => page.evaluate(fn, arg);

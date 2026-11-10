@@ -3,7 +3,7 @@ import { startApp, openPage } from './lib/browser.mjs';
 const [quality = 'low', secs = '60'] = process.argv.slice(2);
 const app = await startApp();
 const logs = [];
-const { browser, page } = await openPage({ url: app.url, quality, logs });
+const { browser, page } = await openPage({ url: app.url, path: 'shop.html', quality, logs });
 const t0 = Date.now();
 try {
   await page.waitForFunction(() => window.__game && window.__game.frames > 1, null, { timeout: +secs * 1000 });

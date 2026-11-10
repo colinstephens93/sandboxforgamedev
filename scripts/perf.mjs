@@ -32,7 +32,7 @@ const app = await startApp();
 const rows = [];
 for (const quality of qualities) {
   const logs = [];
-  const { browser, page } = await openPage({ url: app.url, width: W, height: H, quality, logs, dpr: 1 });
+  const { browser, page } = await openPage({ url: app.url, path: 'shop.html', width: W, height: H, quality, logs, dpr: 1 });
   const ready = await page.waitForFunction(() => window.__game && window.__game.frames > 2, null, { timeout: 900000 }).then(() => true).catch(() => false);
   if (!ready) { console.log(`${quality}: FAILED to start`); await browser.close(); continue; }
   await page.evaluate(() => {

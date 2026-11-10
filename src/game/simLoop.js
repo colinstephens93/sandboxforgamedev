@@ -1,6 +1,7 @@
 // The wiring between the simulation and a truck on screen, shared by the shop game (src/game/game.js) and the
 // bench page (src/bench/bench.js). Each function takes a host object and reads only these fields:
 //   truck, truckCtl, plant, dyno, ign, ai, state, audio, camera, pedal, brakeIn, time
+// and, optionally, rollerBrakeNm: torque the dyno absorber puts on the rollers between runs (the shop game has none: 0).
 // (plus mode and truckZ for the walking listener of the shop game). Nothing here knows about the shop.
 import { Plant } from '../sim/plant.js';
 import { Dyno } from '../sim/dyno.js';
@@ -11,6 +12,8 @@ import { degCtoF } from '../data/truckSpec.js';
 import { TIRE_R } from '../sim/driveline.js';
 
 export const SIM_DT = 1 / 120; // fixed simulation step
+// where the truck's sound and the rollers' sound come from, in metres behind the front axle (listener distances are measured to these)
+export const TRUCK_SOUND_Z = 1.0, DYNO_SOUND_Z = 3.9;
 
 // creates the plant, the dyno, the ignition and AI Live on the host
 export function initSim(host) {
@@ -38,7 +41,7 @@ export function stepSim(host, dt) {
   if (o.stopEngine) p.stopEngine();
   p.idleTargetRpm = o.idleTargetRpm;
   p.hoodClosed = !(host.truckCtl && host.truckCtl.hood && host.truckCtl.hood.open);
-  if (host.dyno.phase === 'idle' || host.dyno.phase === 'done' || host.dyno.phase === 'refused') p.step(dt, { pedal: host.pedal || 0, range: host.state.range || 'P', brake: host.brakeIn || 0 });
+  if (host.dyno.phase === 'idle' || host.dyno.phase === 'done' || host.dyno.phase === 'refused') p.step(dt, { pedal: host.pedal || 0, range: host.state.range || 'P', brake: host.brakeIn || 0, brakeNm: host.rollerBrakeNm || 0 });
   else host.dyno.update(dt);
   host.ai.update(dt, { keyPos: host.ign.key, engineRunning: host.ign.engineRunning });
   // rear lamps follow the real state: tail lamps with the key on, brake lamps on the pedal, reverse lamps
@@ -79,10 +82,10 @@ export function updateCab(host, dt) {
 // The listener of the shop game: the camera, walking around a truck whose front axle is at z = host.truckZ.
 export function cameraListener(host) {
   const cam = host.camera.position, truckZ = host.truckZ || 0;
-  const tz = truckZ + 1.0;
+  const tz = truckZ + TRUCK_SOUND_Z;
   const open = Object.values(host.truckCtl.doors).filter((d) => d.state > 0.05).length;
   const dx = cam.x - 0, dz = cam.z - tz;
-  return { x: cam.x, y: cam.y, z: cam.z, inCab: host.mode === 'driver', doorOpen: open > 0, distanceToTruck: Math.hypot(dx, dz), distanceToDyno: Math.hypot(dx, cam.z - (truckZ + 3.9)), pan: Math.max(-1, Math.min(1, -dx / 6)) };
+  return { x: cam.x, y: cam.y, z: cam.z, inCab: host.mode === 'driver', doorOpen: open > 0, distanceToTruck: Math.hypot(dx, dz), distanceToDyno: Math.hypot(dx, cam.z - (truckZ + DYNO_SOUND_Z)), pan: Math.max(-1, Math.min(1, -dx / 6)) };
 }
 
 // listener: where the sound is heard from (default: the host's camera; the bench passes a fixed point)

@@ -7,7 +7,7 @@ const only = process.argv.slice(2);
 const W = +(process.env.SHOTS_W || 1920), H = +(process.env.SHOTS_H || 1080);
 const app = await startApp();
 const logs = [];
-const { browser, page } = await openPage({ url: app.url, width: W, height: H, quality, logs, dpr: 1 });
+const { browser, page } = await openPage({ url: app.url, path: 'shop.html', width: W, height: H, quality, logs, dpr: 1 });
 await page.waitForFunction(() => window.__game && window.__game.frames > 2, null, { timeout: 900000 });
 await page.evaluate(() => { const g = window.__game; g.introT = 999; g.advance(0.5); g.setMode('walk'); g.mode = 'fixed'; });
 fs.mkdirSync('screenshots', { recursive: true });
