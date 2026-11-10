@@ -412,6 +412,7 @@ Work on the truck and engine alone, without the shop scenery. Everything below w
 * **Small parts no longer cast shadows** (under 3.5 cm radius), and only the engine's large castings do.
 * **Cab trim fitted inside the body** (`src/truck/interior/fit.js`): above the beltline the trim stood up to 3.6 in outside
   the door frames and roof and showed from outside as a tan cage around the glass.
+* **Cab ambient light** scaled down (`src/truck/interior/mats.js`): shadowless surrounding light made the interior glow through the glass.
 * **Rear privacy glass**, a **thin engine cover**, and **smooth normals on the chrome front bumper** (its flat facets
   showed as bands).
 * **Culling** skips the engine behind a closed hood and restores only what it hid.

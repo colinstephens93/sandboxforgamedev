@@ -19,7 +19,7 @@ A review-driven improvement pass was completed on this branch. See `PROGRESS.md`
 - **Performance**: high-quality preset modestly reduced (pixel ratio, SSAO samples/resolution, shadow map, SMAA) to improve frame time while remaining superior to medium.
 - **Audio**: turbo whistle presence slightly increased; full human ear pass still outstanding.
 
-All 276 unit tests continue to pass and `npm run build` succeeds.
+All 276 unit tests of that pass continued to pass and `npm run build` succeeded.
 
 ## Truck-only pass (November 2026)
 

@@ -8,7 +8,7 @@ documentation. The full specification is `PROMPT.md` (source of truth); the runn
 `ACCURACY.md`; the Blender decision is `docs/DECISIONS.md`; the module conventions are `docs/CONVENTIONS.md`.
 
 * Repo: https://github.com/colinstephens93/sandboxforgamedev
-* Branch to work on and push to: `claude/youthful-rubin-gg2uno` (do not push anywhere else, do not open a pull request)
+* Branch: this file was written for the finishing pass on `claude/youthful-rubin-gg2uno`. That work and the later truck-only pass are merged; `main` is current. See the last section of `PROGRESS.md` for what changed since and what is still owed.
 
 ## 0. Rules that always apply
 
@@ -31,14 +31,15 @@ cd sandboxforgamedev
 git checkout claude/youthful-rubin-gg2uno
 npm install
 npm run setup:browser        # downloads Playwright's Chromium
-npm test                     # must pass (about 280 tests)
+npm test                     # must pass (293 tests at the last count)
 npm run build                # must succeed
-GPU=1 node scripts/check.mjs # scripted browser checks, must end "29/29 passed" (on Windows set the variable differently: $env:GPU=1)
+GPU=1 node scripts/check.mjs # scripted browser checks, must end "46/46 passed" (on Windows set the variable differently: $env:GPU=1)
+npm run studio               # the truck and engine alone (studio.html): views, part isolation, benchmark
 npm run dev                  # http://127.0.0.1:5173 for a manual look
 ```
 
 `GPU=1` makes the headless browser use the real graphics card. Without it the scripts use slow software rendering, so always use `GPU=1` on
-the owner's desktop. If WebGL will not start in headless mode, add `HEADED=1` (opens a visible browser window instead) and note it in `PROGRESS.md`.
+the owner's desktop. `CHROME_PATH=<path>` makes the scripts use an already installed Chromium. If WebGL will not start in headless mode, add `HEADED=1` (opens a visible browser window instead) and note it in `PROGRESS.md`.
 
 ## 2. Tasks, in order
 
@@ -94,7 +95,7 @@ the seats and cluster bezel are simplified, and the tailgate/fuel door have not 
 ## 3. What is still unverified
 
 * Audio was never listened to; its levels were set from spectra. It needs an ear pass by a person.
-* Frame rate on real hardware was never measured (all checks ran on software rendering). If you have a GPU, record the frame time at each quality setting in `PROGRESS.md`.
+* Frame rate on real hardware needs measuring again: the earlier figures in `PROGRESS.md` were timed with `gl.finish()`, which returns early in Chrome, and are too low. `scripts/perf.mjs` and the studio benchmark now wait for the GPU. Record the frame time at each quality setting in `PROGRESS.md`.
 * The SAE correction uses the ISO 1585 compression-ignition form; the J1349 text itself was not available.
 
 ## 4. Reporting back

@@ -106,5 +106,6 @@ every fueling table (GM calibration tables are not public).
 * **Exhaust.** The bay's earlier downpipe was removed: the copied model has its own, and the underside module carries the pipe on from the engine. Where the two meet is not modelled as a joint.
 * **Rear glass.** Rear door glass and the back window are drawn as deep-tint privacy glass, nearly opaque from outside. The tint level is estimated from the reference photos, not measured.
 * **Lamp lenses and glass no longer refract.** They use plain transparency (see PROGRESS.md); the headlamp lenses look slightly flatter than before.
+* **Cab ambient light.** Surrounding (image-based) light on the non-metal cab trim is scaled to 0.45, because that lighting has no shadows and lit the cab as if it had no roof. The factor is estimated by eye.
 * **Cab trim.** Interior trim above the beltline is pulled in to follow the body's inward lean (`src/truck/interior/fit.js`). This corrects trim that stood outside the door frames and roof; pillar trim is slightly narrower toward the roof as a result.
 

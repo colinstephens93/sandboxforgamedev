@@ -44,6 +44,8 @@ function mottled(n, base, vary, seed, cells = 6) {
   g.putImageData(img, 0, 0); return c;
 }
 
+const CAB_ENV = 0.45; // estimated by eye against the reference photos
+
 export function makeMaterials(quality) {
   const T = Math.min(quality.tex, 1024); // grain textures need no more than 1024
   const tile = (canvas, inches, srgb = true) => tex(canvas, { repeat: [1 / inches, 1 / inches], srgb, aniso: quality.aniso });
@@ -150,10 +152,14 @@ export function makeMaterials(quality) {
   const wheelThread = new THREE.MeshStandardMaterial({ color: 0x5b5a55, roughness: 0.8, metalness: 0 });
   const wheelPlastic = new THREE.MeshStandardMaterial({ color: 0x2a2b2d, roughness: 0.55, metalness: 0, normalMap: grainN, normalScale: new THREE.Vector2(0.55, 0.55), envMapIntensity: 0.8 });
   const shiftHandle = new THREE.MeshStandardMaterial({ color: 0x2c2d2f, roughness: 0.42, metalness: 0.1, normalMap: plasticN, normalScale: new THREE.Vector2(0.4, 0.4), envMapIntensity: 0.9 });
-  return {
+  const M = {
     redBtn, rubberMatBS, meshGray, graphiteSat, knob, tanSeam, tanSoftTwo, brass, wheelLeather, wheelThread, wheelPlastic, shiftHandle,
     leather, leatherPerf, thread, tanPlastic, tanDash, tanSoft, graphite, black, blackSoft, satin, chrome, rubber, rubberGrip, steel, whitePaint, bodyPaintInner,
     carpet, rubberMat, diamondMat, headliner, tanSeat, glassClear, mirrorGlass, webbing, lampLens, fabricDark,
     _tile: tile,
   };
+  // The cab is an enclosed space, but image-based lighting has no shadows: it lit the trim as if the roof were not there, so
+  // the interior glowed through the glass. The surrounding light on the non-metal trim is scaled down to a shaded room's level.
+  for (const m of Object.values(M)) if (m && m.isMaterial && !(m.metalness > 0.5) && !m.transparent) m.envMapIntensity = (m.envMapIntensity ?? 1) * CAB_ENV;
+  return M;
 }
