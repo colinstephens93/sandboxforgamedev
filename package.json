@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Photorealistic browser game: a stock 2005 Silverado 2500HD Duramax LLY on a chassis dyno, with AI Live tuning.",
+  "description": "A stock 2005 Silverado 2500HD Duramax LLY on a chassis dyno, with AI Live tuning: a light bench page (default) and the walk-around shop game.",
   "scripts": {
     "dev": "vite",
+    "shop": "vite --open /shop.html",
     "studio": "vite --open /studio.html",
     "build": "vite build",
     "preview": "vite preview --port 4173",

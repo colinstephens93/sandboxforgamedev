@@ -4,7 +4,7 @@ import { startApp, openPage } from './lib/browser.mjs';
 const [name = 'test', cam = '-10.5,1.65,7.5', tgt = '0,1.2,-1', fov = '60', quality = 'medium', W = '1280', H = '720'] = process.argv.slice(2);
 const app = await startApp();
 const logs = [];
-const { browser, page } = await openPage({ url: app.url, width: +W, height: +H, quality, logs });
+const { browser, page } = await openPage({ url: app.url, path: 'shop.html', width: +W, height: +H, quality, logs });
 await page.waitForFunction(() => window.__game && window.__game.frames > 1, null, { timeout: 180000 });
 await page.evaluate(([c, t, f]) => window.__game.cam(c.split(',').map(Number), t.split(',').map(Number), +f), [cam, tgt, fov]);
 await page.waitForTimeout(1500);

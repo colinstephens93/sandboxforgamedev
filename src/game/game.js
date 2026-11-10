@@ -15,13 +15,9 @@ import { Interactor } from './interact.js';
 import { setupTruckOpenings } from './truckControl.js';
 import { UI } from '../ui/ui.js';
 import { aabb } from '../core/geom.js';
-import { Plant } from '../sim/plant.js';
-import { Dyno } from '../sim/dyno.js';
-import { Ignition, KEY } from '../sim/startSequence.js';
-import { AILive } from '../sim/flash.js';
 import { loadCal } from '../sim/calibrations.js';
-import { degFtoC, degCtoF } from '../data/truckSpec.js';
-import { TIRE_R } from '../sim/driveline.js';
+import { degFtoC } from '../data/truckSpec.js';
+import { initSim, runSim, stepSim, truckVisualState, updateCab, updateAudio } from './simLoop.js';
 import { AudioEngine } from '../audio/index.js';
 import { buildDynoHardware } from '../shop/dyno/index.js';
 import { buildAILiveRig } from '../shop/ailiveRig.js';
@@ -116,15 +112,8 @@ export class Game {
     requestAnimationFrame((t) => this.loop(t));
   }
 
-  initSim() {
-    const cal = loadCal('stock');
-    if (!cal) throw new Error('Stock calibration failed to load');
-    this.plant = new Plant({ cal, regulator: 'LLY', weather: { tempC: 24, pressureKpa: 101.0, humidityPct: 45 } });
-    this.plant.setCalibration(cal);
-    this.dyno = new Dyno(this.plant);
-    this.ign = new Ignition(); this.ai = new AILive();
-    this.simAcc = 0; this.shopTempF = 75;
-  }
+  // the simulation wiring lives in simLoop.js, shared with the bench page
+  initSim() { initSim(this); this.truckZ = TRUCK_Z; }
 
   // ---- panels (dyno, AI Live, shop menu): registered by the UI modules; only one open at a time ----
   registerPanel(name, panel) { (this.panelsReg ||= {})[name] = panel; }
@@ -250,9 +239,7 @@ export class Game {
     this.time += dt;
     for (const h of this.hooks) h(dt);
     // fixed-step simulation
-    this.simAcc += dt; let n = 0;
-    while (this.simAcc >= 1 / 120 && n < 8) { this.stepSim(1 / 120); this.simAcc -= 1 / 120; n++; }
-    if (this.simAcc > 0.1) this.simAcc = 0;
+    runSim(this, dt);
 
     if (this.mode === 'intro') {
       this.introT += dt;
@@ -294,28 +281,7 @@ export class Game {
     this.input.endFrame();
   }
 
-  stepSim(dt) {
-    // ignition/start logic drives the plant
-    const p = this.plant;
-    const o = this.ign.update(dt, { coolantF: p.coolantF, airF: p.air.tempC * 1.8 + 32, range: this.state.range || 'P', brake: this.brakeIn || 0, pedal: this.pedal || 0, speedMph: p.dl.wheelSpeed() * TIRE_R * 2.23694 });
-    if (o.startEngine) p.startEngine();
-    if (o.stopEngine) p.stopEngine();
-    p.idleTargetRpm = o.idleTargetRpm;
-    p.hoodClosed = !(this.truckCtl && this.truckCtl.hood && this.truckCtl.hood.open);
-    if (this.dyno.phase === 'idle' || this.dyno.phase === 'done' || this.dyno.phase === 'refused') p.step(dt, { pedal: this.pedal || 0, range: this.state.range || 'P', brake: this.brakeIn || 0 });
-    else this.dyno.update(dt);
-    this.ai.update(dt, { keyPos: this.ign.key, engineRunning: this.ign.engineRunning });
-    // rear lamps follow the real state: tail lamps with the key on, brake lamps on the pedal, reverse lamps
-    // in R (PROMPT.md section 4 lists the lamp set; this wires rear.js lamps.set to the simulation)
-    if (this.truck.parts.lamps) {
-      this.truck.parts.lamps.set({
-        tail: this.ign.key >= 1 ? 0.7 : 0,
-        brake: (this.brakeIn || 0) > 0.12 ? 1 : 0,
-        turn: 0,
-        reverse: (this.state.range === 'R' && this.ign.key >= 2) ? 1 : 0,
-      });
-    }
-  }
+  stepSim(dt) { stepSim(this, dt); }
 
   visuals(dt) {
     this.shop.updateDoors(dt);
@@ -327,45 +293,14 @@ export class Game {
     // rear wheels turn with the rollers (front wheels are chocked); forward is toward -Z
     const W = this.truck.parts.wheels;
     if (W) { this.wheelAngle = (this.wheelAngle || 0) - p.dl.wheelSpeed() * dt; W.RL.spin(this.wheelAngle); W.RR.spin(this.wheelAngle); }
-    const o = p.out || {};
-    if (this.truck.update) this.truck.update(dt, { rpm: p.rpm, running: p.running, fanDuty: p.fanDuty, turboRpm: o.turboRpm || 0, shimmer: Math.min(1, Math.max(0, ((o.egtPreK || 300) - 700) / 600)) });
+    if (this.truck.update) this.truck.update(dt, truckVisualState(this));
     for (const h of this.hooks) h(dt);
     this.updateCab(dt);
     this.updateAudio(dt);
   }
 
-  updateCab(dt) {
-    const p = this.plant, ig = this.ign, I = this.truck.interior;
-    this.state.coolantF = p.coolantF; this.state.dt = dt;
-    const o = p.out || {};
-    let keyPos = ig.key;
-    if (ig.clusterFault && keyPos >= 2) keyPos = Math.sin(this.time * 23) + Math.sin(this.time * 7.3) > 0.2 ? 2 : 0; // failed write: cluster dark or flickering
-    const oilF = degCtoF(p.oilC);
-    const oilPsi = p.running ? Math.min(120, 22 + p.rpm * 0.02 + Math.max(0, 190 - oilF) * 0.33) : 0;
-    const msg = ig.dicNote || (p.dl.transF > 265 ? 'TRANSMISSION HOT' : p.reducedPower ? 'REDUCED ENGINE POWER' : '');
-    I.update(dt, {
-      keyPos, rpm: p.running ? p.rpm : 0, mph: p.dl.wheelSpeed() * TIRE_R * 2.23694, coolantF: p.coolantF, transF: p.dl.transF, oilPsi,
-      volts: p.running ? 14.1 : (this.ai.charger ? 13.4 : this.ai.volts), fuel: p.fuelLevel, lights: { waitToStart: ig.wtsOn, waterInFuel: false }, dicMessage: msg,
-      odometerMi: p.odometerKm / 1.609344, engineHours: p.engineSeconds / 3600,
-    });
-    const open = Object.values(this.truckCtl.doors).some((d) => d.state > 0.03);
-    if (I.interiorLight) I.interiorLight.setOn(open);
-  }
-
-  updateAudio(dt) {
-    const p = this.plant, o = p.out || {}, cam = this.camera.position;
-    const tz = TRUCK_Z + 1.0;
-    const open = Object.values(this.truckCtl.doors).filter((d) => d.state > 0.05).length;
-    const st = {
-      running: p.running, cranking: this.ign.cranking, rpm: p.rpm, load: o.load || 0, qty: o.qty || 0, turboRpm: o.turboRpm, vane: o.vane,
-      boostPsi: o.boostPsi, mAir: o.mAir, driveKpa: o.driveKpa, smoke: o.smoke, coolantF: p.coolantF, fanDuty: p.fanDuty,
-      rollerRad: p.dl.wr, tccLocked: p.dl.tccLocked, cpSlipRpm: p.dl.cpSlip * 30 / Math.PI, fail: p.fail.state, doorsOpenCount: open,
-      wtsOn: this.ign.wtsOn, shopFan: this.dyno.fan, exhaustHose: this.dyno.hoseOn, hoodOpen: this.truckCtl.hood ? this.truckCtl.hood.open : false,
-    };
-    const dx = cam.x - 0, dz = cam.z - tz;
-    const listener = { x: cam.x, y: cam.y, z: cam.z, inCab: this.mode === 'driver', doorOpen: open > 0, distanceToTruck: Math.hypot(dx, dz), distanceToDyno: Math.hypot(dx, cam.z - (TRUCK_Z + 3.9)), pan: Math.max(-1, Math.min(1, -dx / 6)) };
-    try { this.audio.update(dt, st, listener); } catch (e) { /* audio must never break the frame */ }
-  }
+  updateCab(dt) { updateCab(this, dt); }
+  updateAudio(dt) { updateAudio(this, dt); }
 
   loop(t) {
     if (this.paused) { this.last = t; requestAnimationFrame((tt) => this.loop(tt)); return; }

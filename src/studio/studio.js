@@ -43,13 +43,15 @@ export class Studio {
     this.canvas = canvas; this.progress = progress; this.frames = 0; this.time = 0; this.animations = [];
     this.stats = { fps: 0, cpuMs: 0, gpuMs: null, calls: 0, tris: 0 };
     this.opts = { autoCull: true, running: false, rpm: 680, spin: false, light: 'studio', floor: true };
+    // what a subclass may change before init() (the bench page, src/bench/bench.js)
+    this.views = VIEWS; this.defaultView = 'hero'; this.defaultQuality = 'high'; this.rendererOpts = { persist: false };
   }
 
   async init() {
     const p = this.progress, url = new URLSearchParams(location.search);
-    this.qname = QUALITY[url.get('quality')] ? url.get('quality') : 'high';
+    this.qname = QUALITY[url.get('quality')] ? url.get('quality') : this.defaultQuality;
     p(0.05, 'Starting renderer');
-    this.R = new Renderer(this.canvas, this.qname, { persist: false });
+    this.R = new Renderer(this.canvas, this.qname, this.rendererOpts);
     const r = this.R.renderer; r.info.autoReset = false; // one frame is several passes (shadows, color, normals): count them all
     this.scene = new THREE.Scene(); this.scene.background = new THREE.Color(BG); this.scene.fog = new THREE.Fog(BG, 8, 26);
         this.camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.04, 200);
@@ -74,12 +76,14 @@ export class Studio {
     this.controls.zoomSpeed = 0.8; this.controls.screenSpacePanning = true;
     this.R.setScene(this.scene, this.camera);
     this.initGpuTimer();
-    window.addEventListener('resize', () => this.R.resize());
-    this.setView('hero', true);
+    window.addEventListener('resize', () => this.resize());
+    this.setView(this.defaultView, true);
     p(1, 'Ready');
     this.last = performance.now();
     requestAnimationFrame((t) => this.loop(t));
   }
+
+  resize() { this.R.resize(); }
 
   // ---- stage: floor, key light with shadows, two generated environments (no downloaded HDRI) ----
   buildStage() {
@@ -168,7 +172,7 @@ export class Studio {
   settle() { for (let i = 0; i < 200 && (this.animations.length || (this.core && this.core.busy)); i++) this.tick(0.05); this.R.renderer.shadowMap.needsUpdate = true; }
 
   setView(name, instant = false) {
-    const v = VIEWS[name]; if (!v) return;
+    const v = this.views[name]; if (!v) return;
     const s = v.state || {};
     this.view = name;
     if (this.core) this.core.standalone = !!(s.only && s.only.length === 1 && s.only[0] === 'engine');
@@ -205,8 +209,8 @@ export class Studio {
     if (o.spin) { this.wheelAngle = (this.wheelAngle || 0) - dt * 6; this.truck.parts.wheels.spin(this.wheelAngle); }
     // everything is drawn for the first few updates so all shaders compile while loading
     // a view that isolates parts (the engine alone) shows them whatever the hood is doing
-    if (o.autoCull && !VIEWS[this.view]?.state?.only) this.cull.update(this.camera.position, this.ctl.hood, (this.ticks = (this.ticks || 0) + 1) < 4); else this.cull.showAll();
-    this.floor.visible = this.opts.floor && !(VIEWS[this.view]?.state?.only) && this.camera.position.y > 0;
+    if (o.autoCull && !this.views[this.view]?.state?.only) this.cull.update(this.camera.position, this.ctl.hood, (this.ticks = (this.ticks || 0) + 1) < 4); else this.cull.showAll();
+    this.floor.visible = this.opts.floor && !(this.views[this.view]?.state?.only) && this.camera.position.y > 0;
     // moving parts need fresh shadows every frame; a still truck keeps the Renderer's schedule
     if (this.animations.length || o.spin || (this.core && this.core.busy)) this.R.renderer.shadowMap.needsUpdate = true;
   }

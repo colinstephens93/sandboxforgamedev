@@ -4,7 +4,7 @@ import { startApp, openPage } from './lib/browser.mjs';
 const variants = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); // [{name, js}]
 const app = await startApp(5198);
 const logs = [];
-const { browser, page } = await openPage({ url: app.url, quality: 'low', logs });
+const { browser, page } = await openPage({ url: app.url, path: 'shop.html', quality: 'low', logs });
 await page.waitForFunction(() => window.__game && window.__game.frames > 1, null, { timeout: 120000 });
 await page.evaluate(() => window.__game.cam([-10.5, 1.65, 7.5], [0, 1.4, -1], 60));
 for (const v of variants) {

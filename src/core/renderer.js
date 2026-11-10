@@ -5,8 +5,10 @@ import { QUALITY } from './quality.js';
 
 export class Renderer {
   // opts.persist = false: do not remember the quality choice (the truck studio must not change the game's setting)
+  // opts.shadowTimer = false: never redraw the shadow maps on the shadowEvery schedule; the owner sets
+  //   renderer.shadowMap.needsUpdate itself when something moved (the bench page)
   constructor(canvas, qualityName, opts = {}) {
-    this.canvas = canvas; this.persist = opts.persist !== false; this.qOverride = null;
+    this.canvas = canvas; this.persist = opts.persist !== false; this.shadowTimer = opts.shadowTimer !== false; this.qOverride = null;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance', preserveDrawingBuffer: false, stencil: false, depth: true });
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.autoUpdate = false; // shadows are refreshed on a schedule (see render)
@@ -78,7 +80,7 @@ export class Renderer {
   }
 
   render(dt, forceShadows = false) {
-    if (forceShadows || this.shadowFrame++ % (this.q.shadowEvery || 1) === 0) this.renderer.shadowMap.needsUpdate = true;
+    if (forceShadows || (this.shadowTimer && this.shadowFrame++ % (this.q.shadowEvery || 1) === 0)) this.renderer.shadowMap.needsUpdate = true;
     if (this.composer) this.composer.render(dt);
     else this.renderer.render(this.scene, this.camera);
   }

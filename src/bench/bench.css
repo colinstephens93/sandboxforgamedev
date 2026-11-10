@@ -1,0 +1,51 @@
+/* Bench page (index.html). The 3D view fills the window; an open panel docks on the right and the view takes what is left
+   (--dock is set by Bench.layoutDock). The panels' own styles come from src/ui/ailive.css; the rules at the end only re-place them. */
+html,body{margin:0;height:100%;background:#2c2f35;overflow:hidden;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:#e8e8e8;font-size:13px}
+:root{--dock:0px}
+canvas#view{position:fixed;left:0;top:0;display:block;width:calc(100vw - var(--dock));height:100vh;touch-action:none}
+#loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0b0c0e;z-index:50;transition:opacity .5s}
+#loading h1{font-weight:600;letter-spacing:.18em;font-size:20px;margin:0 0 6px;text-transform:uppercase}
+#loading p{margin:0 0 22px;color:#8a8f98}
+#loading .bar{width:320px;height:3px;background:#22252b;overflow:hidden;border-radius:2px}
+#loading .bar i{display:block;height:100%;width:0;background:#d9a441;transition:width .15s}
+#loading small{margin-top:10px;color:#6c727c;font-size:12px;height:14px}
+
+/* overlay from src/ui/ui.js (bench mode: message line, frame rate, help) */
+.ui-hud{position:fixed;left:0;top:0;bottom:0;right:var(--dock);pointer-events:none;font-size:14px}
+.ui-msg{position:absolute;left:50%;top:12px;transform:translateX(-50%);width:max-content;max-width:min(680px,calc(100% - 200px));padding:8px 14px;background:rgba(10,10,12,.82);border:1px solid #4a4d55;border-radius:4px;opacity:0;transition:opacity .3s;text-align:center;line-height:1.4}
+.ui-fps{position:absolute;left:10px;top:8px;font-size:12px;color:#9aa0aa}
+.ui-help{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(720px,calc(100% - 24px));max-height:78vh;overflow:auto;padding:18px 24px;background:rgba(12,13,16,.95);border:1px solid #3a3d44;border-radius:6px;pointer-events:auto}
+.ui-help h2{margin:0 0 2px;font-size:19px;letter-spacing:.06em} .ui-help .sub{margin:0 0 12px;color:#8a8f98}
+.ui-help table{border-collapse:collapse;width:100%} .ui-help td{padding:5px 8px;border-top:1px solid #23252b;vertical-align:top} .ui-help td:first-child{width:92px;color:#d9a441}
+.ui-help .q{margin-top:10px;color:#9aa0aa} .ui-help .hint{color:#6c727c;margin:8px 0 0}
+#shoplink{position:fixed;right:calc(var(--dock) + 10px);top:8px;font-size:12px;color:#9aa0aa;text-decoration:none;z-index:5}
+#shoplink:hover{color:#d9a441}
+
+/* control bar */
+#controls{position:fixed;left:8px;right:calc(var(--dock) + 8px);bottom:8px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:8px 10px;background:rgba(14,15,18,.9);border:1px solid #3a3d44;border-radius:6px;z-index:10}
+.bc-group{display:flex;align-items:center;gap:4px}
+.bc-lab{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#d9a441;font-weight:600;margin-right:3px}
+#controls button,#controls select{background:#23262c;color:#e6e6e6;border:1px solid #3d414a;border-radius:3px;padding:5px 9px;cursor:pointer;font:inherit}
+#controls button:hover:not(:disabled){background:#2d3139} #controls button.on{background:#7a5a1c;border-color:#d9a441} #controls button:disabled{opacity:.45;cursor:default}
+#controls .bc-start{user-select:none;touch-action:none}
+#controls input[type=range]{width:120px;accent-color:#d9a441} #controls input[type=range]:disabled{opacity:.4}
+#controls output{min-width:38px;font-variant-numeric:tabular-nums;color:#c9cdd3}
+.bc-lamp{font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 6px;border-radius:3px;border:1px solid #3d414a;color:#5c616b}
+.bc-lamp.lit{color:#1a1200;background:#f5b83d;border-color:#f5b83d;box-shadow:0 0 10px rgba(245,184,61,.6)}
+.bc-rpm{min-width:40px;text-align:right;font:600 14px ui-monospace,Menlo,Consolas,monospace;color:#fff} .bc-group small{color:#8a8f98}
+
+/* panels: base look (as on the shop page), then docked on the right at full height */
+.panel{position:fixed;z-index:20;background:rgba(14,15,18,.96);border:1px solid #3a3d44;border-radius:6px;color:#e6e6e6;pointer-events:auto;font-size:13px}
+body.bench .panel.dx{top:8px;right:8px;max-height:calc(100vh - 16px);width:min(540px,calc(100vw - 16px))}
+body.bench .panel.al{left:auto;top:8px;right:8px;transform:none;width:min(700px,calc(100vw - 16px));height:calc(100vh - 16px);box-shadow:none}
+body.bench .panel.sm{left:auto;top:8px;right:8px;transform:none;width:min(600px,calc(100vw - 16px));height:calc(100vh - 16px)}
+/* AI Live was laid out for a 1180 px window: at docked width its side-by-side columns stack */
+body.bench .al .al-nav{width:132px} body.bench .al .al-navbtn{padding:9px 9px}
+body.bench .al .al-brand{min-width:0} body.bench .al .al-top{gap:10px}
+body.bench .al .al-connect,body.bench .al .al-sound{flex-direction:column}
+body.bench .al .al-connect .main,body.bench .al .al-connect .side,body.bench .al .al-sound .main,body.bench .al .al-sound .side{flex:none}
+body.bench .al .al-actions,body.bench .al .al-split{grid-template-columns:1fr}
+body.bench .al .al-act p{min-height:0}
+body.bench .al .al-cards{grid-template-columns:repeat(2,1fr)}
+body.bench .al .cmp-top,body.bench .al .dl-body{flex-direction:column} body.bench .al .cmp-gain,body.bench .al .dl-chs{width:auto}
+body.bench .al .cmp-graph{flex:none}

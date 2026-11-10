@@ -6,7 +6,7 @@ import { runScript } from './lib/uiScript.mjs';
 const [what = 'rig', quality = 'low', W = '1280', H = '720'] = process.argv.slice(2);
 const app = await startApp(5302);
 const logs = [];
-const { browser, page } = await openPage({ url: app.url, width: +W, height: +H, quality, logs });
+const { browser, page } = await openPage({ url: app.url, path: 'shop.html', width: +W, height: +H, quality, logs });
 await page.waitForFunction(() => window.__game && window.__game.frames > 2, null, { timeout: 240000 });
 fs.mkdirSync('.dev/ui', { recursive: true });
 const ev = (fn, arg) => page.evaluate(fn, arg);

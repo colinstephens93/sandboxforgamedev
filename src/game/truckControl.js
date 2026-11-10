@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { IN_TO_M as IN } from '../truck/skin.js';
 import { ST } from '../truck/skin.js';
-import { makeHinge, HingeDoor } from './interact.js';
+import { makeHinge, HingeDoor } from './hinge.js';
 
 const DEG = Math.PI / 180;
 

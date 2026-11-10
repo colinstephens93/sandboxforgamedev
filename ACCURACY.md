@@ -109,3 +109,14 @@ every fueling table (GM calibration tables are not public).
 * **Cab ambient light.** Surrounding (image-based) light on the non-metal cab trim is scaled to 0.45, because that lighting has no shadows and lit the cab as if it had no roof. The factor is estimated by eye.
 * **Cab trim.** Interior trim above the beltline is pulled in to follow the body's inward lean (`src/truck/interior/fit.js`). This corrects trim that stood outside the door frames and roof; pillar trim is slightly narrower toward the roof as a result.
 
+
+## Bench page (November 2026)
+No new real-world number was added to `src/data/truckSpec.js`. What the bench assumes or simplifies:
+* **Rollers held between runs (bench only, estimated).** On the bench the dyno's absorber brakes the rollers with 2,200 N·m whenever the engine cannot be driving them (shifter in P or N, or engine off). The figure is the one `src/sim/dyno.js` already uses for the absorber at the end of a run; it is a design value, not a measured absorber rating. The shop game is unchanged: there the rollers still coast under tire and windage losses alone, which takes more than five minutes from the end of a pull.
+* **Wheels drawn as standing below 0.02 rad/s** (about one degree a second). A display threshold only.
+* **No dyno hardware is drawn.** The truck stands on a plain floor with its rear wheels turning in place; straps, fan, rollers and exhaust hose exist only as dyno state and sound.
+* **Listening position (design choice).** Sound is heard from a fixed point 1.5 m ahead of the front of the truck (`frontOverhangIn`, itself estimated, is used as the grille position: the bumper face is a few inches ahead of the real grille) at 1.65 m ear height, or from the driver's seat in the Gauges view. Reverberation is still the shop's generated room.
+* **Lighting.** The five underbody fill lights, the two dome lamps and the spare bay light are switched off on the bench, so the underside is darker than in the shop and the dome lamps never come on (no door opens on this page). Studio softbox environment, one shadow-casting key light. The floor is a matte, diffuse-only surface.
+* **Interface cable and charger** are connected with the buttons on AI Live's Connect page (labelled as a test button in the app); there is no cable or cart to carry on this page.
+* **The Cutaway view starts the engine by itself** through the normal sequence (key to RUN, wait for the glow plugs, START). It will not do so while AI Live is reading or writing.
+* **Shop-menu jobs** (repairs, regulator swap) run in the stated seconds on the bench. In the shop game the same jobs finish in half the stated time, because that page runs the panels' per-frame hook twice a frame; this was left as it is so the shop game's behaviour does not change.

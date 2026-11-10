@@ -444,3 +444,86 @@ taken the old way and are too low; they need to be measured again.
 * The engine model's 184 mm rod length (to be corrected in its own repository).
 * Cutaway is in the game; the exploded view is studio-only, because in the truck the parts would pass through the body.
 
+
+## Bench page as the default (November 2026)
+
+The walk-around shop is no longer the default experience. `index.html` is now the **bench**: the truck alone on a plain floor,
+fixed views, a control bar and the existing dyno, AI Live and shop-menu panels. The shop game is unchanged at `shop.html`.
+Everything below was measured on a software renderer (SwiftShader, no GPU in the session): the times compare with each other
+and say nothing about a real graphics card.
+
+### What changed
+* **`src/game/simLoop.js`**: the bodies of `Game.initSim`, `stepSim`, `updateCab` and `updateAudio` moved into functions that
+  take a host object. `Game` calls them. The only addition is an optional `rollerBrakeNm` on the host (0 in the shop game).
+* **`src/bench/bench.js`**: `class Bench extends Studio`. It owns the plant, dyno, ignition, AI Live, audio and the UI host the
+  panels read (`ign, dyno, plant, ai, ui, state, hooks, time, R, qname, shopTempF, setShopTemp, openPanel, closePanels,
+  registerPanel, uiPanels`), runs the hooks and the fixed 120 Hz sim step each frame, spins the rear wheels from
+  `plant.dl.wheelSpeed()`, drives `truck.update` and `interior.update` from the plant and calls `registerUi(this)`.
+* **`src/bench/controls.js`**: key (Off, Run, hold for Start, with the cab ignition's arguments), throttle slider (disabled
+  during a run), P R N D, view buttons, quality select, panel buttons (T, L, M still work), sound on/off, help.
+* **Views**: engine (hood open), engineAlone, cutaway (starts the engine through the normal sequence), gauges (driver eye
+  point), truck, rearWheels. Gauges hides engine, bay, hoodUnder, underside and wheels; the engine views hide interior and underside.
+* **Page**: `index.html` + `src/bench/bench.css`. An open panel docks on the right and the 3D view shrinks to the rest of the
+  window, so the truck stays visible and fewer pixels are drawn. `vite.config.js` builds `index.html` (bench), `shop.html`, `studio.html`.
+* **`bench` quality preset** (`src/core/quality.js`): pixelRatio 1, shadowMap 1024, one shadow caster, no ambient occlusion,
+  no bloom, SMAA, envSize 128, aniso 4, tex 1024. Default on the bench; low, medium and high stay selectable. The automatic
+  step-down uses `Game.governQuality`'s rule (under about 40 fps for three seconds: one level down, never up).
+* **Shadows only while something moves** (`Renderer` option `shadowTimer: false`): a hinge or cutaway animation, turning
+  wheels, or the running engine while it is shown. Not on the `shadowEvery` timer.
+* **Idle skip**: with the engine off, the camera still, no hinge or cutaway animation and no panel being opened or closed, the
+  frame is not drawn. A change of key, lamps, shifter or a gauge step draws for a moment so needles settle. The readout says "idle".
+* **Lights**: ten truck lights down to three on the bench (the five underbody fill spots, two dome lamps and the spare bay
+  light are switched off before the first frame). This was worth 28 percent of the engine view's frame time (1,860 to 1,332 ms).
+* **Rollers held between runs** on the bench (see ACCURACY.md). Found by the scripted check: after a pull the simulation lets
+  the rollers coast for over five minutes, which kept the wheels turning and the page drawing with the engine off.
+* **`src/game/hinge.js`**: `HingeDoor` and `makeHinge` moved out of `interact.js` (which re-exports them). `truckControl.js`
+  imported `interact.js`, which imports the label index, which imports the shop's AI Live rig, so the studio and the bench
+  were loading shop code. The bench bundle now contains none of `src/shop/`, `player.js`, `interact.js` or `core/env.js`
+  (a unit test walks the import graph).
+* **`src/ui/ui.js`**: a `bench` option (no crosshair, prompt or part label; its own help text). No other file in `src/ui/` changed.
+* No material in the bench scene has `transmission` (379 materials checked in the page).
+
+### Measurements (SwiftShader software renderer, update + every pass per frame, each frame waited for with a one-pixel read-back)
+`node scripts/benchPerf.mjs bench <size>`: both pages at the **same quality (`bench`) and resolution**.
+
+| | 1280 x 720 (20 frames) avg / p95 | 1920 x 1080 (12 frames) avg / p95 | draw calls / triangles |
+| --- | --- | --- | --- |
+| Bench, engine view, engine running | 1,399 / 1,447 ms | 2,548 / 2,586 ms | 790 / 0.91 M |
+| Bench, engine view, engine off, if drawn (left alone it draws nothing) | 1,342 / 1,411 ms | 2,465 / 2,500 ms | 790 / 0.91 M |
+| Bench, truck view, engine running | 800 / 853 ms | 1,459 / 1,501 ms | 607 / 0.71 M |
+| Shop, hero bookmark, engine off (the `scripts/perf.mjs` measurement) | 2,473 / 2,579 ms | 4,708 / 4,791 ms | 1,470 / 1.36 M |
+| Shop, engine bay, hood open, engine running (same camera as the bench's engine view) | 3,348 / 3,417 ms | 6,479 / 6,639 ms | 1,397 / 1.30 M |
+
+* Bench engine view against the same engine view in the shop: **2.39 times faster** at 720p, **2.54 times** at 1080p.
+* Bench engine view against the shop's hero bookmark: 1.77 times faster at 720p, 1.85 times at 1080p.
+* The old default page at its own default quality: `scripts/perf.mjs medium 1280x720` gives 3,009 ms a frame (12 frames, p95
+  3,209 ms). The new default page in its default view with the engine running is 1,399 ms, and nothing at all once the engine is off.
+* Draw-call and triangle counts are for a frame that includes the shadow pass.
+* A docked panel shrinks the view: with the dyno panel open at 1366 x 768 the 3D view is 802 px wide (59 percent of the pixels).
+
+### Checks
+* `npm test`: **311 passing** (19 files). New `tests/bench.test.js` (18 tests): the host exposes every field the panels read
+  (the list is checked against the source of `src/ui/`), key Off, Run, Start starts the engine near 680 rpm through the real
+  start sequence, a stock pull through the shared sim loop peaks within 5 whp of 252 and within 3 whp of the plain `Dyno`,
+  wheels, cab and audio wiring, the fixed listener, the idle-skip rule, the preset, the views and the import graph.
+* `npm run build` succeeds. `node scripts/distCheck.mjs` serves `dist/` under a sub-path (as GitHub Pages does) and loads
+  `index.html`, `shop.html` and `studio.html` in headless Chromium: all three start, no console errors, no failed requests.
+* `node scripts/benchCheck.mjs`: **50/50 passed**. It clicks the page's own controls: Run, hold Start, throttle, D, the dyno
+  panel (refusal without straps, strap all, fan, a stock pull: 253.1 whp, graph and peaks), the shop menu (LBZ regulator), AI
+  Live (plug, charger, read, backup, write Street, key cycle), a second pull (425.8 whp, +172.7), every view and its parts,
+  quality, sound, the listener, the idle skip in the live loop, no console errors.
+* `node scripts/check.mjs`: **46/46 passed** against `shop.html` (only its URL changed).
+* `node scripts/benchShots.mjs`: every view and each docked panel rendered to `.dev/` at 1366 x 768 and looked at.
+
+### Still owed
+* **Frame times on a real GPU**, for the bench and the shop. The session had none, so the ratios above are for software
+  rendering, where the cost is almost all per-pixel shading. On a laptop GPU the balance between pixels and draw calls differs.
+* **The automatic quality step-down was not exercised**: it needs a real frame clock (it ignores frames slower than 0.25 s,
+  which is every frame in software rendering).
+* **Sound was not listened to**, as before. The listener position is wired and tested; the result was not heard.
+* The engine view is still about 790 draw calls and 0.9 M triangles with the shadow pass. The next savings would be a cheaper
+  paint and engine material at the bench preset, or a lower render scale, neither of which was asked for.
+* The shop game runs the panels' frame hook twice a frame (repairs and the regulator swap take half the stated time there).
+  Left alone so the shop game does not change; the bench runs it once.
+* No door, tailgate or hood control on the bar: the hood follows the view.
+* Earlier items still open: proportion work against the reference photos, the audio ear pass, the engine model's rod length.
