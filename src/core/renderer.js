@@ -1,7 +1,7 @@
 // WebGL renderer and the post-processing chain: ACES filmic tone mapping, subtle bloom, ambient occlusion, SMAA.
 import * as THREE from 'three';
 import { EffectComposer, RenderPass, EffectPass, NormalPass, SSAOEffect, BloomEffect, SMAAEffect, SMAAPreset, ToneMappingEffect, ToneMappingMode, BlendFunction } from 'postprocessing';
-import { QUALITY } from './quality.js';
+import { QUALITY, DEFAULT_QUALITY } from './quality.js';
 
 export class Renderer {
   // opts.persist = false: do not remember the quality choice (the truck studio must not change the game's setting)
@@ -26,7 +26,7 @@ export class Renderer {
   get q() { const q = QUALITY[this.qualityName]; return this.qOverride ? { ...q, ...this.qOverride } : q; }
 
   setQuality(name) {
-    this.qualityName = QUALITY[name] ? name : 'high';
+    this.qualityName = QUALITY[name] ? name : DEFAULT_QUALITY;
     if (this.persist) { try { localStorage.setItem('dds.quality', this.qualityName); } catch {} }
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.q.pixelRatio));
     this.renderer.shadowMap.needsUpdate = true;

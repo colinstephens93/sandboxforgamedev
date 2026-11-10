@@ -527,3 +527,16 @@ and say nothing about a real graphics card.
   Left alone so the shop game does not change; the bench runs it once.
 * No door, tailgate or hood control on the bar: the hood follows the view.
 * Earlier items still open: proportion work against the reference photos, the audio ear pass, the engine model's rod length.
+
+## Accuracy pass (November 2026): simulation corrections, roof crown, cross-check tests
+* **Simulation.** Charge-air pressure drop follows the actual air flow (it was computed for a fixed 0.4 kg/s);
+  roller drag is referred to the wheel the right way round; fuel properties come from the spec; dead terms removed
+  from the thermal model. `scripts/fit.mjs` was re-run (`src/data/calFit.js`): stock 310 hp / 605 lb-ft, tune gains
+  30.2 / 59.7 / 119.5 / 175.2 / 230.0 whp.
+* **Body.** Roof crown is continuous (no flat cap, no crease); stale hood constants and comments in `skin.js` fixed.
+* **Detailed engine data.** The illustrative torque curve no longer exceeds rated power past 3,000 rpm.
+* **Housekeeping.** Byte-order marks removed from four source files; the renderer's fallback quality is the declared
+  default; the ignition object declares all its fields.
+* **Tests.** `tests/accuracy.test.js` (19 tests) and three model-consistency tests in `tests/sim.test.js`:
+  349 tests pass, `npm run build` succeeds, studio views rendered and looked at.
+* Details and what remains open: `ACCURACY.md`, "Accuracy pass".

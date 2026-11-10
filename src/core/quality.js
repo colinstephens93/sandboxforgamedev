@@ -1,4 +1,4 @@
-// Quality presets (PROMPT.md section 7: low, medium, high; high by default).
+// Quality presets (PROMPT.md section 7: low, medium, high). The default is DEFAULT_QUALITY below.
 export const QUALITY = {
   // shadowCasters: how many of the three ceiling spotlights cast shadows (the one over the truck is kept longest)
   // pixelRatio below 1 renders at a lower resolution and scales up (low only)

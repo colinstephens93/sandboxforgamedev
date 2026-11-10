@@ -24,7 +24,7 @@ const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t
 // ---------------------------------------------------------------------------------------------------------------
 // Real numbers (spec file first; the two below are not in the spec yet, see the comments)
 // ---------------------------------------------------------------------------------------------------------------
-export const HUB_HEIGHT_IN = 14.5;   // confirmed: 15.25 in tire radius less 0.75 in loaded deflection (task brief, matches the placeholder wheels)
+export const HUB_HEIGHT_IN = 14.5;   // estimated: 15.25 in tire radius less 0.75 in loaded deflection (task brief; ACCURACY.md lists it as an estimate)
 export const DEFLECTION_IN = 0.75;   // estimated: LT tire at 55-80 psi under the axle load (task brief)
 export const SECTION_WIDTH_IN = 9.8; // confirmed: Michelin LTX M/S2 LT245/75R16 overall width on a 6.5 in rim (spec has the 245 mm nominal)
 const TREAD_END_IN = 5.3;            // arc length from the crown center to the end of the tread pattern (design number)

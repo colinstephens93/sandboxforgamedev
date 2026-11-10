@@ -1,4 +1,4 @@
-﻿// Parametric outer skin of the 2005 GMT800 Classic crew cab short box.
+// Parametric outer skin of the 2005 GMT800 Classic crew cab short box.
 // Everything is in INCHES in the "body frame": s = distance rearward of the front axle, y = height above the ground
 // at the factory ride height, w = half width (distance from the centerline). Converted to meters at the end.
 // Station values were read from the reference photos (IMG_2851, 2862, 2852, 2873) by measuring pixel positions
@@ -20,11 +20,13 @@ export const ST = {
   axleF: 0, axleR: WB,
 };
 export const ARCH_R = 19.4;       // wheel opening radius
-export const AXLE_Y = spec.tires.rollingRadiusIn + 0.6; // wheel center height
+// Centre of the wheel-opening arcs. It is NOT the hub height: the wheels sit at wheels.js HUB_HEIGHT_IN (14.5 in),
+// about 0.9 in lower, so the opening is not concentric with the tire (estimated; see ACCURACY.md).
+export const AXLE_Y = spec.tires.rollingRadiusIn + 0.6;
 
 // ---- heights (inches above ground) ----
 export const H = {
-  roof: D.heightIn, beltline: 54.6, hoodNose: 48.6, hoodCowl: 54.2, rocker: 17.6, hem: 20.6,
+  roof: D.heightIn, beltline: 54.6, rocker: 17.6, hem: 20.6,
   bedRail: 56.0, bedFloor: 37.4, bumperTop: 30.5, bumperBottom: 18.0, tailgateTop: 55.5,
 };
 
@@ -82,25 +84,29 @@ export function hoodHalfWidth(s) {
 export function hoodHeight(s, x) {
   // Hood line from the blender overlay (tools/blender/overlay.py, .dev/overlay_report.md): the photo's side
   // silhouette is 50.7 in at the hood's leading edge and 53.1 in a third of the way back, against 47.6 and
-  // 52.6 before. The HD hood is nearly flat and sits high; the old table made the nose droop, which is the
-  // "rounded, bulbous nose" weak spot. Rise to the cowl is now 4.1 in over 50 in, not 6.8 in.
+  // 52.6 before (the table below is the centreline before the crown terms, which add about 0.15 in). The HD hood is nearly flat and sits high; the old table made the nose droop, which is the
+  // "rounded, bulbous nose" weak spot. Rise to the cowl is now 3.6 in over 50 in, not 6.8 in.
   const hc = tab([[-30.5, 50.8], [-24, 51.0], [-10, 51.9], [8, 53.2], [19.5, 54.4]], s);
   const hw = hoodHalfWidth(s);
   const t = clamp(Math.abs(x) / hw, 0, 1);
   // crown with a powerdome (two raised bulges for the HD hood) and a downward roll at the edge; the edge
-  // roll is 1.1 in so the fender top and the hood's side edge read as one nearly flat line from the side.
+  // roll is 0.85 in so the fender top and the hood's side edge read as one nearly flat line from the side.
   const crown = 0.45 * t * t + 0.40 * Math.pow(t, 6);
   return hc - crown + 0.25 * (1 - Math.abs(t - 0.28) / 0.72);
 }
 
 // roof: half width at the roof edge and crown height. The width matches the body's tumblehome at roof height
-// (P_CAB is 0.79 of wMax at 75.4 in), so the roof edge forms the drip rail just outboard of the door headers.
+// (P_CAB is 0.79 of wMax at 75.5 in), so the roof edge forms the drip rail just outboard of the door headers.
 export function roofHalfWidth(s) { return tab([[43, 26.2], [52, 30.8], [70, 31.9], [100, 31.6], [108.6, 29.2]], s); }
 export function roofHeight(s, x) {
   const hw = roofHalfWidth(s);
   const t = clamp(Math.abs(x) / hw, 0, 1);
   const sFront = tab([[40, 71.5], [46, 75.6], [56, 76.8], [100, 76.8], [106, 75.9], [109, 74.4]], s);
-  return Math.min(H.roof, sFront + 0.75 * (1 - t * t)) - 1.6 * Math.pow(t, 4);
+  // The centreline is capped at the spec height. The cap is applied to the crown's amplitude, not to the finished
+  // surface: clamping the surface left the roof dead flat across 86 percent of its width with a 2 degree crease
+  // where the flat met the edge roll. Centre and edge heights are unchanged; in between it moves at most 0.15 in.
+  const crown = Math.min(0.75, H.roof - sFront);
+  return sFront + crown * (1 - t * t) - 1.6 * Math.pow(t, 4);
 }
 
 export const IN_TO_M = 0.0254;

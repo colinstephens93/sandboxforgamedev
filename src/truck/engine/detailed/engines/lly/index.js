@@ -129,9 +129,11 @@ export default {
           [2200, 586],
           [2500, 568],
           [2700, 557],
-          [3000, 543],
-          [3150, 526],
-          [3250, 512],
+          [3000, 542.7],
+          // Past the 3,000 rpm power peak torque must fall faster than 1/rpm, or the curve claims more than the rated
+          // 310 hp (the earlier 526 and 512 lb-ft were 315 and 317 hp).
+          [3150, 508],
+          [3250, 480],
         ],
         zf: [
           [0, 0],
@@ -145,8 +147,9 @@ export default {
           [2500, 522],
           [2700, 524],
           [3000, 525.2],
-          [3150, 505],
-          [3250, 488],
+          // same rule for the 300 hp manual rating (the earlier 505 and 488 lb-ft were 303 and 302 hp)
+          [3150, 492],
+          [3250, 466],
         ],
       },
     },

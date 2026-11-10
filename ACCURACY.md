@@ -43,7 +43,7 @@ every fueling table (GM calibration tables are not public).
 * Engine bay (agent report): the built layout follows the diagram and LLY photos over the brief where they differ: alternator on the passenger side of the engine front, A/C compressor driver side, J and K at the driver-side front beside the power steering reservoir, F (Allison dipstick) just passenger of center at the firewall, brake reservoir cap black with a yellow brake symbol. Unconfirmed (estimated): hose and pipe routing, remote terminal bracket details, Allison dipstick handle color, hood washer nozzle positions, battery orientation and label text (generic placeholder), radiator top cover outline and decals, VGT actuator type and solenoid position (built as a pod with rod), hood latch and secondary release geometry, hinge arm shape (from photo 04b only), fan diameter 19 in and blade shape, firewall and cowl details, engine bank dimensions. The secondary release lever is behind the grille: the game lets the player pull it by pointing at the grille.
 * Exhaust side: the tailpipe exits on the PASSENGER side (reference/03-underside-rear.jpg and IMG_2872 both show it there, and the downpipe descends on the passenger side). The earlier task text said driver side; the photos win. The dyno exhaust hose adapter follows it.
 * Fuel filter conflict: the diesel supplement describes an engine-mounted filter with the drain on the passenger side, or on the driver-side frame rail in front of the tank; the owner confirmed the driver-side frame rail, which is built (with its water-in-fuel sensor wire). The fuel tank is on the driver side.
-* Underside (agent report, all `estimated`): frame width 34.5 in, kick-up location, tank dimensions (about 25 gal by volume), spring geometry, crossmember positions, AAM 11.5 rear cover with 10 bolts, springs under the axle, transfer case front output side, cooler line sides, rear strap tabs (not factory), recirculating-ball steering gear (believed correct for GMT800; the brief said rack). Wheel center 14.5 in vs skin.js rolling radius 14.76 in + 0.6 in: small inconsistency, left as is.
+* Underside (agent report, all `estimated`): frame width 34.5 in, kick-up location, tank dimensions (about 25 gal by volume), spring geometry, crossmember positions, AAM 11.5 rear cover with 10 bolts, springs under the axle, transfer case front output side, cooler line sides, rear strap tabs (not factory), recirculating-ball steering gear (believed correct for GMT800; the brief said rack). Wheel center 14.5 in vs skin.js `AXLE_Y` (rolling radius 14.76 in + 0.6 in = 15.36 in): `AXLE_Y` is the centre of the wheel-opening arcs, not the hub, so the openings sit about 0.9 in above concentric with the tires. Left as is; both are estimates.
 * Wheels/tires (agent report, `estimated`): rotor size (13 in outer radius), caliper shape and position, knuckle/CV stub/axle detail; the Michelin LTX M/S2 section width 9.8 in comes from the listing; 0.75 in deflection and the 14.5 in hub height; the DOT code on the sidewall is made up; wheel offset, face recess and cap geometry estimated from photo 06 at one angle; rear brakes modeled as a disc rotor with caliper (rear brake type not verified from the references).
 * AI Live quick-tune risk text quotes simulation numbers (for example Street EGT about 1,610 F; about 14 whp lost with the LLY regulator): they are model outputs and estimates, not published data.
 * Method note: body proportions are measured against the reference photos with scripted orthographic overlays (tools/blender/, see docs/DECISIONS.md). The photos show a lifted truck with oversized tires, so heights follow the spec envelope and only horizontal proportions are taken from the photos.
@@ -56,7 +56,7 @@ every fueling table (GM calibration tables are not public).
 
 * **Glass frit.** The black ceramic frit border that `PROMPT.md` section 1 asks for is **not modelled**: the side
   and rear glass are a tinted material only (`mat.glassTinted`), with no printed frit band or dot matrix. The
-  tint (opacity 0.72, colour 0x0a1513) is an estimate, not a measured transmission value.
+  tint (opacity 0.68, colour 0x0a1513, `src/core/materials.js`) is an estimate, not a measured transmission value.
 * **Front fascia and headlamps** are simplified geometry: the grille's slat count and the lamp internals
   (reflector bowls, projector, turn signal section) do not match the reference photos one for one, and the lens
   materials are approximations. The overall arrangement (chrome bar with the gold bowtie, two grille openings,
@@ -99,7 +99,7 @@ every fueling table (GM calibration tables are not public).
 * Turbo whistle base gain raised from 0.42 to 0.48 (estimated adjustment for better Turbo Sound presence). Full human listening pass against real LLY recordings is still outstanding.
 
 ## Detailed engine and cab fit (November 2026)
-* **Engine model.** The block, heads, internals, front drive, turbo, intake, EGR and fuel system are the model from the `duramaxsimulator` repository (commit f1ff396), copied unchanged. Its own research sheets are the authority for its values; it is an illustrative model, not CAD. It keeps a **184 mm connecting-rod length** although its research sheet gives 163 mm (the block and deck are built around 184 mm, so it cannot be changed in this repository alone). Valve timing, lift and the appearance of the internals are illustrative.
+* **Engine model.** The block, heads, internals, front drive, turbo, intake, EGR and fuel system are the model from the `duramaxsimulator` repository (commit f1ff396), copied with one data correction (see "Accuracy pass" below). Its own research sheets are the authority for its values; it is an illustrative model, not CAD. It keeps a **184 mm connecting-rod length** although its research sheet gives 163 mm (the block and deck are built around 184 mm, so it cannot be changed in this repository alone). Valve timing, lift and the appearance of the internals are illustrative.
 * **Placement (estimated).** The engine sits with its crankshaft on the existing mount axis and its mid-length at s = 2.4 in, chosen so the heads land where the earlier simple engine's banks were. Clearances to the firewall, fan and hood pad are checked by `tests/detailedEngine.test.js`; no real-world mounting dimension was used.
 * **Sump.** The copied model's sump is a test-stand shape and hung below the front axle and crossmember, so in the truck the underside module's own sump is shown instead.
 * **Engine cover.** Thinned to a lid 2.6 in deep (estimated from reference photo 02; the real cover is a thin tread-pattern lid, not a box).
@@ -120,3 +120,37 @@ No new real-world number was added to `src/data/truckSpec.js`. What the bench as
 * **Interface cable and charger** are connected with the buttons on AI Live's Connect page (labelled as a test button in the app); there is no cable or cart to carry on this page.
 * **The Cutaway view starts the engine by itself** through the normal sequence (key to RUN, wait for the glow plugs, START). It will not do so while AI Live is reading or writing.
 * **Shop-menu jobs** (repairs, regulator swap) run in the stated seconds on the bench. In the shop game the same jobs finish in half the stated time, because that page runs the panels' per-frame hook twice a frame; this was left as it is so the shop game's behaviour does not change.
+
+## Accuracy pass (November 2026)
+No new real-world number was added to `src/data/truckSpec.js`. `tests/accuracy.test.js` now checks that numbers which
+appear in more than one place agree (spec against itself, the detailed LLY entry against the spec, the engine's
+geometry against its firing order).
+* **Charge-air pressure drop (model change).** The intercooler pressure drop used a fixed 0.4 kg/s air flow at every
+  operating point, so idle and light load lost the same 6.6 percent of compressor outlet pressure as rated power. It now
+  follows the actual air flow (3 percent fixed plus a part that grows with flow squared; `icDropFlow`, `icDropRefFlow`
+  in `src/sim/params.js`, both `estimated`, chosen to give the same 6.6 percent at 0.4 kg/s). The fuel and vane tables
+  were re-fitted with `scripts/fit.mjs`: stock is still 310 hp at 3,000 rpm and 605 lb-ft at 1,600 rpm, and the five
+  tunes land on the same wheel-horsepower gains (within 0.5 whp).
+* **Roller drag (correction).** Roller bearing and air drag was carried to the wheel with the radius ratio inverted
+  (multiplied by Rr/Rw instead of Rw/Rr), which understated it by a factor of about 1.5. It is a small term
+  (`windageNmPerRadS`, `estimated`); the coast-down loss table changes by about 0.003 percent at the speeds of a pull.
+* **Fuel properties** (heating value, stoichiometric ratio, density) are read from the spec by the model
+  coefficients instead of being repeated there.
+* **Intercooler heat soak** depends on boost only. The code also carried a charge-temperature term multiplied by
+  zero; it was removed, with no change in behaviour.
+* **Fuel level** is a fixed 62 percent of the tank: running the engine does not consume it. Not modelled.
+* **Roof crown.** The roof was clamped flat at 77.0 in across 86 percent of its width, with a crease of about 2 degrees
+  where the flat met the edge roll. It is now a continuous crown: centre (77.0 in) and edge heights are unchanged and
+  the surface between moves by at most 0.15 in. The 0.2 in crown is a design value (`estimated`).
+* **Hub height tag.** `HUB_HEIGHT_IN` in `src/truck/wheels.js` was tagged `confirmed`; it is derived from an estimated
+  0.75 in tire deflection and is now tagged `estimated`, as this file already listed it.
+* **Detailed engine torque curve (copied model, changed here).** The illustrative full-load curve in
+  `engines/lly/index.js` gave 526 and 512 lb-ft at 3,150 and 3,250 rpm, which is 315 and 317 hp: more than the rated
+  310 hp, past the rated-power speed. The last two points of both calibrations were lowered so rated power is the
+  maximum (Allison 508 and 480 lb-ft, manual 492 and 466 lb-ft; shape `estimated`). The truck's dyno and gauges do
+  not use this curve; it belongs to the copied model's own telemetry.
+* **Not changed, still open.** The copied engine model keeps its 184 mm connecting rod (163 mm in its research
+  sheet): with the 99 mm stroke that is a rod-to-stroke ratio of 1.86 against 1.65, so the drawn pistons dwell
+  slightly longer near top dead centre than the real engine's. The same entry labels the 310 hp / 605 lb-ft Allison
+  calibration "2006" with 16.8:1 compression, while this truck is a 2005 and the spec uses 17.5:1 (conflict table
+  above); those labels are not shown in the truck app and were left for the source repository.

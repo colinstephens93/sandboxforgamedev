@@ -133,7 +133,7 @@ moving part and fails if a merged part would have moved, hidden or changed. Add 
 ### Detailed engine
 
 The engine block, heads, internals, front drive, turbo and fuel system are the detailed LLY model from the
-[duramaxsimulator](https://github.com/colinstephens93/duramaxsimulator) repository, copied unchanged into
+[duramaxsimulator](https://github.com/colinstephens93/duramaxsimulator) repository, copied into
 `src/truck/engine/detailed/` (see the README there) and fitted into the bay by `src/truck/engine/detailedEngine.js`. The
 truck keeps its own dress around it (engine cover, fan, air conditioning compressor, power steering, dipstick, downpipe,
 hoses and wiring) and its own sump, which is shaped around the front axle. Its crank, pistons, cam and valvetrain turn with

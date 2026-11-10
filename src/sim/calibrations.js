@@ -1,4 +1,4 @@
-// Assembles the calibrations: templates (shape) + calFit.json (fitted tables).
+// Assembles the calibrations: templates (shape) + calFit.js (fitted tables).
 import fit from '../data/calFit.js';
 import { TEMPLATES, RPM_NODES, TUNE_ORDER } from './calTemplates.js';
 
