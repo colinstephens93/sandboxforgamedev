@@ -14,7 +14,7 @@ await page.evaluate(() => { window.__bench.paused = true; }); // the script adva
 const names = await page.evaluate(() => Object.keys(window.__bench.views));
 const snap = async (file) => { await page.evaluate(() => { const b = window.__bench; b.controls.update(); b.tick(0); b.draw(0.016, true); }); await page.screenshot({ path: file }); console.log(`saved ${file}`); };
 for (const name of names) {
-  await page.evaluate((n) => { const b = window.__bench; b.setView(n, true); b.advance(n === 'cutaway' ? 14 : 2); b.settle(); }, name);
+  await page.evaluate((n) => { const b = window.__bench; b.setView(n, true); if (n === 'cutaway') b.autoStart(); b.advance(n === 'cutaway' ? 14 : 2); b.settle(); }, name);
   await snap(`.dev/bench-${name}.png`);
 }
 // the engine running in the engine view, then each panel docked beside it

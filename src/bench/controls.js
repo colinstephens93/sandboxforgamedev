@@ -1,4 +1,4 @@
-// The bench page's control bar: RPM, throttle, views, quality, panel buttons and sound.
+// The bench page's control bar: engine On/Off, RPM, throttle, views, quality, panel buttons and sound.
 // createKeyControl has no DOM in it, so the unit tests drive the same key logic the automatic start uses.
 import { KEY } from '../sim/startSequence.js';
 import { QUALITY_ORDER } from '../core/quality.js';
@@ -10,20 +10,20 @@ const START_HOLD_MAX_S = 16; // the cab key lets go after this long too (the ign
 export function createKeyControl(host) {
   const ig = host.ign;
   const args = () => ({ coolantF: host.state.coolantF ?? 70, range: host.state.range ?? 'P' });
-  let held = false;
-  const release = () => { held = false; ig.releaseStart(); };
+  let held = false, attempt = 0;
+  const release = () => { held = false; attempt++; ig.releaseStart(); };
   return {
     args,
     get held() { return held; },
-    off() { held = false; ig.setKey(KEY.LOCK, args()); },
+    off() { held = false; attempt++; ig.setKey(KEY.LOCK, args()); },
     // RUN from OFF; from START it is the key springing back
     run() { if (ig.key === KEY.START) { release(); return; } if (ig.key < KEY.RUN) ig.setKey(KEY.RUN, args()); },
     // START is spring-loaded: it is held until the engine fires, the starter gives up, or startRelease()
     startPress() {
       ig.setKey(KEY.START, args());
       if (ig.key !== KEY.START) { if (host.ui) host.ui.say(ig.message || 'The engine will not crank.', 5); return false; }
-      held = true; let t = 0;
-      host.animate((dt) => { t += dt; if (!held || ig.engineRunning || !ig.cranking || t > START_HOLD_MAX_S) { release(); return true; } return false; });
+      held = true; const currentAttempt = ++attempt; let t = 0;
+      host.animate((dt) => { if (currentAttempt !== attempt) return true; t += dt; if (!held || ig.engineRunning || !ig.cranking || t > START_HOLD_MAX_S) { release(); return true; } return false; });
       return true;
     },
     startRelease() { if (held || ig.key === KEY.START) release(); },
@@ -38,6 +38,7 @@ export function buildControls(host, root) {
   const ig = host.ign, views = host.views;
   const on = (b, f) => { b.addEventListener('click', f); return b; };
 
+  const engine = on(el('button', { className: 'bc-engine' }), () => host.toggleEngine());
   const rpm = el('b', { className: 'bc-rpm', textContent: '0' });
 
   // ---- throttle ----
@@ -59,7 +60,7 @@ export function buildControls(host, root) {
   const help = on(el('button', { textContent: '?', title: 'Help (F1)' }), () => host.ui.toggleHelp());
 
   root.replaceChildren(
-    el('div', { className: 'bc-group' }, rpm, el('small', { textContent: 'rpm' })),
+    group('Engine', engine, rpm, el('small', { textContent: 'rpm' })),
     group('Throttle', pedal, pedalOut),
     group('View', ...viewBtns),
     group('Panels', ...panelBtns),
@@ -77,6 +78,11 @@ export function buildControls(host, root) {
   let last = '';
   function update() {
     const dyno = host.dynoRunning;
+    engine.textContent = host.starting ? 'Starting… · Turn off' : host.engineOn ? 'Turn off' : 'Turn on';
+    engine.title = host.engineOn ? 'Turn the engine off' : 'Turn the engine on';
+    engine.setAttribute('aria-label', engine.title);
+    engine.setAttribute('aria-pressed', String(host.engineOn));
+    engine.classList.toggle('on', host.engineOn);
     rpm.textContent = String(Math.round(host.plant.running || ig.cranking ? host.plant.rpm : 0));
     if (pedal.disabled !== dyno) pedal.disabled = dyno;
     if (dyno && pedal.value !== '0') { pedal.value = 0; }
@@ -85,5 +91,5 @@ export function buildControls(host, root) {
     if (document.activeElement !== qual && qual.value !== host.qname) qual.value = host.qname;
   }
   sync();
-  return { sync, update, el: { pedal, viewBtns, panelBtns, qual, sound } };
+  return { sync, update, el: { engine, pedal, viewBtns, panelBtns, qual, sound } };
 }

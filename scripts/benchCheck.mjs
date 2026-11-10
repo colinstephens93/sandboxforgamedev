@@ -17,6 +17,7 @@ try {
   for (const [index, view] of ['engine', 'engineAlone', 'cutaway', 'rearWheels'].entries()) {
     await page.keyboard.press(`Digit${index + 1}`); await advance(1);
     assert.equal(await page.evaluate(() => window.__bench.view), view);
+    assert.equal(await page.evaluate(() => window.__bench.engineOn), false);
   }
   await page.keyboard.press('Digit5');
   assert.equal(await page.evaluate(() => window.__bench.view), 'rearWheels');
@@ -31,8 +32,23 @@ try {
     const b = window.__bench;
     return [b.plant.cal.id, b.ai.installed, b.ai.cable, b.ai.charger, b.ai.backup, b.ign.key, b.ai.needsKeyCycle];
   }), ['street', 'street', false, false, false, 0, false]);
-  await page.locator('[data-view="cutaway"]').click(); await advance(15);
+  await page.locator('[data-view="cutaway"]').click(); await advance(1);
+  assert.equal(await page.evaluate(() => window.__bench.plant.running), false);
+  const power = page.locator('.bc-engine');
+  await power.click(); await advance(.2);
+  assert.equal(await power.getAttribute('aria-pressed'), 'true');
+  await power.click(); await advance(15);
+  assert.equal(await page.evaluate(() => window.__bench.engineOn), false);
+  await power.click(); await advance(15);
   assert.equal(await page.evaluate(() => window.__bench.plant.running), true);
+  await page.locator('[data-view="engineAlone"]').click(); await advance(.2);
+  assert.equal(await page.evaluate(() => window.__bench.plant.running), true);
+  const throttle = page.locator('input[title="Accelerator pedal"]');
+  assert.equal(await throttle.isEnabled(), true);
+  await throttle.fill('30'); await advance(4);
+  assert.equal(await page.evaluate(() => window.__bench.pedal), .3);
+  assert.ok(await page.evaluate(() => window.__bench.plant.rpm > 1000));
+  await throttle.fill('0'); await advance(8);
   await page.locator('.al-navbtn').filter({ hasText: 'TURBO SOUND' }).click();
   await page.locator('.al-sound input[data-r="close"]').fill('20');
   await page.locator('.al-navbtn').filter({ hasText: 'QUICK TUNES' }).click();
@@ -44,7 +60,9 @@ try {
   // Tune changes must not alter a pull already in progress.
   await page.evaluate(() => window.__bench.dyno.startRun()); await advance();
   assert.equal(await tune('Street').isDisabled(), true);
-  await page.evaluate(() => window.__bench.dyno.abort()); await advance();
+  await power.click(); await advance();
+  assert.equal(await page.evaluate(() => window.__bench.dynoRunning || window.__bench.plant.running), false);
+  assert.equal(await throttle.isEnabled(), true);
   assert.equal(await tune('Street').isEnabled(), true);
   await page.evaluate(async () => { const { resetTruck } = await import('/src/ui/shopMenu.js'); resetTruck(window.__bench); });
   await advance(); await tune('Street').click(); await advance();
@@ -54,7 +72,7 @@ try {
   fs.mkdirSync('.dev', { recursive: true });
   await page.screenshot({ path: '.dev/bench-direct-tuning.png' });
   assert.equal(logs.filter(l => l.includes('[pageerror]')).length, 0, logs.join('\n'));
-  console.log('PASS: four views and shortcuts; direct tuning stopped/running; turbo sound; active-run guard; reset; no page errors.');
+  console.log('PASS: independent engine On/Off, cancelled startup, manual throttle, stop during pull; four views and shortcuts; direct tuning stopped/running; turbo sound; active-run guard; reset; no page errors.');
 } finally {
   if (browser) await browser.close();
   await app.close();

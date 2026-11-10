@@ -13,7 +13,7 @@ const HELP = [
 
 // the bench page (src/bench): no walking, so no crosshair, use prompt or part label; its own help text
 const BENCH_HELP = [
-  ['Engine', 'Select Cutaway to start the engine through its normal glow-plug and cranking sequence'],
+  ['Engine', 'Turn on starts the engine; Turn off stops it or cancels starting. Views do not change engine power'],
   ['Throttle', 'The slider is the accelerator pedal. The dyno takes it over during a run'],
   ['Views', '1 engine, 2 engine alone, 3 cutaway, 4 rear wheels. Drag to look around, wheel to zoom'],
   ['Dyno', 'T: fan on, Start Run. The bench truck is already secured'], ['AI Live', 'L: choose a Quick Tune and Apply tune. No connection setup or key cycle is needed'],

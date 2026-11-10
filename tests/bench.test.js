@@ -105,7 +105,7 @@ describe('bench key control', () => {
     b.setRange('P'); b.keyCtl.off(); b.advance(0.2);
     expect(b.keyCtl.startPress()).toBe(false); expect(b.ign.key).toBe(KEY.RUN);
   });
-  it('the automatic start used by the running-engine views goes through the same sequence, and stays out of a write', () => {
+  it('the automatic start used by the engine button goes through the same sequence, and stays out of a write', () => {
     const b = makeBench();
     expect(b.autoStart()).toBe(true); b.advance(1);
     expect(b.ign.wtsOn).toBe(true); expect(b.plant.running).toBe(false); // it waits for the glow plugs like a driver
@@ -208,7 +208,7 @@ describe('bench: quality preset, views and materials', () => {
       const s = BENCH_VIEWS[k].state, shown = (p) => (s.only ? s.only.includes(p) : !(s.hide || []).includes(p));
       expect(shown('engine')).toBe(true); expect(shown('interior')).toBe(false); expect(shown('underside')).toBe(false);
     }
-    expect(BENCH_VIEWS.cutaway.state).toMatchObject({ cutaway: true, engineRunning: true });
+    expect(BENCH_VIEWS.cutaway.state).toMatchObject({ cutaway: true });
   });
   it('no truck material is transmissive', () => {
     const bad = [];
@@ -269,5 +269,39 @@ describe('bench: shadow update scheduling', () => {
     b.time += .001; b.shadowMotionPending = true; b.moving = false; b.draw(.001);
     expect(refreshes).toHaveLength(4);
     expect(b.shadowMotionPending).toBe(false);
+  });
+});
+
+describe('bench engine On/Off button', () => {
+  it('starts independently of the dyno and preserves manual throttle control', () => {
+    const b = makeBench();
+    b.toggleEngine(); expect(b.engineOn).toBe(true); b.advance(15);
+    expect(b.plant.running).toBe(true); expect(b.dyno.phase).toBe('idle');
+    b.setPedal(.3); b.advance(4);
+    expect(b.pedal).toBe(.3); expect(b.plant.rpm).toBeGreaterThan(spec.engine.idleRpm + 300);
+    b.toggleEngine(); b.advance(1);
+    expect(b.engineOn).toBe(false); expect(b.plant.running).toBe(false);
+    expect(b.pedal).toBe(.3);
+  });
+  it('cancels a pending start without later starting on its own', () => {
+    const b = makeBench(); b.toggleEngine(); b.advance(.2); b.toggleEngine(); b.advance(15);
+    expect(b.engineOn).toBe(false); expect(b.ign.key).toBe(KEY.LOCK);
+    expect(b.plant.running).toBe(false);
+  });
+  it('handles rapid off/on clicks during cranking without an old callback cancelling the new start', () => {
+    const b = makeBench(); b.toggleEngine();
+    for (let i = 0; i < 100 && !b.ign.cranking; i++) b.advance(.1);
+    expect(b.ign.cranking).toBe(true);
+    b.toggleEngine(); b.toggleEngine(); b.advance(15);
+    expect(b.plant.running).toBe(true); expect(b.starting).toBe(false);
+    expect(b.ign.key).toBe(KEY.RUN);
+  });
+  it('turning off during a pull aborts it and leaves throttle available afterwards', () => {
+    const b = makeBench(); b.toggleEngine(); b.advance(15);
+    expect(b.dyno.startRun().ok).toBe(true); b.advance(.2);
+    b.toggleEngine(); b.advance(.2);
+    expect(b.dynoRunning).toBe(false); expect(b.plant.running).toBe(false);
+    expect(b.dyno.runs).toHaveLength(0);
+    b.setPedal(.5); expect(b.pedal).toBe(.5);
   });
 });

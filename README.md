@@ -52,8 +52,9 @@ the bottom of the window and in the three panels, which dock on the right so the
 
 | Control | What it does |
 |---|---|
+| **Engine**: Turn on / Turn off | Starts or stops the engine independently of views and dyno runs. Turn off also cancels starting or aborts an active pull |
 | **Throttle** slider | The accelerator pedal. The dyno takes it over during a run |
-| **View** (keys 1 to 4) | Engine (hood up), Engine alone, Cutaway (castings faded, internals turning: this view starts the engine if it is off), Rear wheels. Drag to look around, wheel to zoom |
+| **View** (keys 1 to 4) | Engine (hood up), Engine alone, Cutaway (castings faded, internals visible; engine power is controlled separately), Rear wheels. Drag to look around, wheel to zoom |
 | **Dyno** (T) | Start Run; graph, peaks and run history. The bench is pre-strapped; hood and fan settings do not block a run |
 | **AI Live** (L) | Opens Quick Tunes. Choose Apply tune to load the calibration and staged turbo sound settings immediately, with the engine running or stopped. No connection, read, backup, or key cycle is needed. Finish or abort an active dyno run before changing tunes |
 | **Shop menu** (M) | Repairs, the LBZ fuel pressure regulator, shop temperature, reset |

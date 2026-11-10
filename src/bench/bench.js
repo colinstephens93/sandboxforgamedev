@@ -18,11 +18,11 @@ const ENGINE_VIEW = { hide: ['interior', 'underside'] }; // the engine views nev
 
 // Fixed views in the truck frame (front axle at the origin, truck faces -Z, +X is the passenger side, rear axle at z = 3.886 m).
 // state: hood (open), only (parts shown, everything else off and no floor), hide (parts switched off), cutaway,
-// engineRunning (the view starts the engine through the normal start sequence if it is not running).
+// Views only change visualization; the engine button owns ignition.
 export const BENCH_VIEWS = {
   engine:      { label: 'Engine',       pos: [0.95, 2.2, -2.1],  tgt: [0, 1.08, 0.2],    fov: 46, state: { hood: true, ...ENGINE_VIEW } },
   engineAlone: { label: 'Engine alone', pos: [1.25, 1.2, -1.35], tgt: [0, 0.62, 0.05],  fov: 40, state: { only: ['engine'] } },
-  cutaway:     { label: 'Cutaway',      pos: [1.25, 1.2, -1.35], tgt: [0, 0.62, 0.05],  fov: 40, state: { only: ['engine'], cutaway: true, engineRunning: true } },
+  cutaway:     { label: 'Cutaway',      pos: [1.25, 1.2, -1.35], tgt: [0, 0.62, 0.05],  fov: 40, state: { only: ['engine'], cutaway: true } },
   rearWheels:  { label: 'Rear wheels',  pos: [2.75, 0.8, 6.3],   tgt: [0.75, 0.45, 3.75], fov: 40, state: { hide: ['engine', 'bay', 'hoodUnder'] } },
 };
 export const BENCH_VIEW_ORDER = ['engine', 'engineAlone', 'cutaway', 'rearWheels'];
@@ -123,6 +123,18 @@ export class Bench extends Studio {
   }
 
   // ---- controls (src/bench/controls.js) ----
+  get engineOn() { return !!(this.starting || this.ign.cranking || this.ign.engineRunning || this.plant.running); }
+  toggleEngine() {
+    if (this.engineOn) {
+      this.startAttempt = (this.startAttempt || 0) + 1;
+      this.starting = false;
+      if (this.dynoRunning) this.dyno.abort('Run aborted: engine turned off');
+      this.keyCtl.off();
+      this.plant.stopEngine();
+    } else this.autoStart();
+    this.wake(2.5);
+    this.controlsUi?.sync();
+  }
   setPedal(v) { this.pedal = this.dynoRunning ? 0 : Math.min(1, Math.max(0, +v || 0)); }
   setRange(r) { if (!['P', 'R', 'N', 'D'].includes(r)) return; this.simState.range = r; if (this.truck && this.truck.interior.shift) this.truck.interior.shift(r); }
   get dynoRunning() { return ['spinup', 'pull', 'coast'].includes(this.dyno.phase); }
@@ -140,15 +152,17 @@ export class Bench extends Studio {
   }
 
   // Start the engine the way the driver does: key to RUN, wait for the Wait to Start light, hold START until it fires.
-  // Used by the views that show a running engine. Refused while AI Live is talking to the ECM (starting then ruins a write).
+  // Used by the engine button and scripted checks. Refused while AI Live is talking to the ECM (starting then ruins a write).
   autoStart() {
     const ig = this.ign;
     if (this.plant.running || ig.engineRunning || this.starting) return true;
-    if (['reading', 'backing', 'writing'].includes(this.ai.stage)) { this.ui.say('AI Live is working on the ECM: the engine stays off. Start it with the key when it has finished.', 5); return false; }
+    if (['reading', 'backing', 'writing'].includes(this.ai.stage)) { this.ui.say('AI Live is working on the ECM: the engine stays off. Use the engine button when it has finished.', 5); return false; }
     this.starting = true;
+    const attempt = this.startAttempt = (this.startAttempt || 0) + 1;
     if (ig.key < KEY.RUN) this.keyCtl.run();
     let pressed = false, t = 0;
     this.animate((dt) => {
+      if (attempt !== this.startAttempt) return true;
       t += dt;
       if (ig.key < KEY.RUN || t > 30) { this.starting = false; return true; } // the key was turned off meanwhile
       if (!pressed) { if (ig.wtsOn) return false; pressed = true; if (!this.keyCtl.startPress()) { this.starting = false; return true; } return false; }
@@ -164,7 +178,6 @@ export class Bench extends Studio {
     super.setView(name, instant);
     const s = v.state || {};
     if (!s.only && s.hide) for (const k of s.hide) this.setPart(k, false);
-    if (s.engineRunning) this.autoStart();
     this.dirty = true;
   }
   // finish hinge and cutaway animations at once without advancing the simulation (scripts, first frame)
